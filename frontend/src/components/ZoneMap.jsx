@@ -1,0 +1,339 @@
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents, useMap, Polygon } from 'react-leaflet';
+import { useState, useEffect } from 'react';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix Leaflet default icon issue in Vite
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+// Ray-casting point-in-polygon algorithm
+function isPointInPolygon(point, polygon) {
+  if (!polygon || polygon.length < 3) return true; // No boundary = allow anywhere
+  const [lat, lng] = point;
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [xi, yi] = polygon[i];
+    const [xj, yj] = polygon[j];
+    const intersect = ((yi > lng) !== (yj > lng)) && (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+// Create a compact dot icon for spot markers (avoids overlap)
+function createSpotIcon(status, isSelected) {
+  const color = isSelected ? '#7c3aed' : (status === 'available' ? '#16a34a' : status === 'occupied' ? '#dc2626' : '#d97706');
+  const ring = isSelected ? `box-shadow:0 0 0 3px #fff,0 0 0 5px ${color};` : 'box-shadow:0 1px 4px rgba(0,0,0,0.4);';
+  return L.divIcon({
+    className: '',
+    html: `<div style="background:${color};border-radius:50%;width:18px;height:18px;border:2px solid #fff;${ring}cursor:pointer;"></div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    popupAnchor: [0, -12],
+    tooltipAnchor: [0, -14],
+  });
+}
+
+// Component for capturing click events — enforces boundary if provided
+function LocationPicker({ onPick, boundary, onBoundaryViolation }) {
+  useMapEvents({
+    click(e) {
+      if (!onPick) return;
+      const pt = [e.latlng.lat, e.latlng.lng];
+      if (boundary && boundary.length >= 3 && !isPointInPolygon(pt, boundary)) {
+        if (onBoundaryViolation) onBoundaryViolation();
+        return;
+      }
+      onPick(pt);
+    }
+  });
+  return null;
+}
+
+// Component to dynamically pan the map when center changes
+function MapCenterer({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center && center[0] && center[1]) {
+      map.setView(center, map.getZoom(), { animate: true });
+    }
+  }, [center, map]);
+  return null;
+}
+
+/**
+ * ZoneMap Component
+ * Props:
+ *   - zones: array of zone objects with optional boundary_geojson
+ *   - selectedPolygon: [lat, lng] pairs for polygon being drawn
+ *   - spotMarkers: array of spot objects { id, spot_number, latitude, longitude, status }
+ *   - boundary: [lat, lng] array to restrict click-picking inside a zone polygon
+ *   - onPick(point): called when admin clicks map
+ *   - onClearPick(): clear drafted polygon
+ *   - onUndoPick(): undo last drafted point
+ *   - viewOnly: if true, disables click picking
+ *   - height: CSS height string (default '400px')
+ *   - center: [lat, lng] override (default Dhaka)
+ */
+export default function ZoneMap({
+  zones = [],
+  selectedPolygon = [],
+  spotMarkers = [],
+  boundary = null,
+  onPick,
+  onClearPick,
+  onUndoPick,
+  onSpotSelect,
+  selectedSpotId = null,
+  viewOnly = false,
+  height = '400px',
+  center
+}) {
+  const defaultCenter = center || [23.8103, 90.4125];
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [boundaryWarning, setBoundaryWarning] = useState(false);
+
+  useEffect(() => {
+    if (center && center[0] && center[1]) setMapCenter(center);
+  }, [center]);
+
+  useEffect(() => {
+    if (selectedPolygon.length > 0) setMapCenter(selectedPolygon[0]);
+  }, [selectedPolygon]);
+
+  function handleBoundaryViolation() {
+    setBoundaryWarning(true);
+    setTimeout(() => setBoundaryWarning(false), 2000);
+  }
+
+  async function handleSearch() {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      setSearchResults(data.slice(0, 4));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
+  function handleSearchResultPick(result) {
+    setMapCenter([parseFloat(result.lat), parseFloat(result.lon)]);
+    setSearchResults([]);
+    setSearchQuery('');
+  }
+
+  return (
+    <div style={{ height, borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
+
+      {/* Search bar — admin only */}
+      {!viewOnly && (
+        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, width: 280, background: '#fff', padding: 8, borderRadius: 10, boxShadow: '0 4px 14px rgba(0,0,0,0.15)' }}>
+          <div className="d-flex gap-2">
+            <input
+              type="text" className="form-control form-control-sm" placeholder="Search area (e.g., Gulshan)"
+              value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            />
+            <button className="btn btn-sm btn-primary d-flex align-items-center justify-content-center" onClick={handleSearch} disabled={isSearching} style={{ width: 40 }}>
+              {isSearching ? <span className="spinner-border spinner-border-sm"></span> : '🔍'}
+            </button>
+          </div>
+          {searchResults.length > 0 && (
+            <div className="list-group mt-2 shadow-sm rounded" style={{ maxHeight: 200, overflowY: 'auto' }}>
+              {searchResults.map((r, i) => (
+                <button key={i} className="list-group-item list-group-item-action py-2 px-2 border-0 border-bottom" style={{ fontSize: 11, background: '#f8fafc' }} onClick={() => handleSearchResultPick(r)}>
+                  <div className="fw-semibold text-truncate">{r.display_name.split(',')[0]}</div>
+                  <div className="text-muted text-truncate" style={{ fontSize: 10 }}>{r.display_name}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Boundary warning toast */}
+      {boundaryWarning && (
+        <div style={{ position: 'absolute', bottom: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, background: '#dc2626', color: '#fff', padding: '8px 18px', borderRadius: 20, fontWeight: 600, fontSize: 13, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+          ⚠️ Please click inside the zone boundary!
+        </div>
+      )}
+
+      {/* Spot legend for vendor view */}
+      {viewOnly && spotMarkers.length > 0 && (
+        <div style={{ position: 'absolute', bottom: 16, right: 16, zIndex: 1000, background: '#fff', padding: '8px 12px', borderRadius: 10, boxShadow: '0 2px 10px rgba(0,0,0,0.15)', fontSize: 12 }}>
+          <div className="fw-semibold mb-1 text-muted" style={{ fontSize: 11 }}>SPOT STATUS</div>
+          <div className="d-flex gap-2">
+            <span><span style={{ display:'inline-block', width:10, height:10, borderRadius:'50%', background:'#16a34a', marginRight:4 }}></span>Available</span>
+            <span><span style={{ display:'inline-block', width:10, height:10, borderRadius:'50%', background:'#dc2626', marginRight:4 }}></span>Occupied</span>
+          </div>
+        </div>
+      )}
+
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <MapContainer center={mapCenter} zoom={14} style={{ height: '100%', width: '100%' }}>
+          <MapCenterer center={mapCenter} />
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          {/* Admin click-to-pick */}
+          {!viewOnly && onPick && (
+            <LocationPicker
+              onPick={onPick}
+              boundary={boundary}
+              onBoundaryViolation={handleBoundaryViolation}
+            />
+          )}
+
+          {/* Selected Polygon / spot pin being drafted */}
+          {selectedPolygon && selectedPolygon.length > 0 && (
+            <>
+              {selectedPolygon.map((p, i) => (
+                <Marker key={`draft-${i}`} position={p}>
+                  <Popup>📍 Point {i + 1}</Popup>
+                </Marker>
+              ))}
+              {selectedPolygon.length > 2 && (
+                <Polygon positions={selectedPolygon} color="#1a6b3c" fillColor="#1a6b3c" fillOpacity={0.25} />
+              )}
+              {selectedPolygon.length === 2 && (
+                <Polygon positions={selectedPolygon} color="#1a6b3c" dashArray="5, 10" />
+              )}
+            </>
+          )}
+
+          {/* Existing zone polygons */}
+          {zones.map((zone, i) => {
+            const geo = zone.boundary_geojson && (typeof zone.boundary_geojson === 'string' ? JSON.parse(zone.boundary_geojson) : zone.boundary_geojson);
+            const isArray = Array.isArray(geo);
+            const hasPolygon = isArray && geo.length > 2;
+            const hasSinglePoint = isArray && geo.length === 1;
+            const hasLegacyPoint = zone.latitude && zone.longitude;
+
+            if (!hasPolygon && !hasSinglePoint && !hasLegacyPoint) return null;
+
+            // When picking a spot pin, make polygons non-interactive so clicks pass through
+            const polyInteractive = !onPick;
+            return (
+              <div key={`zone-wrapper-${i}`}>
+                {hasPolygon ? (
+                  <Polygon
+                    positions={geo}
+                    color="#3b82f6"
+                    fillColor="#3b82f6"
+                    fillOpacity={0.12}
+                    weight={2}
+                    interactive={polyInteractive}
+                    pathOptions={{ pointerEvents: polyInteractive ? 'auto' : 'none' }}
+                  >
+                    {polyInteractive && (
+                      <Popup>
+                        <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '4px', color: '#1a6b3c' }}>🗺️ {zone.name}</div>
+                        {zone.area && <div style={{ fontSize: '12px', color: '#64748b' }}>{zone.area}</div>}
+                      </Popup>
+                    )}
+                  </Polygon>
+                ) : hasSinglePoint ? (
+                  <Marker position={geo[0]}>
+                    <Popup><strong>📍 {zone.name}</strong></Popup>
+                  </Marker>
+                ) : (
+                  <Marker position={[zone.latitude, zone.longitude]}>
+                    <Popup><strong>📍 {zone.name}</strong></Popup>
+                  </Marker>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Spot markers with colored status labels */}
+          {spotMarkers.map(spot => {
+            if (!spot.latitude || !spot.longitude) return null;
+            const isSelected = spot.id === selectedSpotId;
+            const isAvailable = spot.status === 'available';
+            return (
+              <Marker
+                key={`spot-${spot.id}`}
+                position={[parseFloat(spot.latitude), parseFloat(spot.longitude)]}
+                icon={createSpotIcon(spot.status, isSelected)}
+                eventHandlers={onSpotSelect && isAvailable ? {
+                  click: (e) => { e.originalEvent.stopPropagation(); onSpotSelect(spot); }
+                } : {}}
+              >
+                <Tooltip permanent direction="top" offset={[0, -12]} opacity={1}
+                  className="" pane="tooltipPane"
+                >
+                  <span style={{
+                    background: isSelected ? '#7c3aed' : (spot.status === 'available' ? '#16a34a' : '#dc2626'),
+                    color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 700,
+                    whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+                  }}>{spot.spot_number}</span>
+                </Tooltip>
+                <Popup>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>📌 Spot {spot.spot_number}</div>
+                  <div style={{ marginTop: 4 }}>
+                    <span style={{
+                      background: isSelected ? '#ede9fe' : (spot.status === 'available' ? '#dcfce7' : '#fee2e2'),
+                      color: isSelected ? '#6d28d9' : (spot.status === 'available' ? '#15803d' : '#991b1b'),
+                      padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600
+                    }}>
+                      {isSelected ? '✓ SELECTED' : spot.status?.toUpperCase()}
+                    </span>
+                  </div>
+                  {spot.blocks?.block_name && <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Block: {spot.blocks.block_name}</div>}
+                  {onSpotSelect && isAvailable && !isSelected && (
+                    <button
+                      className="btn btn-sm btn-success mt-2 w-100"
+                      style={{ fontSize: 11, borderRadius: 6 }}
+                      onClick={(e) => { e.stopPropagation(); onSpotSelect(spot); }}
+                    >Select This Spot</button>
+                  )}
+                  {isSelected && (
+                    <div style={{ marginTop: 6, fontSize: 11, color: '#6d28d9', fontWeight: 600 }}>✓ This spot is selected!</div>
+                  )}
+                </Popup>
+              </Marker>
+            );
+          })}
+
+        </MapContainer>
+      </div>
+
+      {/* Bottom toolbar — admin zone drawing only */}
+      {!viewOnly && onPick && (
+        <div className="d-flex justify-content-between align-items-center" style={{ background: '#f0f4f8', padding: '10px 16px', borderTop: '1px solid #e2e8f0', minHeight: 48 }}>
+          <div style={{ fontSize: 13, color: '#64748b' }}>
+            💡 <strong>Click inside the zone</strong> to pin the spot location.
+          </div>
+          {selectedPolygon && selectedPolygon.length > 0 && (
+            <div className="d-flex gap-2">
+              {onUndoPick && (
+                <button type="button" onClick={onUndoPick} className="btn btn-sm shadow-sm" style={{ background: '#fef08a', color: '#854d0e', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
+                  ↩️ Undo Last
+                </button>
+              )}
+              {onClearPick && (
+                <button type="button" onClick={onClearPick} className="btn btn-sm shadow-sm" style={{ background: '#fee2e2', color: '#991b1b', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
+                  ❌ Clear Pin
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
