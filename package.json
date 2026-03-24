@@ -1,0 +1,15 @@
+{
+  "name": "streetvendor-master",
+  "version": "1.0.0",
+  "description": "Master entry for StreetVendor BD Platform",
+  "private": true,
+  "scripts": {
+    "start": "cd backend && npm start",
+    "build": "cd frontend && npm install && npm run build",
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "cd frontend && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
