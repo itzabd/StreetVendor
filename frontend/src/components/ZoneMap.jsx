@@ -26,16 +26,25 @@ function isPointInPolygon(point, polygon) {
 }
 
 // Create a compact dot icon for spot markers (avoids overlap)
-function createSpotIcon(status, isSelected) {
+function createSpotIcon(status, isSelected, isLocked) {
   const color = isSelected ? '#7c3aed' : (status === 'available' ? '#16a34a' : status === 'occupied' ? '#dc2626' : '#d97706');
   const ring = isSelected ? `box-shadow:0 0 0 3px #fff,0 0 0 5px ${color};` : 'box-shadow:0 1px 4px rgba(0,0,0,0.4);';
+  const pulse = isLocked ? `
+    @keyframes sv-marker-pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(124, 58, 237, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+    }
+    animation: sv-marker-pulse 2s infinite;
+  ` : '';
+
   return L.divIcon({
     className: '',
-    html: `<div style="background:${color};border-radius:50%;width:18px;height:18px;border:2px solid #fff;${ring}cursor:pointer;"></div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
-    popupAnchor: [0, -12],
-    tooltipAnchor: [0, -14],
+    html: `<div style="background:${color};border-radius:50%;width:22px;height:22px;border:3px solid #fff;${ring}cursor:pointer;${pulse}"></div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+    popupAnchor: [0, -14],
+    tooltipAnchor: [0, -16],
   });
 }
 
@@ -56,13 +65,14 @@ function LocationPicker({ onPick, boundary, onBoundaryViolation }) {
 }
 
 // Component to dynamically pan the map when center changes
-function MapCenterer({ center }) {
+function MapCenterer({ center, zoom }) {
   const map = useMap();
   useEffect(() => {
     if (center && center[0] && center[1]) {
-      map.setView(center, map.getZoom(), { animate: true });
+      const z = zoom || map.getZoom();
+      map.setView(center, z, { animate: true });
     }
-  }, [center, map]);
+  }, [center, map, zoom]);
   return null;
 }
 
@@ -92,7 +102,8 @@ export default function ZoneMap({
   selectedSpotId = null,
   viewOnly = false,
   height = '400px',
-  center
+  center,
+  locked = false
 }) {
   const defaultCenter = center || [23.8103, 90.4125];
   const [mapCenter, setMapCenter] = useState(defaultCenter);
@@ -138,7 +149,7 @@ export default function ZoneMap({
     <div style={{ height, borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
 
       {/* Search bar — admin only */}
-      {!viewOnly && (
+      {!viewOnly && !locked && (
         <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, width: 280, background: '#fff', padding: 8, borderRadius: 10, boxShadow: '0 4px 14px rgba(0,0,0,0.15)' }}>
           <div className="d-flex gap-2">
             <input
@@ -170,8 +181,13 @@ export default function ZoneMap({
         </div>
       )}
 
+      {/* Modern Overlay Gradient (only if locked) */}
+      {locked && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 400, pointerEvents: 'none', background: 'radial-gradient(circle at center, transparent 30%, rgba(30, 41, 59, 0.05) 100%)' }}></div>
+      )}
+
       {/* Spot legend for vendor view */}
-      {viewOnly && spotMarkers.length > 0 && (
+      {viewOnly && !locked && spotMarkers.length > 0 && (
         <div style={{ position: 'absolute', bottom: 16, right: 16, zIndex: 1000, background: '#fff', padding: '8px 12px', borderRadius: 10, boxShadow: '0 2px 10px rgba(0,0,0,0.15)', fontSize: 12 }}>
           <div className="fw-semibold mb-1 text-muted" style={{ fontSize: 11 }}>SPOT STATUS</div>
           <div className="d-flex gap-2">
@@ -181,9 +197,19 @@ export default function ZoneMap({
         </div>
       )}
 
-      <div style={{ flex: 1, minHeight: 0 }}>
-        <MapContainer center={mapCenter} zoom={14} style={{ height: '100%', width: '100%' }}>
-          <MapCenterer center={mapCenter} />
+      <div style={{ flex: 1, minHeight: 0, filter: locked ? 'saturate(0.8) contrast(1.05)' : 'none' }}>
+        <MapContainer 
+          center={mapCenter} 
+          zoom={locked ? 18 : 14} 
+          style={{ height: '100%', width: '100%' }}
+          dragging={!locked}
+          scrollWheelZoom={!locked}
+          doubleClickZoom={!locked}
+          touchZoom={!locked}
+          zoomControl={!locked}
+          attributionControl={!locked}
+        >
+          <MapCenterer center={mapCenter} zoom={locked ? 18 : null} />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -268,7 +294,7 @@ export default function ZoneMap({
               <Marker
                 key={`spot-${spot.id}`}
                 position={[parseFloat(spot.latitude), parseFloat(spot.longitude)]}
-                icon={createSpotIcon(spot.status, isSelected)}
+                icon={createSpotIcon(spot.status, isSelected, locked)}
                 eventHandlers={onSpotSelect && isAvailable ? {
                   click: (e) => { e.originalEvent.stopPropagation(); onSpotSelect(spot); }
                 } : {}}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -7,15 +8,24 @@ import { useConfirm } from '../context/ConfirmContext';
 export default function Assignments() {
   const { addToast } = useToast();
   const { confirmAction } = useConfirm();
+  const location = useLocation();
   const [assignments, setAssignments] = useState([]);
   const [zones, setZones] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [spots, setSpots] = useState([]);
-  const [approvedUsers, setApprovedUsers] = useState([]); // from approved applications
+  const [approvedUsers, setApprovedUsers] = useState([]); // dropdown list
+  const [approvedApps, setApprovedApps] = useState([]); // full data for lookup
+  const [pendingSpotNumber, setPendingSpotNumber] = useState(null);
   
   const [selectedZone, setSelectedZone] = useState('');
   const [selectedBlock, setSelectedBlock] = useState('');
-  const [formData, setFormData] = useState({ vendor_id: '', spot_id: '', start_date: new Date().toISOString().split('T')[0], end_date: '', rent_amount: '' });
+  const [formData, setFormData] = useState({ 
+    vendor_id: '', 
+    spot_id: '', 
+    start_date: new Date().toISOString().split('T')[0], 
+    end_date: '', 
+    rent_amount: '' 
+  });
   
   const { profile, getToken } = useAuth();
   const isAdmin = profile?.role === 'admin';
@@ -25,18 +35,71 @@ export default function Assignments() {
     if (isAdmin) {
       loadZones();
       loadApprovedUsers();
+      
+      // Auto-pre-fill from Application redirect
+      if (location.state) {
+        const { vendor_id, zone_id } = location.state;
+        if (vendor_id) setFormData(prev => ({ ...prev, vendor_id }));
+        if (zone_id) setSelectedZone(zone_id); // This triggers loadBlocksForZone
+        addToast('Form pre-filled from application!', 'info');
+      }
     }
-  }, [isAdmin]);
+  }, [isAdmin, location.state]);
 
   useEffect(() => {
     if (selectedZone) loadBlocksForZone(selectedZone);
     else setBlocks([]);
   }, [selectedZone]);
 
+  // Logic to auto-select block and spot if redirecting from application
+  useEffect(() => {
+    // If blocks just loaded and we have a target spot
+    const targetNum = location.state?.preferred_spot_number || pendingSpotNumber;
+    if (blocks.length > 0 && targetNum && !selectedBlock) {
+      findAndSelectBlockForSpot(targetNum);
+    }
+  }, [blocks, pendingSpotNumber, location.state]);
+
   useEffect(() => {
     if (selectedBlock) loadAvailableSpots(selectedBlock);
     else setSpots([]);
   }, [selectedBlock]);
+
+  useEffect(() => {
+    const targetNum = location.state?.preferred_spot_number || pendingSpotNumber;
+    if (spots.length > 0 && targetNum && !formData.spot_id) {
+      const target = spots.find(s => s.spot_number === targetNum);
+      if (target) setFormData(prev => ({ ...prev, spot_id: target.id }));
+    }
+  }, [spots, pendingSpotNumber]);
+
+  async function loadAvailableSpots(blockId) {
+    const token = await getToken();
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/spots?block_id=${blockId}`, { headers: { Authorization: `Bearer ${token}` } });
+    // Only show available spots
+    setSpots(res.data.filter(s => s.status === 'available'));
+  }
+
+  // Handle Vendor Selection Change (Pull-based automation)
+  const handleVendorChange = (vendorId) => {
+    setFormData(prev => ({ ...prev, vendor_id: vendorId }));
+    if (!vendorId) return;
+
+    // Look for the most recent approved application for this vendor
+    const app = approvedApps.find(a => a.vendor_id === vendorId);
+    if (app) {
+      if (app.zone_id) setSelectedZone(app.zone_id);
+      
+      let spotNum = null;
+      if (app.notes && app.notes.includes('[Preferred Spot:')) {
+        const match = app.notes.match(/\[Preferred Spot:\s*([^\]]+)\]/);
+        if (match) spotNum = match[1].trim();
+      }
+      
+      setPendingSpotNumber(spotNum);
+      addToast(`Found application for ${app.zones?.name}. Auto-filling...`, 'info');
+    }
+  };
 
   async function loadAssignments() {
     const token = await getToken();
@@ -56,6 +119,7 @@ export default function Assignments() {
     const mapped = approved.map(a => ({ id: a.vendor_id, name: a.profiles?.full_name, phone: a.profiles?.phone }));
     const unique = Array.from(new Map(mapped.map(item => [item.id, item])).values());
     setApprovedUsers(unique);
+    setApprovedApps(approved); // Store full apps for lookup
   }
 
   async function loadZones() {
@@ -70,11 +134,27 @@ export default function Assignments() {
     setBlocks(res.data);
   }
 
-  async function loadAvailableSpots(blockId) {
+  async function findAndSelectBlockForSpot(spotNum) {
+    if (!spotNum) return;
     const token = await getToken();
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/spots?block_id=${blockId}`, { headers: { Authorization: `Bearer ${token}` } });
-    // Only show available spots
-    setSpots(res.data.filter(s => s.status === 'available'));
+    
+    // Iterate through all blocks in this zone to find the one containing the preferred spot number
+    for (const block of blocks) {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/spots?block_id=${block.id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const match = res.data.find(s => s.spot_number === spotNum);
+        if (match) {
+          setSelectedBlock(block.id);
+          // The spots useEffect will handle setting the formData.spot_id
+          // but we can also set it here for faster response
+          setFormData(prev => ({ ...prev, spot_id: match.id }));
+          return;
+        }
+      } catch (err) {
+        console.error("Error searching block for spot", err);
+      }
+    }
+    addToast(`Could not find a match for preferred Spot ${spotNum} in this zone's blocks.`, 'warning');
   }
 
   async function handleSubmit(e) {
@@ -138,7 +218,7 @@ export default function Assignments() {
             <h5 className="card-title text-primary">Assign Spot to Vendor</h5>
             <form onSubmit={handleSubmit} className="row g-3">
               <div className="col-md-3">
-                <select className="form-select" value={formData.vendor_id} onChange={e => setFormData({...formData, vendor_id: e.target.value})} required>
+                <select className="form-select" value={formData.vendor_id} onChange={e => handleVendorChange(e.target.value)} required>
                   <option value="">-- Select Vendor --</option>
                   {approvedUsers.map(u => <option key={u.id} value={u.id}>{u.name} ({u.phone})</option>)}
                 </select>

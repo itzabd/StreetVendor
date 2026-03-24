@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -7,9 +8,11 @@ import { useConfirm } from '../context/ConfirmContext';
 export default function Permissions() {
   const { addToast } = useToast();
   const { confirmAction } = useConfirm();
+  const location = useLocation();
   const [permissions, setPermissions] = useState([]);
   const [zones, setZones] = useState([]);
   const [vendors, setVendors] = useState([]);
+  const [approvedApps, setApprovedApps] = useState([]);
   
   const [formData, setFormData] = useState({ vendor_id: '', zone_id: '', permission_type: '', valid_from: new Date().toISOString().split('T')[0], valid_until: '', notes: '' });
   
@@ -21,8 +24,15 @@ export default function Permissions() {
     if (isAdmin) {
       loadZones();
       loadVendors();
+
+      if (location.state) {
+        const { vendor_id, zone_id } = location.state;
+        if (vendor_id) setFormData(prev => ({ ...prev, vendor_id }));
+        if (zone_id) setFormData(prev => ({ ...prev, zone_id }));
+        addToast('Form pre-filled from application!', 'info');
+      }
     }
-  }, [isAdmin]);
+  }, [isAdmin, location.state]);
 
   async function loadPermissions() {
     const token = await getToken();
@@ -43,7 +53,19 @@ export default function Permissions() {
     const mapped = res.data.map(a => ({ id: a.vendor_id, name: a.profiles?.full_name }));
     const unique = Array.from(new Map(mapped.map(item => [item.id, item])).values());
     setVendors(unique);
+    setApprovedApps(res.data.filter(a => a.status === 'approved'));
   }
+
+  const handleVendorChange = (vendorId) => {
+    setFormData(prev => ({ ...prev, vendor_id: vendorId }));
+    if (!vendorId) return;
+
+    const app = approvedApps.find(a => a.vendor_id === vendorId);
+    if (app && app.zone_id) {
+      setFormData(prev => ({ ...prev, zone_id: app.zone_id }));
+      addToast(`Found application for ${app.zones?.name}. Auto-filled zone.`, 'info');
+    }
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -104,7 +126,7 @@ export default function Permissions() {
             <h5 className="card-title text-primary">Grant New Permission</h5>
             <form onSubmit={handleSubmit} className="row g-3">
               <div className="col-md-3">
-                <select className="form-select" value={formData.vendor_id} onChange={e => setFormData({...formData, vendor_id: e.target.value})} required>
+                <select className="form-select" value={formData.vendor_id} onChange={e => handleVendorChange(e.target.value)} required>
                   <option value="">-- Vendor --</option>
                   {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                 </select>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -8,6 +9,7 @@ import ZoneMap from '../components/ZoneMap';
 export default function Applications() {
   const { addToast } = useToast();
   const { confirmAction } = useConfirm();
+  const navigate = useNavigate();
   const [apps, setApps] = useState([]);
   const [zones, setZones] = useState([]);
   const [zoneSpots, setZoneSpots] = useState([]);
@@ -93,6 +95,36 @@ export default function Applications() {
     } catch (err) {
       addToast(err.response?.data?.error || 'Failed to submit application', 'danger');
     } finally { setLoading(false); }
+  }
+
+  async function handleApproveAndRedirect(app, target) {
+    // First approve the application
+    try {
+      const token = await getToken();
+      await axios.put(`${import.meta.env.VITE_API_URL}/applications/${app.id}`, { status: 'approved' }, { headers: { Authorization: `Bearer ${token}` } });
+      
+      // Parse preferred spot if exists
+      let preferredSpot = null;
+      if (app.notes && app.notes.includes('[Preferred Spot:')) {
+        const match = app.notes.match(/\[Preferred Spot:\s*([^\]]+)\]/);
+        if (match) preferredSpot = match[1].trim();
+      }
+
+      const state = {
+        vendor_id: app.vendor_id,
+        zone_id: app.zone_id,
+        preferred_spot_number: preferredSpot
+      };
+
+      addToast(`Application approved! Redirecting to ${target === 'assign' ? 'Assignments' : 'Permissions'}...`, 'success');
+      
+      // Navigate after a short delay
+      setTimeout(() => {
+        navigate(target === 'assign' ? '/admin/assignments' : '/admin/permissions', { state });
+      }, 800);
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Failed to approve application', 'danger');
+    }
   }
 
   async function handleStatusUpdate(id, status) {
@@ -279,11 +311,22 @@ export default function Applications() {
                 <td style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</td>
                 {isAdmin && (
                   <td style={{ textAlign: 'right' }}>
-                    {a.status === 'pending' && (
+                    {a.status === 'pending' ? (
                       <div className="d-flex gap-2 justify-content-end">
-                        <button onClick={() => handleStatusUpdate(a.id, 'approved')} className="btn btn-sm" style={{ background: '#dcfce7', color: '#166534', borderRadius: 6 }}>✓ Approve</button>
-                        <button onClick={() => handleStatusUpdate(a.id, 'rejected')} className="btn btn-sm" style={{ background: '#fee2e2', color: '#991b1b', borderRadius: 6 }}>✗ Reject</button>
+                        <div className="btn-group">
+                          <button onClick={() => handleApproveAndRedirect(a, 'assign')} className="btn btn-sm btn-success" style={{ borderRadius: '6px 0 0 6px', fontSize: 11 }}>Approve & Assign</button>
+                          <button type="button" className="btn btn-sm btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" style={{ borderRadius: '0 6px 6px 0' }}>
+                            <span className="visually-hidden">Toggle Dropdown</span>
+                          </button>
+                          <ul className="dropdown-menu dropdown-menu-end shadow border-0" style={{ fontSize: 13, borderRadius: 12 }}>
+                            <li><button className="dropdown-item py-2" onClick={() => handleApproveAndRedirect(a, 'permit')}>Approve & Grant Permission</button></li>
+                            <li><hr className="dropdown-divider" /></li>
+                            <li><button className="dropdown-item py-2 text-danger" onClick={() => handleStatusUpdate(a.id, 'rejected')}>Reject Application</button></li>
+                          </ul>
+                        </div>
                       </div>
+                    ) : (
+                      <div className="small text-muted">{a.status === 'approved' ? 'Processed' : 'Rejected'}</div>
                     )}
                   </td>
                 )}
