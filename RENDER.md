@@ -6,8 +6,8 @@ Since this project has a separate `frontend` and `backend`, you need to configur
 - **Service Type**: Web Service
 - **Name**: `streetvendor-api`
 - **Root Directory**: `backend`  <-- **CRITICAL STEP**
-- **Build Command**: `npm install`
-- **Start Command**: `node server.js`
+- **Build Command**: `npm install` (Use `npm` to avoid conflicts with `package-lock.json`)
+- **Start Command**: `node server.js` (or `npm start`)
 - **Environment Variables**:
   - `PORT`: `10000` (or leave default)
   - `SUPABASE_URL`: (Your Supabase URL)
@@ -26,6 +26,15 @@ Since this project has a separate `frontend` and `backend`, you need to configur
   - `VITE_SUPABASE_ANON_KEY`: (Your Supabase Anon Key)
 
 ---
+
+---
+
+### Why did I see a "package-lock.json" warning?
+This warning happens because Render's default environment uses **Yarn**, but your project was originally built with **npm** (which created the `package-lock.json` files). 
+
+**Mixing them is risky.** To fix it:
+1. Always use **`npm install`** and **`npm start`** in your Render settings.
+2. If Render still warns you, it's just a heads-up that it detected the npm lockfile while its own default is Yarn. As long as your Build/Start commands use `npm`, it will work perfectly.
 
 ### Why did the previous deploy fail?
 Render was looking for a `package.json` in the root folder, but it's actually inside the `backend/` and `frontend/` folders. By setting the **Root Directory** in Render settings, you tell Render exactly where to look.
