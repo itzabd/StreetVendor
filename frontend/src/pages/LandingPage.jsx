@@ -1,6 +1,30 @@
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import AuthModal from '../components/auth/AuthModal';
 
 export default function LandingPage() {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [authMode, setAuthMode] = useState(null); // 'login', 'register', or null
+
+  // Handle deep links/redirects (?mode=login)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode');
+    if (mode === 'login' || mode === 'register') {
+      setAuthMode(mode);
+      // Clean query params without full page reload
+      window.history.replaceState({}, '', '/home');
+    }
+  }, [location]);
+
+  const handleDashboardRedirect = () => {
+    if (profile?.role === 'admin') navigate('/admin');
+    else navigate('/vendor');
+  };
+
   return (
     <div className="sv-landing">
       {/* Navbar */}
@@ -13,8 +37,14 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="d-flex gap-3">
-          <Link to="/login" className="btn btn-outline-light btn-sm px-4">Sign In</Link>
-          <Link to="/register" className="btn btn-warning btn-sm px-4 fw-semibold">Register as Vendor</Link>
+          {user ? (
+            <button onClick={handleDashboardRedirect} className="btn btn-warning btn-sm px-4 fw-semibold">Go to Dashboard</button>
+          ) : (
+            <>
+              <button onClick={() => setAuthMode('login')} className="btn btn-outline-light btn-sm px-4">Sign In</button>
+              <button onClick={() => setAuthMode('register')} className="btn btn-warning btn-sm px-4 fw-semibold">Register as Vendor</button>
+            </>
+          )}
         </div>
       </nav>
 
@@ -31,12 +61,20 @@ export default function LandingPage() {
                 A modern platform for Bangladesh street vendors to register digitally, apply for zones, manage their assigned spots, and track permissions — all in one place.
               </p>
               <div className="d-flex gap-3 flex-wrap">
-                <Link to="/register" className="btn btn-warning btn-lg fw-semibold px-5">
-                  Register as Vendor
-                </Link>
-                <Link to="/login" className="btn btn-outline-light btn-lg px-5">
-                  Admin Sign In
-                </Link>
+                {user ? (
+                  <button onClick={handleDashboardRedirect} className="btn btn-warning btn-lg fw-semibold px-5">
+                    Back to Dashboard
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={() => setAuthMode('register')} className="btn btn-warning btn-lg fw-semibold px-5">
+                      Register as Vendor
+                    </button>
+                    <button onClick={() => setAuthMode('login')} className="btn btn-outline-light btn-lg px-5">
+                      Admin Sign In
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Stats Row */}
@@ -79,12 +117,25 @@ export default function LandingPage() {
 
       {/* Footer */}
       <div style={{ padding: '16px 48px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>© 2025 StreetVendor BD — Academic Software Engineering Project</span>
+        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>© 2026 StreetVendor BD — Academic Software Engineering Project</span>
         <div className="d-flex gap-3">
-          <Link to="/login" style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, textDecoration: 'none' }}>Sign In</Link>
-          <Link to="/register" style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, textDecoration: 'none' }}>Register</Link>
+          {user ? (
+            <button onClick={handleDashboardRedirect} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>Dashboard</button>
+          ) : (
+            <>
+              <button onClick={() => setAuthMode('login')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>Sign In</button>
+              <button onClick={() => setAuthMode('register')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>Register</button>
+            </>
+          )}
         </div>
       </div>
+
+      <AuthModal
+        isOpen={!!authMode}
+        initialMode={authMode || 'login'}
+        onClose={() => setAuthMode(null)}
+        onSuccess={handleDashboardRedirect}
+      />
     </div>
   );
 }

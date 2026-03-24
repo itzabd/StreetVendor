@@ -59,8 +59,8 @@ export default function App() {
           <BrowserRouter>
             <Routes>
             <Route path="/home" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Navigate to="/home?mode=login" replace />} />
+            <Route path="/register" element={<Navigate to="/home?mode=register" replace />} />
             <Route path="/" element={<RootRedirect />} />
 
             {/* Vendor Routes */}
