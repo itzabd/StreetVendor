@@ -320,9 +320,61 @@ body {
 /* ─── Landing Page ────────────────────────────────────────── */
 .sv-landing {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0d3d22 0%, #1a6b3c 50%, #2d8f55 100%);
+  background: #0d3d22;
+  background: radial-gradient(circle at center, #1a6b3c 0%, #0d3d22 100%);
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.sv-bg-blobs {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sv-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.45;
+}
+
+.blob-1 {
+  width: 600px; height: 600px;
+  top: -150px; left: -100px;
+  background: #2d8f55;
+  animation: blobMove 25s infinite ease-in-out;
+}
+
+.blob-2 {
+  width: 500px; height: 500px;
+  bottom: -100px; right: -50px;
+  background: #f59e0b;
+  opacity: 0.15;
+  animation: blobMove 35s infinite ease-in-out reverse;
+}
+
+.blob-3 {
+  width: 450px; height: 450px;
+  top: 20%; right: 10%;
+  background: #1a6b3c;
+  opacity: 0.3;
+  animation: blobMove 30s infinite ease-in-out 5s;
+}
+
+@keyframes blobMove {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  33% { transform: translate(50px, 80px) scale(1.1) rotate(10deg); }
+  66% { transform: translate(-30px, 40px) scale(0.95) rotate(-5deg); }
+  100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+}
+
+.sv-landing-nav, .sv-landing-hero, .sv-landing-footer {
+  position: relative;
+  z-index: 10;
 }
 
 .sv-landing-nav {
@@ -361,8 +413,96 @@ body {
 }
 
 /* Leaflet map override to prevent z-index issues */
-.leaflet-container {
-  z-index: 1 !important;
+.sv-landing-nav, .sv-landing-hero, .sv-landing-footer {
+  position: relative;
+  z-index: 10;
+}
+
+/* Staggered Entrance Animations */
+.animate-entrance {
+  animation: svEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes svEntrance {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Interactive Spotlight Effect */
+.sv-spotlight-container {
+  position: relative;
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+}
+
+.sv-spotlight-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  background: radial-gradient(
+    600px circle at var(--mouse-x) var(--mouse-y),
+    rgba(255, 255, 255, 0.06),
+    transparent 40%
+  );
+  z-index: 5;
+}
+
+.sv-feature-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  padding: 28px;
+  height: 100%;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sv-feature-card:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.3);
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+}
+
+.sv-feature-card:hover .sv-feature-icon {
+  transform: scale(1.15) rotate(8deg);
+  background: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+.sv-feature-icon {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+  transition: all 0.5s ease;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.35s; }
+.delay-4 { animation-delay: 0.5s; }
+
+.sv-landing-footer {
+  position: relative;
+  z-index: 10;
+  padding: 40px 24px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(0,0,0,0.1);
 }
 
 /* ─── Notification Toasts ─────────────────────────────────── */

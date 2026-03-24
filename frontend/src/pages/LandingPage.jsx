@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/auth/AuthModal';
@@ -7,7 +7,18 @@ export default function LandingPage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const heroRef = useRef(null);
   const [authMode, setAuthMode] = useState(null); // 'login', 'register', or null
+
+  // Spotlight Mouse Tracking
+  const handleMouseMove = (e) => {
+    if (!heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    heroRef.current.style.setProperty('--mouse-x', `${x}px`);
+    heroRef.current.style.setProperty('--mouse-y', `${y}px`);
+  };
 
   // Handle deep links/redirects (?mode=login)
   useEffect(() => {
@@ -26,7 +37,16 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="sv-landing">
+    <div className="sv-landing sv-spotlight-container" ref={heroRef} onMouseMove={handleMouseMove}>
+      <div className="sv-spotlight-overlay"></div>
+      
+      {/* Animated Background Blobs */}
+      <div className="sv-bg-blobs">
+        <div className="sv-bg-blob blob-1"></div>
+        <div className="sv-bg-blob blob-2"></div>
+        <div className="sv-bg-blob blob-3"></div>
+      </div>
+
       {/* Navbar */}
       <nav className="sv-landing-nav">
         <div className="d-flex align-items-center gap-3">
@@ -52,12 +72,12 @@ export default function LandingPage() {
       <div className="sv-landing-hero">
         <div className="container">
           <div className="row align-items-center g-5">
-            <div className="col-lg-6">
+            <div className="col-lg-6 animate-entrance delay-1">
               <span className="badge bg-warning text-dark mb-3 px-3 py-2" style={{ fontSize: 12 }}>Bangladesh Street Vendor Platform</span>
-              <h1 style={{ fontSize: 46, fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 20 }}>
+              <h1 style={{ fontSize: 48, fontWeight: 800, color: '#fff', lineHeight: 1.1, marginBottom: 20, letterSpacing: '-0.02em' }}>
                 Digital Identity &amp; Spot Management
               </h1>
-              <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, marginBottom: 32, maxWidth: 480 }}>
+              <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, marginBottom: 32, maxWidth: 500 }}>
                 A modern platform for Bangladesh street vendors to register digitally, apply for zones, manage their assigned spots, and track permissions — all in one place.
               </p>
               <div className="d-flex gap-3 flex-wrap">
@@ -78,7 +98,7 @@ export default function LandingPage() {
               </div>
 
               {/* Stats Row */}
-              <div className="d-flex gap-4 mt-5 flex-wrap">
+              <div className="d-flex gap-4 mt-5 flex-wrap animate-entrance delay-2">
                 {[
                   { n: 'Vendor Identity', d: 'Digital records for street vendors' },
                   { n: 'Zone Mapping', d: 'Geographic zone management' },
@@ -93,19 +113,19 @@ export default function LandingPage() {
             </div>
 
             {/* Feature Cards */}
-            <div className="col-lg-6">
-              <div className="row g-3">
+            <div className="col-lg-6 animate-entrance delay-3">
+              <div className="row g-4">
                 {[
-                  { icon: '🪪', title: 'Digital Vendor ID', desc: 'Vendors register with name, NID, phone, and receive a verified digital identity in the system.' },
-                  { icon: '🗺️', title: 'Zone & Spot Management', desc: 'Admins create zones and blocks on the map, then assign specific spots to approved vendors.' },
-                  { icon: '📋', title: 'Application Workflow', desc: 'Vendors apply for preferred zones. Admins review, approve or reject applications online.' },
-                  { icon: '📊', title: 'Rent & Permission Tracking', desc: 'Automated rent record logging and permission management with expiry tracking.' },
+                  { icon: '🪪', title: 'Digital Vendor ID', desc: 'Secure verified identity for all registered street vendors.' },
+                  { icon: '🗺️', title: 'Smart Zone Mapping', desc: 'Interactive geographic boundaries for organized trading.' },
+                  { icon: '📋', title: 'Digital Approvals', desc: 'Seamless online workflow for spot application and review.' },
+                  { icon: '📊', title: 'Smart Rent Tracker', desc: 'Automated billing and real-time payment status monitoring.' },
                 ].map((f, i) => (
                   <div key={i} className="col-sm-6">
-                    <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: 14, padding: '20px 18px', height: '100%', border: '1px solid rgba(255,255,255,0.15)' }}>
+                    <div className="sv-feature-card">
                       <div className="sv-feature-icon">{f.icon}</div>
-                      <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 8 }}>{f.title}</div>
-                      <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, lineHeight: 1.6 }}>{f.desc}</div>
+                      <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{f.title}</div>
+                      <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 1.6 }}>{f.desc}</div>
                     </div>
                   </div>
                 ))}
@@ -116,19 +136,14 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '16px 48px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>© 2026 StreetVendor BD — Academic Software Engineering Project</span>
-        <div className="d-flex gap-3">
-          {user ? (
-            <button onClick={handleDashboardRedirect} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>Dashboard</button>
-          ) : (
-            <>
-              <button onClick={() => setAuthMode('login')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>Sign In</button>
-              <button onClick={() => setAuthMode('register')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>Register</button>
-            </>
-          )}
+      <footer className="sv-landing-footer">
+        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 500 }}>
+          © 2026 StreetVendor BD — Academic Software Engineering Project
         </div>
-      </div>
+        <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 11, marginTop: 8 }}>
+          Bridging the gap between street vendors and digital governance.
+        </div>
+      </footer>
 
       <AuthModal
         isOpen={!!authMode}
