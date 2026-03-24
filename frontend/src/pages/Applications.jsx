@@ -166,7 +166,7 @@ export default function Applications() {
   };
 
   return (
-    <div>
+    <div className="animate-entrance">
       <div className="sv-page-header">
         <h3>{isAdmin ? '📋 Vendor Applications' : '📝 My Applications'}</h3>
         <p>{isAdmin ? 'Review and action vendor zone applications' : 'Apply for a zone and track your application status'}</p>

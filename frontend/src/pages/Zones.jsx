@@ -97,7 +97,7 @@ export default function Zones() {
   }
 
   return (
-    <div className="p-4" style={{ maxWidth: 1000, margin: '0 auto' }}>
+    <div className="p-4 animate-entrance" style={{ maxWidth: 1400, margin: '0 auto' }}>
       <div className="sv-page-header mb-4">
         <h3>🗺️ Geographic Zones</h3>
         <p>Manage physical vending zones. Click anywhere on the map below to pinpoint a new zone's location.</p>

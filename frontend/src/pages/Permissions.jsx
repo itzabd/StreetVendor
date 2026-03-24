@@ -117,7 +117,7 @@ export default function Permissions() {
   };
 
   return (
-    <div className="p-4">
+    <div className="animate-entrance">
       <h3 className="fw-bold mb-4">{isAdmin ? 'Vendor Permissions' : 'My Permissions'}</h3>
       
       {isAdmin && (

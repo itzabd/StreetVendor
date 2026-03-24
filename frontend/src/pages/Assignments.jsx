@@ -209,7 +209,7 @@ export default function Assignments() {
   };
 
   return (
-    <div className="p-4">
+    <div className="animate-entrance">
       <h3 className="fw-bold mb-4">{isAdmin ? 'Spot Assignments' : 'My Assigned Spots'}</h3>
       
       {isAdmin && (

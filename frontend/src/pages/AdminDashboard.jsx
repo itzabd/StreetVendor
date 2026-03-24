@@ -64,13 +64,18 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      {/* Admin Banner */}
-      <div style={{ background: 'linear-gradient(135deg, #1e293b, #334155)', borderRadius: 14, padding: '22px 28px', marginBottom: 24, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
+      {/* Admin Banner with Shimmer Effect */}
+      <div className="animate-entrance sv-shimmer-bg" style={{ 
+        position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #1e293b, #334155, #1e293b)', 
+        backgroundSize: '200% 100%', borderRadius: 14, padding: '22px 28px', marginBottom: 24, 
+        color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+        animation: 'sv-shimmer-shift 8s linear infinite, svEntrance 0.8s ease-out'
+      }}>
+        <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Admin Control Panel 🔑</div>
           <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13 }}>Manage zones, blocks, spots, applications, and vendor records from here.</div>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
           <Link to="/admin/zones" className="btn btn-sm" style={{ background: '#1a6b3c', color: '#fff', borderRadius: 8, fontSize: 12 }}>+ Add Zone</Link>
           <Link to="/admin/applications" className="btn btn-sm" style={{ background: '#f59e0b', color: '#000', borderRadius: 8, fontSize: 12 }}>Review Applications</Link>
         </div>
@@ -78,10 +83,10 @@ export default function AdminDashboard() {
 
       {/* Stat Cards */}
       <div className="row g-3 mb-4">
-        {statCards.map(s => (
-          <div key={s.label} className="col-sm-6 col-xl-3">
+        {statCards.map((s, idx) => (
+          <div key={s.label} className={`col-sm-6 col-xl-3 animate-entrance delay-${idx + 1}`}>
             <Link to={s.link} style={{ textDecoration: 'none' }}>
-              <div className="sv-stat-card">
+              <div className="sv-stat-card sv-hover-lift">
                 <div className="stat-icon">{s.icon}</div>
                 <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
                 <div className="stat-label">{s.label}</div>
@@ -93,16 +98,16 @@ export default function AdminDashboard() {
       </div>
 
       {/* Spot Status */}
-      <div className="row g-3 mb-4">
+      <div className="row g-3 mb-4 animate-entrance delay-4">
         <div className="col-md-6">
-          <div className="sv-card h-100" style={{ padding: '18px 20px' }}>
+          <div className="sv-card h-100 sv-hover-lift" style={{ padding: '18px 20px' }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: '#1a6b3c', marginBottom: 16 }}>🟢 Available Spots</div>
             <div style={{ fontSize: 36, fontWeight: 800, color: '#1a6b3c' }}>{stats.availableSpots ?? '—'}</div>
             <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Ready to be assigned to vendors</div>
           </div>
         </div>
         <div className="col-md-6">
-          <div className="sv-card h-100" style={{ padding: '18px 20px' }}>
+          <div className="sv-card h-100 sv-hover-lift" style={{ padding: '18px 20px' }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: '#2563eb', marginBottom: 16 }}>🔵 Occupied Spots</div>
             <div style={{ fontSize: 36, fontWeight: 800, color: '#2563eb' }}>{stats.occupiedSpots ?? '—'}</div>
             <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Currently assigned to vendors</div>

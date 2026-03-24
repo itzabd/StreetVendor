@@ -11,6 +11,7 @@ export default function VendorDashboard() {
   const [activePermission, setActivePermission] = useState(null);
   const [fullSpot, setFullSpot] = useState(null);
   const [fullZone, setFullZone] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const { profile, getToken } = useAuth();
 
   useEffect(() => { loadDashboardData(); }, []);
@@ -32,7 +33,7 @@ export default function VendorDashboard() {
       permissions: permissions.data.filter(p => p.status === 'active').length,
     });
     setRecentApps(apps.data.slice(0, 5));
-    
+
     const activeAsgn = assignments.data.find(a => a.status === 'active');
     const activePerm = permissions.data.find(p => p.status === 'active');
     setActiveAssignment(activeAsgn);
@@ -45,7 +46,7 @@ export default function VendorDashboard() {
           axios.get(`${base}/blocks`, { headers: h }),
           axios.get(`${base}/spots`, { headers: h })
         ]);
-        
+
         const spotMatch = spotsRes.data.find(s => s.id === activeAsgn.spot_id);
         if (spotMatch) {
           setFullSpot(spotMatch);
@@ -71,19 +72,25 @@ export default function VendorDashboard() {
   ];
 
   return (
-    <div>
-      {/* Welcome Banner */}
-      <div className="animate-entrance" style={{ background: 'linear-gradient(135deg, #1e293b, #334155)', borderRadius: 20, padding: '30px 40px', marginBottom: 30, marginTop: '-10px', color: '#fff', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}>
-        <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>Welcome, {profile?.full_name?.split(' ')[0]} 👋</div>
-        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14 }}>Manage your street vending operations and track your legal permissions.</div>
+    <div className="position-relative">
+      {/* Welcome Banner with Shimmer Effect */}
+      <div className="animate-entrance sv-shimmer-bg" style={{ 
+        position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #1e293b, #334155, #1e293b)', 
+        backgroundSize: '200% 100%', borderRadius: 20, padding: '30px 40px', marginBottom: 30, marginTop: '-10px', 
+        color: '#fff', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', animation: 'sv-shimmer-shift 8s linear infinite, svEntrance 0.8s ease-out'
+      }}>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>Welcome, {profile?.full_name?.split(' ')[0]} 👋</div>
+          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14 }}>Manage your street vending operations and track your legal permissions.</div>
+        </div>
       </div>
 
       {/* Stat Cards */}
       <div className="row g-3 mb-4">
-        {statCards.map(s => (
-          <div key={s.label} className="col-sm-6 col-xl-3">
+        {statCards.map((s, idx) => (
+          <div key={s.label} className={`col-sm-6 col-xl-3 animate-entrance delay-${idx + 1}`}>
             <Link to={s.link} style={{ textDecoration: 'none' }}>
-              <div className="sv-stat-card">
+              <div className="sv-stat-card sv-hover-lift">
                 <div className="stat-icon">{s.icon}</div>
                 <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
                 <div className="stat-label">{s.label}</div>
@@ -151,27 +158,22 @@ export default function VendorDashboard() {
                     </div>
                     <div className="fs-6 fw-bold text-dark mb-1">{activePermission.permission_type}</div>
                     <div className="small text-muted">
-                      Granted: <b>{new Date(activePermission.valid_from).toLocaleDateString(undefined, { dateStyle: 'medium' })}</b>
-                    </div>
+                      Granted: <b>{new Date(activePermission.valid_from).toLocaleDateString(undefined, { dateStyle: 'medium' })}</b></div>
                   </div>
                 )}
-                
-                <div className="mt-4 pt-2">
-                  <Link to="/vendor/assignments" className="btn btn-primary w-100 py-3 shadow-sm" style={{ borderRadius: 12, fontWeight: 700 }}>View Full Details</Link>
-                </div>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="sv-card mb-4 text-center py-5 animate-entrance delay-2">
+        <div className="sv-card mb-4 text-center py-5 animate-entrance delay-2 sv-hover-lift">
           <div className="fs-1 mb-3">🏷️</div>
           <h5>No Active Spot Yet</h5>
           <p className="text-muted">Once an admin assigns you a spot, it will appear here on the map.</p>
           <Link to="/vendor/applications" className="btn btn-primary px-4" style={{ borderRadius: 8 }}>Apply for a Zone</Link>
         </div>
       )}
-      <div className="sv-card">
+      <div className="sv-card animate-entrance delay-4 sv-hover-lift" style={{ transition: 'all 0.4s ease' }}>
         <div className="sv-card-header">
           <h5>Recent Applications</h5>
           <Link to="/vendor/applications" style={{ fontSize: 12, color: '#1a6b3c', textDecoration: 'none', fontWeight: 600 }}>View all →</Link>
@@ -200,6 +202,69 @@ export default function VendorDashboard() {
           </tbody>
         </table>
       </div>
+
+      {/* Floating Helpline SOS Button - Fixed to Viewport */}
+      <div className="position-fixed" style={{ bottom: 40, right: 40, zIndex: 10000 }}>
+        <button 
+          onClick={() => setShowHelpModal(true)}
+          className="btn d-flex align-items-center justify-content-center shadow-lg border-0"
+          style={{ 
+            width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+            fontSize: 26, boxShadow: '0 8px 32px rgba(239, 68, 68, 0.4)', transition: 'all 0.3s ease',
+            animation: 'sv-sos-pulse 2s infinite'
+          }}
+        >
+          🆘
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes sv-sos-pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+          70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+      `}</style>
+
+      {/* Helpline Modal Component */}
+      {showHelpModal && (
+        <div className="sv-modal-backdrop" onClick={() => setShowHelpModal(false)}>
+          <div className="sv-modal-content" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+            <button className="sv-modal-close" onClick={() => setShowHelpModal(false)}>✕</button>
+            <div className="p-4">
+              <div className="text-center mb-4">
+                <div className="fs-2 mb-2">🛡️</div>
+                <h5 className="fw-800 text-dark mb-1">Emergency & Support</h5>
+                <p className="small text-muted">24/7 dedicated help at your fingertips</p>
+              </div>
+
+              <div className="d-flex flex-column gap-3">
+                <a href="tel:999" className="text-decoration-none">
+                  <div className="p-3 rounded-4 d-flex align-items-center gap-3"
+                    style={{ background: '#fef2f2', border: '1px solid #fee2e2', transition: 'all 0.3s' }}>
+                    <div className="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: 44, height: 44 }}>🚓</div>
+                    <div className="flex-grow-1">
+                      <div className="fw-800 text-danger mb-0" style={{ fontSize: 18 }}>999</div>
+                      <div className="small text-muted fw-semibold">National Emergency</div>
+                    </div>
+                  </div>
+                </a>
+
+                <a href="tel:+880123456789" className="text-decoration-none">
+                  <div className="p-3 rounded-4 d-flex align-items-center gap-3"
+                    style={{ background: '#f0fdf4', border: '1px solid #dcfce7' }}>
+                    <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: 44, height: 44 }}>💼</div>
+                    <div className="flex-grow-1">
+                      <div className="fw-800 text-success mb-0" style={{ fontSize: 16 }}>Support Desk</div>
+                      <div className="small text-muted fw-semibold">Digital Vendor Support</div>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

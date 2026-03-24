@@ -61,7 +61,7 @@ export default function Complaints() {
   };
 
   return (
-    <div className="p-4" style={{ maxWidth: 900, margin: '0 auto' }}>
+    <div className="p-4 animate-entrance" style={{ maxWidth: 1200, margin: '0 auto' }}>
       <div className="sv-page-header mb-4">
         <h3>{isAdmin ? '📣 Support Inbox' : '📨 My Complaints'}</h3>
         <p>{isAdmin ? 'Manage and resolve vendor issues.' : 'Report issues or disputes to the administration.'}</p>

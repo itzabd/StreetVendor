@@ -91,7 +91,7 @@ export default function Spots() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 animate-entrance">
       <h3 className="fw-bold mb-4">Vendor Spots</h3>
       
       <div className="card shadow-sm mb-4">

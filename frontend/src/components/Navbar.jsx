@@ -62,8 +62,23 @@ export default function Navbar() {
       return n;
     });
     localStorage.setItem('sv_notifications', JSON.stringify(updated));
-    // Local state update for instant feedback
     setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, readBy: [...(n.readBy || []), profile?.id] } : n));
+  };
+
+  const markAllAsRead = () => {
+    const userId = profile?.id;
+    if (!userId) return;
+    const allNotifs = JSON.parse(localStorage.getItem('sv_notifications') || '[]');
+    const updated = allNotifs.map(n => {
+      const isTarget = isAdmin || n.target_vendor_id === 'all' || n.target_vendor_id === userId;
+      const alreadyRead = (n.readBy || []).includes(userId);
+      if (isTarget && !alreadyRead) {
+        return { ...n, readBy: [...(n.readBy || []), userId] };
+      }
+      return n;
+    });
+    localStorage.setItem('sv_notifications', JSON.stringify(updated));
+    setNotifications(prev => prev.map(n => ({ ...n, readBy: Array.from(new Set([...(n.readBy || []), userId])) })));
   };
 
   const initials = profile?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
@@ -94,9 +109,20 @@ export default function Navbar() {
             <div className="position-absolute end-0 mt-2 shadow bg-white rounded-3 p-2" style={{ width: 320, zIndex: 1000, border: '1px solid #e2e8f0' }}>
               <div className="d-flex justify-content-between align-items-center mb-2 px-2 pt-2 border-bottom pb-2">
                 <h6 className="mb-0 fw-bold">Notifications</h6>
-                {isAdmin && (
-                  <span className="badge bg-primary pointer" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin')}>Send New</span>
-                )}
+                <div className="d-flex align-items-center gap-2">
+                  {unreadCount > 0 && (
+                    <span 
+                      className="text-primary pointer small" 
+                      style={{ cursor: 'pointer', fontSize: 11, fontWeight: 600, textDecoration: 'underline' }}
+                      onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
+                    >
+                      Mark all as read
+                    </span>
+                  )}
+                  {isAdmin && (
+                    <span className="badge bg-primary pointer" style={{ cursor: 'pointer', fontSize: 10 }} onClick={() => navigate('/admin/dashboard')}>Send New</span>
+                  )}
+                </div>
               </div>
               <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                 {notifications.length === 0 ? (
