@@ -69,10 +69,11 @@ function MapCenterer({ center, zoom }) {
   const map = useMap();
   useEffect(() => {
     if (center && center[0] && center[1]) {
-      const z = zoom || map.getZoom();
-      map.setView(center, z, { animate: true });
+      // Use explicit zoom if provided, otherwise keep current zoom
+      const z = (zoom != null) ? zoom : map.getZoom();
+      map.flyTo(center, z, { animate: true, duration: 0.8 });
     }
-  }, [center, map, zoom]);
+  }, [center, zoom]); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
 
@@ -103,6 +104,7 @@ export default function ZoneMap({
   viewOnly = false,
   height = '400px',
   center,
+  zoom = null,
   locked = false
 }) {
   const defaultCenter = center || [23.8103, 90.4125];
@@ -190,17 +192,18 @@ export default function ZoneMap({
       {viewOnly && !locked && spotMarkers.length > 0 && (
         <div style={{ position: 'absolute', bottom: 16, right: 16, zIndex: 1000, background: '#fff', padding: '8px 12px', borderRadius: 10, boxShadow: '0 2px 10px rgba(0,0,0,0.15)', fontSize: 12 }}>
           <div className="fw-semibold mb-1 text-muted" style={{ fontSize: 11 }}>SPOT STATUS</div>
-          <div className="d-flex gap-2">
-            <span><span style={{ display:'inline-block', width:10, height:10, borderRadius:'50%', background:'#16a34a', marginRight:4 }}></span>Available</span>
-            <span><span style={{ display:'inline-block', width:10, height:10, borderRadius:'50%', background:'#dc2626', marginRight:4 }}></span>Occupied</span>
+          <div className="d-flex flex-column gap-1">
+            <span style={{ color: '#475569' }}><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#16a34a', marginRight: 4 }}></span>Good</span>
+            <span style={{ color: '#475569' }}><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#d97706', marginRight: 4 }}></span>Reasonable</span>
+            <span style={{ color: '#475569' }}><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#dc2626', marginRight: 4 }}></span>Bad</span>
           </div>
         </div>
       )}
 
       <div style={{ flex: 1, minHeight: 0, filter: locked ? 'saturate(0.8) contrast(1.05)' : 'none' }}>
-        <MapContainer 
-          center={mapCenter} 
-          zoom={locked ? 18 : 14} 
+        <MapContainer
+          center={mapCenter}
+          zoom={locked ? 18 : 14}
           style={{ height: '100%', width: '100%' }}
           dragging={!locked}
           scrollWheelZoom={!locked}
@@ -209,7 +212,7 @@ export default function ZoneMap({
           zoomControl={!locked}
           attributionControl={!locked}
         >
-          <MapCenterer center={mapCenter} zoom={locked ? 18 : null} />
+          <MapCenterer center={mapCenter} zoom={locked ? 18 : (zoom ?? null)} />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -303,24 +306,27 @@ export default function ZoneMap({
                   className="" pane="tooltipPane"
                 >
                   <span style={{
-                    background: isSelected ? '#7c3aed' : (spot.status === 'available' ? '#16a34a' : '#dc2626'),
+                    background: isSelected ? '#7c3aed' : (spot.status === 'available' ? '#16a34a' : (spot.status === 'unverified' ? '#f59e0b' : '#dc2626')),
                     color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 700,
                     whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-                  }}>{spot.spot_number}</span>
+                  }}>{spot.label || spot.vendor_name || spot.spot_number || 'Spot'}</span>
                 </Tooltip>
                 <Popup>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>📌 Spot {spot.spot_number}</div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>
+                    {spot.is_guest_report ? '📍 ' : '📌 '}
+                    {spot.label || spot.vendor_name || `Spot ${spot.spot_number || ''}`}
+                  </div>
                   <div style={{ marginTop: 4 }}>
                     <span style={{
-                      background: isSelected ? '#ede9fe' : (spot.status === 'available' ? '#dcfce7' : '#fee2e2'),
-                      color: isSelected ? '#6d28d9' : (spot.status === 'available' ? '#15803d' : '#991b1b'),
+                      background: isSelected ? '#ede9fe' : (spot.status === 'available' ? '#dcfce7' : (spot.status === 'unverified' ? '#fef3c7' : '#fee2e2')),
+                      color: isSelected ? '#6d28d9' : (spot.status === 'available' ? '#15803d' : (spot.status === 'unverified' ? '#b45309' : '#991b1b')),
                       padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600
                     }}>
                       {isSelected ? '✓ SELECTED' : spot.status?.toUpperCase()}
                     </span>
                   </div>
                   {spot.blocks?.block_name && <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Block: {spot.blocks.block_name}</div>}
-                  {onSpotSelect && isAvailable && !isSelected && (
+                  {onSpotSelect && (isAvailable || spot.status === 'unverified') && !isSelected && (
                     <button
                       className="btn btn-sm btn-success mt-2 w-100"
                       style={{ fontSize: 11, borderRadius: 6 }}

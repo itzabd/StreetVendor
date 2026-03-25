@@ -17,6 +17,8 @@ app.use('/api/assignments', require('./routes/assignments'));
 app.use('/api/permissions', require('./routes/permissions'));
 app.use('/api/complaints', require('./routes/complaints'));
 app.use('/api/rent', require('./routes/rent'));
+app.use('/api/public', require('./routes/public'));
+
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'StreetVendor BD API is running' }));

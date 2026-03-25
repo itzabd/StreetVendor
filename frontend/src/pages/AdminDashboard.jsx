@@ -18,15 +18,17 @@ export default function AdminDashboard() {
     const token = await getToken();
     const h = { Authorization: `Bearer ${token}` };
     const base = import.meta.env.VITE_API_URL;
-    const [zones, apps, complaints, spots] = await Promise.all([
+    const [zones, apps, complaints, spots, reports] = await Promise.all([
       axios.get(`${base}/zones`, { headers: h }).catch(() => ({ data: [] })),
       axios.get(`${base}/applications`, { headers: h }).catch(() => ({ data: [] })),
       axios.get(`${base}/complaints`, { headers: h }).catch(() => ({ data: [] })),
       axios.get(`${base}/spots`, { headers: h }).catch(() => ({ data: [] })),
+      axios.get(`${base}/public/reports`, { headers: h }).catch(() => ({ data: [] })),
     ]);
     setStats({
       zones: zones.data.length,
       pendingApps: apps.data.filter(a => a.status === 'pending').length,
+      pendingGuestReports: reports.data.filter(r => r.status === 'pending').length,
       openComplaints: complaints.data.filter(c => c.status === 'open').length,
       spots: spots.data.length,
       availableSpots: spots.data.filter(s => s.status === 'available').length,
@@ -39,6 +41,7 @@ export default function AdminDashboard() {
     { icon: '🗺️', label: 'Total Zones', value: stats.zones, color: '#1a6b3c', link: '/admin/zones' },
     { icon: '📍', label: 'Total Spots', value: stats.spots, color: '#2563eb', link: '/admin/spots' },
     { icon: '📋', label: 'Pending Applications', value: stats.pendingApps, color: '#f59e0b', link: '/admin/applications' },
+    { icon: '🔍', label: 'Guest Reports', value: stats.pendingGuestReports, color: '#8b5cf6', link: '/admin/guest-reports' },
     { icon: '📣', label: 'Open Complaints', value: stats.openComplaints, color: '#ef4444', link: '/admin/complaints' },
   ];
 
