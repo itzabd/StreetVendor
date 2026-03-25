@@ -19,6 +19,7 @@ app.use('/api/complaints', require('./routes/complaints'));
 app.use('/api/rent', require('./routes/rent'));
 
 // Health check
+app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'StreetVendor BD API is running' }));
 app.get('/', (req, res) => res.json({ message: 'StreetVendor BD API is running' }));
 
 const PORT = process.env.PORT || 5000;
