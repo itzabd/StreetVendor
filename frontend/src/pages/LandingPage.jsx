@@ -197,6 +197,15 @@ export default function LandingPage() {
     ratings: v.ratings
   }));
 
+  // Fix Leaflet resize on mobile
+  useEffect(() => {
+    if (isExplorerOpen) {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 500);
+    }
+  }, [isExplorerOpen]);
+
   return (
     <div className={`sv-landing ${isExplorerOpen ? 'discovery-open' : ''}`}>
 
@@ -483,13 +492,26 @@ export default function LandingPage() {
               key={`map-${mapZoom}`}
             />
 
-            <div className="position-absolute" style={{ top: 20, left: 20, zIndex: 1000, pointerEvents: 'none' }}>
-              <div className="p-3 rounded-4 shadow-lg text-white" style={{ background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', maxWidth: 200 }}>
-                <div className="fw-bold small mb-1">🗺️ Live Map Guide</div>
-                <div style={{ fontSize: 10, opacity: 0.8 }}>Marker colors indicate crowdsourced reputation:</div>
-                <div className="mt-2 d-flex flex-column gap-1">
-                  <div className="d-flex align-items-center gap-2"><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a' }}></span> <span style={{ fontSize: 9 }}>Mostly Positive Feedback</span></div>
-                  <div className="d-flex align-items-center gap-2"><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626' }}></span> <span style={{ fontSize: 9 }}>Needs Improvement</span></div>
+            <div className="position-absolute sv-map-legend animate-entrance" style={{ 
+              top: 20, left: 20, zIndex: 1000, pointerEvents: 'none',
+              background: 'rgba(15, 23, 42, 0.9)',
+              backdropFilter: 'blur(12px)',
+              borderRadius: 16,
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '16px',
+              maxWidth: 220,
+              color: 'white'
+            }}>
+              <div className="fw-bold small mb-1">🗺️ Live Map Guide</div>
+              <div style={{ fontSize: 10, opacity: 0.8 }}>Marker colors indicate crowdsourced reputation:</div>
+              <div className="mt-2 d-flex flex-column gap-1">
+                <div className="d-flex align-items-center gap-2">
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a' }}></span>
+                  <span style={{ fontSize: 9 }}>Mostly Positive Feedback</span>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626' }}></span>
+                  <span style={{ fontSize: 9 }}>Needs Improvement</span>
                 </div>
               </div>
             </div>

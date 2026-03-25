@@ -999,6 +999,18 @@ body {
     flex: none !important;
   }
 
+  .sv-map-legend {
+    top: 10px !important;
+    left: 10px !important;
+    padding: 10px !important;
+    max-width: 180px !important;
+    border-radius: 12px !important;
+  }
+  
+  .sv-map-legend div:first-child { font-size: 11px !important; }
+  .sv-map-legend div:nth-child(2) { font-size: 9px !important; }
+  .sv-map-legend .gap-1 div span:last-child { font-size: 8px !important; }
+
   /* Vendor Card Refinements */
   .vendor-list .btn-sm {
     font-size: 10px !important;
