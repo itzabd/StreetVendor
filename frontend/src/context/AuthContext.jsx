@@ -9,6 +9,11 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [serviceStatus, setServiceStatus] = useState({ database: 'ok', api: 'ok' });
+  
+  // Debug API URL
+  useEffect(() => {
+    console.log("Current API URL:", import.meta.env.VITE_API_URL);
+  }, []);
 
   // Fetch profile from backend
   async function fetchProfile(token) {
