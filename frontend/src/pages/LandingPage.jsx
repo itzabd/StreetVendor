@@ -210,9 +210,6 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="d-flex gap-3 align-items-center">
-          <button onClick={toggleExplorer} className="btn btn-link text-white text-decoration-none small fw-semibold d-none d-md-block">
-            {isExplorerOpen ? 'Back to Home' : 'Explore Map'}
-          </button>
           {user ? (
             <button onClick={handleDashboardRedirect} className="btn btn-warning btn-sm px-4 fw-bold shadow-sm">Dashboard</button>
           ) : (
