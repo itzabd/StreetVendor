@@ -17,18 +17,18 @@ async function getAll(req, res) {
 
 async function create(req, res) {
   const { zone_id, notes } = req.body;
-  if (!zone_id) return res.status(400).json({ error: 'zone_id is required' });
-
-  // Check for existing pending/approved application to same zone
-  const { data: existing } = await supabase
+  let existingQuery = supabase
     .from('vendor_applications')
     .select('id, status')
     .eq('vendor_id', req.user.id)
-    .eq('zone_id', zone_id)
-    .in('status', ['pending', 'approved'])
-    .single();
+    .in('status', ['pending', 'approved']);
+    
+  if (zone_id) existingQuery = existingQuery.eq('zone_id', zone_id);
+  else existingQuery = existingQuery.is('zone_id', null);
 
-  if (existing) return res.status(400).json({ error: `You already have a ${existing.status} application for this zone` });
+  const { data: existing } = await existingQuery.single();
+
+  if (existing) return res.status(400).json({ error: `You already have a ${existing.status} application for this location` });
 
   const { data, error } = await supabase
     .from('vendor_applications')

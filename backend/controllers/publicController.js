@@ -36,18 +36,19 @@ const publicController = {
 
       if (reportError) throw reportError;
 
-      // 3. Fetch aggregate ratings for these vendors
-      const vendorIds = assignments.map(a => a.vendor_id);
+      // 3. Fetch aggregate ratings for these vendors and reports
       const { data: ratings, error: rateError } = await supabase
         .from('vendor_ratings')
-        .select('vendor_id, rating_type');
+        .select('vendor_id, guest_report_id, rating_type');
 
       if (rateError) throw rateError;
 
-      // 4. Map ratings to vendors
+      // 4. Map ratings to vendors (handles both official and reports)
       const ratingMap = ratings.reduce((acc, r) => {
-        if (!acc[r.vendor_id]) acc[r.vendor_id] = { good: 0, worst: 0, reasonable: 0 };
-        acc[r.vendor_id][r.rating_type]++;
+        const id = r.vendor_id || r.guest_report_id;
+        if (!id) return acc;
+        if (!acc[id]) acc[id] = { good: 0, worst: 0, reasonable: 0 };
+        acc[id][r.rating_type]++;
         return acc;
       }, {});
 
@@ -67,7 +68,7 @@ const publicController = {
           longitude: r.longitude,
           status: 'unverified'
         },
-        ratings: { good: 0, worst: 0, reasonable: 0 }
+        ratings: ratingMap[r.id] || { good: 0, worst: 0, reasonable: 0 }
       }));
 
       res.json([...official, ...reported]);
@@ -78,23 +79,36 @@ const publicController = {
   },
 
   // Submit a rating (Now allows guests)
+  // Submit a rating (Now allows guests)
   submitRating: async (req, res) => {
     try {
       const { vendor_id, rating_type, comment } = req.body;
-      const rater_id = req.user ? req.user.id : null; // Optional rater_id
+      const rater_id = req.user ? req.user.id : null; 
       
+      // 1. Check if profile exists
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', vendor_id)
+        .maybeSingle();
+
+      const isOfficial = !!profile;
+      
+      const insertObj = {
+        rater_id,
+        rating_type,
+        comment,
+        vendor_id: isOfficial ? vendor_id : null,
+        guest_report_id: isOfficial ? null : vendor_id
+      };
+
       const { data, error } = await supabase
         .from('vendor_ratings')
-        .insert([{
-          vendor_id,
-          rater_id,
-          rating_type,
-          comment
-        }])
+        .insert([insertObj])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) return res.status(500).json({ error: error.message });
       res.json(data);
     } catch (err) {
       res.status(500).json({ error: err.message });

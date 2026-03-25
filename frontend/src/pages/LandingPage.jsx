@@ -132,8 +132,11 @@ export default function LandingPage() {
   };
 
   const handleSelectVendor = (vendor) => {
-    if (vendor.spots?.latitude && vendor.spots?.longitude) {
-      setMapCenter([parseFloat(vendor.spots.latitude), parseFloat(vendor.spots.longitude)]);
+    // Support both registered vendors (vendor.spots) and guest reports (vendor.latitude/longitude)
+    const lat = vendor.spots?.latitude ?? vendor.latitude;
+    const lng = vendor.spots?.longitude ?? vendor.longitude;
+    if (lat && lng) {
+      setMapCenter([parseFloat(lat), parseFloat(lng)]);
       setMapZoom(18);
       discoveryRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
@@ -340,14 +343,19 @@ export default function LandingPage() {
             </div>
 
             <div className="d-flex gap-2 mb-4 scrollbar-hide" style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 5, scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {['all', 'good', 'reasonable', 'worst'].map(f => (
+              {[
+                { key: 'all',        label: 'All Spots' },
+                { key: 'good',       label: '👍 Good' },
+                { key: 'reasonable', label: '⚖️ Reasonable' },
+                { key: 'worst',      label: '👎 Bad' },
+              ].map(({ key, label }) => (
                 <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`btn btn-sm px-3 rounded-pill text-capitalize ${filter === f ? 'btn-warning fw-bold text-dark' : 'btn-outline-light opacity-50'}`}
-                  style={{ fontSize: 12, border: filter === f ? 'none' : '1px solid rgba(255,255,255,0.2)' }}
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`btn btn-sm px-3 rounded-pill ${filter === key ? 'btn-warning fw-bold text-dark' : 'btn-outline-light opacity-50'}`}
+                  style={{ fontSize: 12, border: filter === key ? 'none' : '1px solid rgba(255,255,255,0.2)', whiteSpace: 'nowrap' }}
                 >
-                  {f === 'all' ? 'All Spots' : `Most ${f}`}
+                  {label}
                 </button>
               ))}
             </div>
@@ -475,6 +483,7 @@ export default function LandingPage() {
               height="100%"
               center={mapCenter}
               zoom={mapZoom}
+              key={`map-${mapZoom}`}
             />
 
             <div className="position-absolute" style={{ top: 20, left: 20, zIndex: 1000, pointerEvents: 'none' }}>

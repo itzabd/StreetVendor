@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import ZoneMap from '../components/ZoneMap';
+import supabase from '../supabaseClient';
 
 export default function Applications() {
   const { addToast } = useToast();
@@ -16,14 +17,40 @@ export default function Applications() {
   const [selectedSpot, setSelectedSpot] = useState(null);
   const [formData, setFormData] = useState({ zone_id: '', notes: '' });
   const [selectedZoneForMap, setSelectedZoneForMap] = useState(null);
+  const [allGuestSpots, setAllGuestSpots] = useState([]);
   const [loading, setLoading] = useState(false);
   const { profile, getToken } = useAuth();
   const isAdmin = profile?.role === 'admin';
 
   useEffect(() => {
     loadApps();
-    if (!isAdmin) loadZones();
+    if (!isAdmin) {
+      loadZones();
+      loadAllGuestSpots();
+    }
   }, [isAdmin]);
+
+  async function loadAllGuestSpots() {
+    try {
+      const { data: guestReports } = await supabase
+        .from('guest_reports')
+        .select('*')
+        .eq('status', 'approved');
+      
+      const guestSpots = (guestReports || []).map(r => ({
+        id: r.id,
+        is_guest_report: true,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        label: r.vendor_name,
+        vendor_name: r.vendor_name,
+        status: 'unverified'
+      }));
+      setAllGuestSpots(guestSpots);
+    } catch (e) {
+      console.error('Failed to load guest spots', e);
+    }
+  }
 
   async function loadApps() {
     try {
@@ -71,6 +98,7 @@ export default function Applications() {
       );
       const results = await Promise.all(spotPromises);
       const allSpots = results.flatMap(r => r.data);
+
       setZoneSpots(allSpots.filter(s => s.latitude && s.longitude));
     } catch (e) {
       console.error('Failed to load zone spots', e);
@@ -83,8 +111,19 @@ export default function Applications() {
     try {
       const token = await getToken();
       // Auto-append preferred spot to notes
-      const spotNote = selectedSpot ? `[Preferred Spot: ${selectedSpot.spot_number}] ` : '';
-      const payload = { ...formData, notes: spotNote + formData.notes };
+      let spotNote = '';
+      if (selectedSpot) {
+        if (selectedSpot.is_guest_report) {
+          spotNote = `[Claiming Guest Spot: ${selectedSpot.vendor_name || 'Spot'}] `;
+        } else {
+          spotNote = `[Preferred Spot: ${selectedSpot.spot_number}] `;
+        }
+      }
+      
+      const payload = { 
+        zone_id: formData.zone_id || null, 
+        notes: spotNote + formData.notes 
+      };
       await axios.post(`${import.meta.env.VITE_API_URL}/applications`, payload, { headers: { Authorization: `Bearer ${token}` } });
       setFormData({ zone_id: '', notes: '' });
       setSelectedZoneForMap(null);
@@ -175,12 +214,41 @@ export default function Applications() {
       {/* Vendor: Apply Form */}
       {!isAdmin && (
         <div className="sv-form-card mb-4">
-          <h6 style={{ fontWeight: 700, color: '#1a6b3c', marginBottom: 16 }}>Apply for a Zone</h6>
+          <h6 style={{ fontWeight: 700, color: '#1a6b3c', marginBottom: 16 }}>Apply for a Spot or Zone</h6>
+          
+          {/* Always Visible Map Preview */}
+          <div className="mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <div className="small fw-semibold" style={{ color: '#1a6b3c' }}>🗺️ City Map — Select a golden pin to claim a guest-reported spot</div>
+            </div>
+            {selectedSpot && (
+              <div className="d-flex align-items-center gap-3 mb-2 p-2 rounded" style={{ background: '#ede9fe', border: '1px solid #c4b5fd' }}>
+                <span style={{ fontSize: 20 }}>📌</span>
+                <div>
+                  <div className="fw-bold" style={{ color: '#6d28d9' }}>
+                    {selectedSpot.is_guest_report ? `Guest Spot: ${selectedSpot.vendor_name || 'Spot'}` : `Spot ${selectedSpot.spot_number}`} Selected
+                  </div>
+                  <div className="small text-muted">Click the spot again or another to change</div>
+                </div>
+                <button type="button" className="btn btn-sm ms-auto" style={{ background: '#fee2e2', color: '#991b1b', borderRadius: 6 }} onClick={() => setSelectedSpot(null)}>✕ Deselect</button>
+              </div>
+            )}
+            <ZoneMap
+              zones={zones}
+              spotMarkers={[...zoneSpots, ...allGuestSpots]}
+              onSpotSelect={setSelectedSpot}
+              selectedSpotId={selectedSpot?.id || null}
+              viewOnly
+              height="350px"
+              center={selectedZoneForMap ? (Array.isArray(selectedZoneForMap.boundary_geojson) && selectedZoneForMap.boundary_geojson[0] ? selectedZoneForMap.boundary_geojson[0] : (selectedZoneForMap.latitude ? [selectedZoneForMap.latitude, selectedZoneForMap.longitude] : null)) : [23.8103, 90.4125]}
+            />
+          </div>
+
           <form onSubmit={handleSubmit}>
             <div className="row g-3">
               <div className="col-md-4">
-                <select className="form-select" value={formData.zone_id} onChange={e => handleZoneSelect(e.target.value)} required>
-                  <option value="">-- Select Preferred Zone --</option>
+                <select className="form-select" value={formData.zone_id} onChange={e => handleZoneSelect(e.target.value)}>
+                  <option value="">-- Apply without Zone (Spot only) --</option>
                   {zones.map(z => <option key={z.id} value={z.id}>{z.name} {z.area ? `(${z.area})` : ''}</option>)}
                 </select>
               </div>
@@ -188,41 +256,17 @@ export default function Applications() {
                 <input type="text" placeholder="Additional Notes (e.g., selling fruits, morning only)" className="form-control" value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
               </div>
               <div className="col-md-2">
-                <button type="submit" className="btn btn-primary w-100" style={{ borderRadius: 8 }} disabled={loading}>
+                <button type="submit" className="btn btn-primary w-100" style={{ borderRadius: 8 }} disabled={loading || (!formData.zone_id && !selectedSpot)}>
                   {loading ? '...' : 'Submit'}
                 </button>
               </div>
             </div>
+          </form>
 
-            {/* Zone Map Preview for vendor — shows zone polygon + available spots */}
-            {selectedZoneForMap && (
-              <div className="mt-3">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <div className="small fw-semibold" style={{ color: '#1a6b3c' }}>🗺️ Zone Map — Click a 🟢 green spot to select it</div>
-                  <span className="small text-muted">{zoneSpots.length} spot{zoneSpots.length !== 1 ? 's' : ''} on map</span>
-                </div>
-                {selectedSpot && (
-                  <div className="d-flex align-items-center gap-3 mb-2 p-2 rounded" style={{ background: '#ede9fe', border: '1px solid #c4b5fd' }}>
-                    <span style={{ fontSize: 20 }}>📌</span>
-                    <div>
-                      <div className="fw-bold" style={{ color: '#6d28d9' }}>Spot {selectedSpot.spot_number} Selected</div>
-                      <div className="small text-muted">Block: {selectedSpot.blocks?.block_name} · Click the spot again or another to change</div>
-                    </div>
-                    <button type="button" className="btn btn-sm ms-auto" style={{ background: '#fee2e2', color: '#991b1b', borderRadius: 6 }} onClick={() => setSelectedSpot(null)}>✕ Deselect</button>
-                  </div>
-                )}
-                <ZoneMap
-                  zones={[selectedZoneForMap]}
-                  spotMarkers={zoneSpots}
-                  onSpotSelect={setSelectedSpot}
-                  selectedSpotId={selectedSpot?.id || null}
-                  viewOnly
-                  height="300px"
-                  center={Array.isArray(selectedZoneForMap.boundary_geojson) && selectedZoneForMap.boundary_geojson[0] ? selectedZoneForMap.boundary_geojson[0] : (selectedZoneForMap.latitude ? [selectedZoneForMap.latitude, selectedZoneForMap.longitude] : null)}
-                />
-
-                {/* Spot list table for vendor */}
-                {zoneSpots.length > 0 ? (
+          {/* Spot list table for selected zone */}
+          {selectedZoneForMap && (
+            <div className="mt-4">
+              {zoneSpots.length > 0 ? (
                   <div className="mt-3">
                     <div className="small fw-semibold mb-2" style={{ color: '#334155' }}>📋 Available Spots in {selectedZoneForMap.name}</div>
                     <div className="table-responsive rounded border">
@@ -265,13 +309,12 @@ export default function Applications() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-muted small mt-2 text-center py-2" style={{ background: '#f8fafc', borderRadius: 8 }}>
+                  <div className="text-muted small px-2 py-3 text-center" style={{ background: '#f8fafc', borderRadius: 8 }}>
                     No spots with GPS coordinates found in this zone yet.
                   </div>
                 )}
-              </div>
-            )}
-          </form>
+            </div>
+          )}
         </div>
       )}
 

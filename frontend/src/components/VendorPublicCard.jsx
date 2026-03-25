@@ -80,25 +80,25 @@ export default function VendorPublicCard({ vendor, isFavorite, onToggleFavorite,
         {/* Action Buttons */}
         <div className="d-flex gap-2">
           <button 
-            onClick={() => onRate(vendor.vendor_id, 'good')}
+            onClick={(e) => { e.stopPropagation(); onRate(vendor.vendor_id || vendor.id, 'good'); }}
             className="btn btn-outline-success btn-sm flex-grow-1"
             style={{ fontSize: 11, borderRadius: 8, fontWeight: 600 }}
           >
-            👍 Correct
+            👍 Good
           </button>
           <button 
-            onClick={() => onRate(vendor.vendor_id, 'reasonable')}
+            onClick={(e) => { e.stopPropagation(); onRate(vendor.vendor_id || vendor.id, 'reasonable'); }}
             className="btn btn-outline-warning btn-sm"
             style={{ fontSize: 11, borderRadius: 8, fontWeight: 600 }}
           >
-            ⚖️ OK
+            ⚖️ Reasonable
           </button>
           <button 
-            onClick={() => onRate(vendor.vendor_id, 'worst')}
+            onClick={(e) => { e.stopPropagation(); onRate(vendor.vendor_id || vendor.id, 'worst'); }}
             className="btn btn-outline-danger btn-sm"
             style={{ fontSize: 11, borderRadius: 8, fontWeight: 600 }}
           >
-            👎 Wrong
+            👎 Bad
           </button>
         </div>
       </div>
