@@ -56,9 +56,14 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) await fetchProfile(session.access_token);
-      setLoading(false);
+      try {
+        setUser(session?.user ?? null);
+        if (session?.user) await fetchProfile(session.access_token);
+      } catch (err) {
+        console.error("Auth initialization error:", err);
+      } finally {
+        setLoading(false);
+      }
     });
 
     // Listen for auth state changes
