@@ -191,17 +191,17 @@ export default function ZoneMap({
         <div style={{ position: 'absolute', bottom: 16, right: 16, zIndex: 1000, background: '#fff', padding: '8px 12px', borderRadius: 10, boxShadow: '0 2px 10px rgba(0,0,0,0.15)', fontSize: 12 }}>
           <div className="fw-semibold mb-1 text-muted" style={{ fontSize: 11 }}>SPOT STATUS</div>
           <div className="d-flex gap-2">
-            <span style={{ color: '#475569' }}><span style={{ display:'inline-block', width:10, height:10, borderRadius:'50%', background:'#16a34a', marginRight:4 }}></span>Good</span>
-            <span style={{ color: '#475569' }}><span style={{ display:'inline-block', width:10, height:10, borderRadius:'50%', background:'#dc2626', marginRight:4 }}></span>Worst</span>
+            <span style={{ color: '#475569' }}><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#16a34a', marginRight: 4 }}></span>Good</span>
+            <span style={{ color: '#475569' }}><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#dc2626', marginRight: 4 }}></span>Worst</span>
           </div>
         </div>
 
       )}
 
       <div style={{ flex: 1, minHeight: 0, filter: locked ? 'saturate(0.8) contrast(1.05)' : 'none' }}>
-        <MapContainer 
-          center={mapCenter} 
-          zoom={locked ? 18 : 14} 
+        <MapContainer
+          center={mapCenter}
+          zoom={locked ? 18 : 14}
           style={{ height: '100%', width: '100%' }}
           dragging={!locked}
           scrollWheelZoom={!locked}
