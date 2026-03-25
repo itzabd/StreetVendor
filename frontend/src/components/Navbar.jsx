@@ -36,33 +36,44 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    // Load notifications from local storage based on user role
-    const allNotifs = JSON.parse(localStorage.getItem('sv_notifications') || '[]');
-    // Filter: admins see all broadcast logs, vendors see targeted or broadcasts
-    const myNotifs = allNotifs.filter(n => 
-      isAdmin || n.target_vendor_id === 'all' || n.target_vendor_id === profile?.id
-    ).reverse().slice(0, 5); // limit to 5
-    setNotifications(myNotifs);
-    
-    // Auto-poll local storage for changes (hack for lack of backend)
-    const interval = setInterval(() => {
-      const liveNotifs = JSON.parse(localStorage.getItem('sv_notifications') || '[]');
-      const update = liveNotifs.filter(n => isAdmin || n.target_vendor_id === 'all' || n.target_vendor_id === profile?.id).reverse().slice(0, 10);
-      if (JSON.stringify(update) !== JSON.stringify(myNotifs)) setNotifications(update);
-    }, 2000);
+    const loadNotifs = () => {
+      try {
+        const raw = localStorage.getItem('sv_notifications');
+        const allNotifs = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(allNotifs)) throw new Error('Invalid format');
+        
+        if (!profile?.id) return setNotifications([]);
+
+        const filtered = allNotifs.filter(n => {
+          const isBroadcast = n.target_vendor_id === 'all';
+          const isTargetedToMe = n.target_vendor_id === profile.id;
+          return isBroadcast || isTargetedToMe;
+        }).reverse().slice(0, 10);
+
+        setNotifications(filtered);
+      } catch (err) {
+        console.error('Notification system error:', err);
+        setNotifications([]);
+      }
+    };
+
+    loadNotifs();
+    const interval = setInterval(loadNotifs, 3000);
     return () => clearInterval(interval);
-  }, [profile, isAdmin]);
+  }, [profile?.id]);
 
   const markAsRead = (notifId) => {
+    const userId = profile?.id;
+    if (!userId) return;
     const allNotifs = JSON.parse(localStorage.getItem('sv_notifications') || '[]');
     const updated = allNotifs.map(n => {
       if (n.id === notifId) {
-        return { ...n, readBy: [...(n.readBy || []), profile?.id] };
+        return { ...n, readBy: Array.from(new Set([...(n.readBy || []), userId])) };
       }
       return n;
     });
     localStorage.setItem('sv_notifications', JSON.stringify(updated));
-    setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, readBy: [...(n.readBy || []), profile?.id] } : n));
+    setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, readBy: Array.from(new Set([...(n.readBy || []), userId])) } : n));
   };
 
   const markAllAsRead = () => {
@@ -70,10 +81,9 @@ export default function Navbar() {
     if (!userId) return;
     const allNotifs = JSON.parse(localStorage.getItem('sv_notifications') || '[]');
     const updated = allNotifs.map(n => {
-      const isTarget = isAdmin || n.target_vendor_id === 'all' || n.target_vendor_id === userId;
-      const alreadyRead = (n.readBy || []).includes(userId);
-      if (isTarget && !alreadyRead) {
-        return { ...n, readBy: [...(n.readBy || []), userId] };
+      const isTarget = n.target_vendor_id === 'all' || n.target_vendor_id === userId;
+      if (isTarget) {
+        return { ...n, readBy: Array.from(new Set([...(n.readBy || []), userId])) };
       }
       return n;
     });
@@ -120,7 +130,7 @@ export default function Navbar() {
                     </span>
                   )}
                   {isAdmin && (
-                    <span className="badge bg-primary pointer" style={{ cursor: 'pointer', fontSize: 10 }} onClick={() => navigate('/admin/dashboard')}>Send New</span>
+                    <span className="badge bg-primary pointer" style={{ cursor: 'pointer', fontSize: 10 }} onClick={() => navigate('/admin')}>Dashboard</span>
                   )}
                 </div>
               </div>
@@ -130,9 +140,13 @@ export default function Navbar() {
                 ) : (
                   notifications.map(n => {
                     const isRead = (n.readBy || []).includes(profile?.id);
+                    const isBroadcast = n.target_vendor_id === 'all';
                     return (
                       <div key={n.id} className="p-2 border-bottom position-relative" style={{ borderRadius: 6, background: isRead ? '#fff' : '#f0fdf4' }}>
-                        <div className="fw-semibold" style={{ fontSize: 13, color: '#1a6b3c', paddingRight: 20 }}>{n.title}</div>
+                        <div className="d-flex align-items-center gap-2 mb-1">
+                          <div className="fw-semibold" style={{ fontSize: 13, color: '#1a6b3c', paddingRight: 20 }}>{n.title}</div>
+                          {isBroadcast && <span className="badge bg-secondary" style={{ fontSize: 8 }}>System</span>}
+                        </div>
                         <div className="text-muted" style={{ fontSize: 12 }}>{n.message}</div>
                         <div className="d-flex justify-content-between align-items-end mt-1">
                           <div className="text-muted" style={{ fontSize: 10 }}>{new Date(n.created_at).toLocaleDateString()}</div>
