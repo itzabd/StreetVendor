@@ -85,7 +85,11 @@ export default function App() {
             <Route path="/admin/complaints" element={<ProtectedRoute role="admin"><Layout><Complaints /></Layout></ProtectedRoute>} />
             <Route path="/admin/rent" element={<ProtectedRoute role="admin"><Layout><RentRecords /></Layout></ProtectedRoute>} />
             <Route path="/admin/profile" element={<ProtectedRoute role="admin"><Layout><Profile /></Layout></ProtectedRoute>} />
+
+            {/* Catch-all: Redirect to home or root redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+
         </BrowserRouter>
         </ConfirmProvider>
       </ToastProvider>

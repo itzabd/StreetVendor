@@ -38,3 +38,14 @@ This warning happens because Render's default environment uses **Yarn**, but you
 
 ### Why did the previous deploy fail?
 Render was looking for a `package.json` in the root folder, but it's actually inside the `backend/` and `frontend/` folders. By setting the **Root Directory** in Render settings, you tell Render exactly where to look.
+
+### Troubleshooting: "Not Found" on Frontend
+If you see a "Not Found" error on your deployed site:
+1. **Redirects/Rewrites**: Go to your Render Static Site Dashboard -> **Redirects/Rewrites**. Add a rule:
+   - **Source**: `/*`
+   - **Destination**: `/index.html`
+   - **Action**: `Rewrite`
+2. **Root Directory**: Ensure it is set to `frontend`.
+3. **Publish Directory**: If Root Directory is `frontend`, this should be `dist`. If Root Directory is `.`, this must be `frontend/dist`.
+4. **Environment Variables**: Ensure `VITE_API_URL` is the **full URL** of your backend (including `https://`).
+
