@@ -9,21 +9,44 @@ async function authenticate(req, res, next) {
 
   const token = authHeader.split(' ')[1];
 
-  // Get user from Supabase using the access token
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    req.user = user;
+    req.profile = profile;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Authentication failed' });
+  }
+}
+
+// Optional auth — doesn't block if no token
+async function optionalAuthenticate(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
   }
 
-  // Fetch profile for role info
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  req.user = user;
-  req.profile = profile;
+  const token = authHeader.split(' ')[1];
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) {
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      req.user = user;
+      req.profile = profile;
+    }
+  } catch (err) {
+    // Silently fail for optional auth
+  }
   next();
 }
 
@@ -35,4 +58,4 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { authenticate, requireAdmin };
+module.exports = { authenticate, optionalAuthenticate, requireAdmin };

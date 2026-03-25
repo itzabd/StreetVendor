@@ -323,13 +323,23 @@ body {
 
 /* ─── Landing Page ────────────────────────────────────────── */
 .sv-landing {
-  min-height: 100vh;
+  height: 100vh;
+  width: 100%;
   background: #0d3d22;
-  background: radial-gradient(circle at center, #1a6b3c 0%, #0d3d22 100%);
+  background: radial-gradient(circle at 50% 50%, #1a6b3c 0%, #0d3d22 100%);
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+}
+
+.sv-landing::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+  opacity: 0.1;
+  pointer-events: none;
 }
 
 .sv-bg-blobs {
@@ -375,6 +385,78 @@ body {
   66% { transform: translate(-30px, 40px) scale(0.95) rotate(-5deg); }
   100% { transform: translate(0, 0) scale(1) rotate(0deg); }
 }
+
+/* Bottom Sheet Discovery Section */
+.sv-discovery-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 40px);
+  background: #0f172a;
+  border-radius: 32px 32px 0 0;
+  box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
+  transform: translateY(calc(100% - 100px)); /* Peek state */
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+}
+
+.sv-discovery-sheet.is-open {
+  transform: translateY(0);
+}
+
+.sv-sheet-handle {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95), #0f172a);
+  border-radius: 32px 32px 0 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.sv-handle-bar {
+  width: 44px;
+  height: 4px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 2px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.sv-sheet-handle:hover .sv-handle-bar {
+  background: #f59e0b;
+  width: 50px;
+}
+
+.sv-discovery-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.is-open .sv-discovery-content {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sv-landing-v2-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
 
 .sv-landing-nav, .sv-landing-hero, .sv-landing-footer {
   position: relative;
@@ -444,21 +526,22 @@ body {
   top: 0; left: 0; width: 100%; height: 100%;
   pointer-events: none;
   background: radial-gradient(
-    600px circle at var(--mouse-x) var(--mouse-y),
-    rgba(255, 255, 255, 0.06),
-    transparent 40%
+    800px circle at var(--mouse-x) var(--mouse-y),
+    rgba(245, 158, 11, 0.04),
+    rgba(255, 255, 255, 0.01) 30%,
+    transparent 60%
   );
   z-index: 5;
 }
 
 .sv-feature-card {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(12px);
-  border-radius: 24px;
-  padding: 28px;
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(24px);
+  border-radius: 32px;
+  padding: 36px;
   height: 100%;
-  border: 1px solid rgba(255,255,255,0.1);
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -466,16 +549,16 @@ body {
 }
 
 .sv-feature-card:hover {
-  background: rgba(255,255,255,0.12);
-  border-color: rgba(255,255,255,0.3);
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(245, 158, 11, 0.25);
+  transform: translateY(-12px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 .sv-feature-card:hover .sv-feature-icon {
-  transform: scale(1.15) rotate(8deg);
-  background: rgba(245, 158, 11, 0.3);
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+  transform: rotate(5deg) scale(1.1);
+  background: #f59e0b;
+  color: #000;
 }
 
 .sv-feature-icon {

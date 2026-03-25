@@ -22,6 +22,7 @@ import Permissions from './pages/Permissions';
 import Complaints from './pages/Complaints';
 import RentRecords from './pages/RentRecords';
 import Profile from './pages/Profile';
+import AdminGuestReports from './pages/AdminGuestReports';
 import ServiceMonitor from './components/ServiceMonitor';
 
 function Layout({ children }) {
@@ -80,6 +81,7 @@ export default function App() {
             <Route path="/admin/blocks" element={<ProtectedRoute role="admin"><Layout><Blocks /></Layout></ProtectedRoute>} />
             <Route path="/admin/spots" element={<ProtectedRoute role="admin"><Layout><Spots /></Layout></ProtectedRoute>} />
             <Route path="/admin/applications" element={<ProtectedRoute role="admin"><Layout><Applications /></Layout></ProtectedRoute>} />
+            <Route path="/admin/guest-reports" element={<ProtectedRoute role="admin"><Layout><AdminGuestReports /></Layout></ProtectedRoute>} />
             <Route path="/admin/assignments" element={<ProtectedRoute role="admin"><Layout><Assignments /></Layout></ProtectedRoute>} />
             <Route path="/admin/permissions" element={<ProtectedRoute role="admin"><Layout><Permissions /></Layout></ProtectedRoute>} />
             <Route path="/admin/complaints" element={<ProtectedRoute role="admin"><Layout><Complaints /></Layout></ProtectedRoute>} />

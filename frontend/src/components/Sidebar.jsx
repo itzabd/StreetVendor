@@ -16,6 +16,7 @@ const adminLinks = [
   { to: '/admin/blocks', icon: '🏗️', label: 'Blocks' },
   { to: '/admin/spots', icon: '📍', label: 'Spots' },
   { to: '/admin/applications', icon: '📋', label: 'Applications' },
+  { to: '/admin/guest-reports', icon: '📍', label: 'Guest Reports' },
   { to: '/admin/assignments', icon: '🔄', label: 'Assignments' },
   { to: '/admin/permissions', icon: '🔑', label: 'Permissions' },
   { to: '/admin/complaints', icon: '📣', label: 'Complaints' },
