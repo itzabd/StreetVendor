@@ -22,6 +22,7 @@ import Permissions from './pages/Permissions';
 import Complaints from './pages/Complaints';
 import RentRecords from './pages/RentRecords';
 import Profile from './pages/Profile';
+import ServiceMonitor from './components/ServiceMonitor';
 
 function Layout({ children }) {
   return (
@@ -56,6 +57,7 @@ export default function App() {
     <AuthProvider>
       <ToastProvider>
         <ConfirmProvider>
+          <ServiceMonitor />
           <BrowserRouter>
             <Routes>
             <Route path="/home" element={<LandingPage />} />

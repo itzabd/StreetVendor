@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [serviceError, setServiceError] = useState(false);
 
   // Fetch profile from backend
   async function fetchProfile(token) {
@@ -16,8 +17,39 @@ export function AuthProvider({ children }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProfile(res.data);
-    } catch {
+      return res.data;
+    } catch (err) {
       setProfile(null);
+      // If we get a network error (no response), it might be an API outage
+      if (!err.response && err.request) {
+        setServiceError(true);
+      }
+      return null;
+    }
+  }
+
+  async function checkServiceHealth() {
+    try {
+      // 1. Check Supabase Connectivity
+      const { error: dbError } = await supabase.from('profiles').select('id').limit(1).maybeSingle();
+      const isDbDown = dbError && (dbError.message.includes('fetch') || dbError.code === 'PGRST301' || dbError.status === 0);
+
+      // 2. Check API (Render) Connectivity
+      let isApiDown = false;
+      try {
+        // Minor ping to the API. Accessing the root or an auth-less endpoint is best.
+        // Assuming the base URL might have a health check or at least returns 200/404/401
+        await axios.get(`${import.meta.env.VITE_API_URL}/health`, { timeout: 5000 }).catch(err => {
+          // If no response, the server is unreachable
+          if (!err.response) isApiDown = true;
+        });
+      } catch {
+        isApiDown = true;
+      }
+
+      setServiceError(isDbDown || isApiDown);
+    } catch (err) {
+      setServiceError(true);
     }
   }
 
@@ -39,7 +71,16 @@ export function AuthProvider({ children }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Initial health check
+    checkServiceHealth();
+
+    // Periodic health check every 60s
+    const healthInterval = setInterval(checkServiceHealth, 60000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(healthInterval);
+    };
   }, []);
 
   async function login(email, password) {
@@ -66,7 +107,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, login, logout, getToken, refreshUser }}>
+    <AuthContext.Provider value={{ user, profile, loading, serviceError, login, logout, getToken, refreshUser, checkServiceHealth }}>
       {children}
     </AuthContext.Provider>
   );

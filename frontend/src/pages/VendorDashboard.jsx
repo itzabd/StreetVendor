@@ -74,9 +74,9 @@ export default function VendorDashboard() {
   return (
     <div className="position-relative">
       {/* Welcome Banner with Shimmer Effect */}
-      <div className="animate-entrance sv-shimmer-bg" style={{ 
-        position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #1e293b, #334155, #1e293b)', 
-        backgroundSize: '200% 100%', borderRadius: 20, padding: '30px 40px', marginBottom: 30, marginTop: '-10px', 
+      <div className="animate-entrance sv-shimmer-bg" style={{
+        position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #1e293b, #334155, #1e293b)',
+        backgroundSize: '200% 100%', borderRadius: 20, padding: '30px 40px', marginBottom: 30, marginTop: '-10px',
         color: '#fff', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', animation: 'sv-shimmer-shift 8s linear infinite, svEntrance 0.8s ease-out'
       }}>
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -205,10 +205,10 @@ export default function VendorDashboard() {
 
       {/* Floating Helpline SOS Button - Fixed to Viewport */}
       <div className="position-fixed" style={{ bottom: 40, right: 40, zIndex: 10000 }}>
-        <button 
+        <button
           onClick={() => setShowHelpModal(true)}
           className="btn d-flex align-items-center justify-content-center shadow-lg border-0"
-          style={{ 
+          style={{
             width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
             fontSize: 26, boxShadow: '0 8px 32px rgba(239, 68, 68, 0.4)', transition: 'all 0.3s ease',
             animation: 'sv-sos-pulse 2s infinite'
