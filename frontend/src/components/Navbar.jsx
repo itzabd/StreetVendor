@@ -129,9 +129,7 @@ export default function Navbar() {
                       Mark all as read
                     </span>
                   )}
-                  {isAdmin && (
-                    <span className="badge bg-primary pointer" style={{ cursor: 'pointer', fontSize: 10 }} onClick={() => navigate('/admin')}>Dashboard</span>
-                  )}
+
                 </div>
               </div>
               <div style={{ maxHeight: 300, overflowY: 'auto' }}>
