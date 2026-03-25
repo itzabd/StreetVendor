@@ -91,7 +91,7 @@ export default function Navbar() {
     setNotifications(prev => prev.map(n => ({ ...n, readBy: Array.from(new Set([...(n.readBy || []), userId])) })));
   };
 
-  const initials = profile?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const initials = profile?.full_name ? profile.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
   const avatarUrl = user?.user_metadata?.avatar_url;
   const unreadCount = notifications.filter(n => !(n.readBy || []).includes(profile?.id)).length;
 

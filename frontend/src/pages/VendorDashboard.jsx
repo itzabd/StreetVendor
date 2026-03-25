@@ -80,7 +80,7 @@ export default function VendorDashboard() {
         color: '#fff', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', animation: 'sv-shimmer-shift 8s linear infinite, svEntrance 0.8s ease-out'
       }}>
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>Welcome, {profile?.full_name?.split(' ')[0]} 👋</div>
+          <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>Welcome, {profile?.full_name ? profile.full_name.split(' ')[0] : 'Vendor'} 👋</div>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14 }}>Manage your street vending operations and track your legal permissions.</div>
         </div>
       </div>
