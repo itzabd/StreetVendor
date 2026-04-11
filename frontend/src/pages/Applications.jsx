@@ -299,6 +299,49 @@ export default function Applications() {
                     <div className="h-100">
                       {formData.zone_id && selectedZoneForMap ? (
                         <div className="h-100 d-flex flex-column">
+
+                          {/* Table ListView of Available Spots */}
+                          <div className="mb-3">
+                            <h6 className="fw-800" style={{ color: '#1a6b3c' }}>Available Spots in Zone</h6>
+                            <div className="table-responsive rounded-3 border" style={{ maxHeight: '180px', overflowY: 'auto', background: '#fff' }}>
+                              <table className="table table-sm table-hover mb-0" style={{ fontSize: 13 }}>
+                                <thead className="table-light" style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                                  <tr>
+                                    <th className="px-3">Spot Number</th>
+                                    <th>Description</th>
+                                    <th className="text-end px-3">Select</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {vendorSpotMarkers.map(s => {
+                                    const isSelected = selectedSpot?.id === s.id;
+                                    return (
+                                      <tr key={s.id} onClick={() => setSelectedSpot(s)} style={{ cursor: 'pointer', background: isSelected ? '#f0fdf4' : '' }}>
+                                        <td className="fw-bold px-3">{s.is_guest_report ? s.vendor_name : s.spot_number}</td>
+                                        <td className="text-muted">{s.description || '—'}</td>
+                                        <td className="text-end px-3">
+                                          <button 
+                                            type="button" 
+                                            className={`btn btn-sm ${isSelected ? 'btn-success fw-bold' : 'btn-outline-success'}`}
+                                            onClick={(e) => { e.stopPropagation(); setSelectedSpot(s); }}
+                                            style={{ padding: '2px 10px', fontSize: 11, borderRadius: 12 }}
+                                          >
+                                            {isSelected ? '✅ Selected' : 'Choose'}
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                  {vendorSpotMarkers.length === 0 && (
+                                    <tr>
+                                      <td colSpan={3} className="text-center text-muted py-4">No spots are currently assigned to this zone.</td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+
                           <ZoneMap
                             key={`zone-map-${formData.zone_id}`}
                             zones={[selectedZoneForMap]}
@@ -306,13 +349,13 @@ export default function Applications() {
                             onSpotSelect={setSelectedSpot}
                             selectedSpotId={selectedSpot?.id || null}
                             viewOnly
-                            height="260px"
+                            height="240px"
                             center={selectedZoneForMap.boundary_geojson?.[0] || [23.8103, 90.4125]}
                           />
                           {selectedSpot && (
                             <div className="mt-2 p-2 rounded-3 d-flex align-items-center justify-content-between" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
                               <span className="small fw-bold text-success" style={{ fontSize: 11 }}>✅ Selected: {selectedSpot.is_guest_report ? selectedSpot.vendor_name : `Spot #${selectedSpot.spot_number}`}</span>
-                              <button type="button" className="btn btn-sm btn-link text-muted p-0 text-decoration-none" onClick={() => setSelectedSpot(null)}>✕ Clear</button>
+                              <button type="button" className="btn btn-sm btn-link text-muted p-0 text-decoration-none fw-bold" onClick={() => setSelectedSpot(null)}>✕ Clear</button>
                             </div>
                           )}
                         </div>
@@ -332,25 +375,23 @@ export default function Applications() {
           </div>
         )}
 
-        {isAdmin && (
-          <div className="row g-3 mb-4">
-            {[
-              { key: 'pending', label: 'New Queue', icon: '⏳', bg: '#fef9c3', col: '#854d0e', border: '#fde047' },
-              { key: 'approved', label: 'Active Permitees', icon: '✅', bg: '#dcfce7', col: '#166534', border: '#86efac' },
-              { key: 'rejected', label: 'Rejected', icon: '❌', bg: '#fee2e2', col: '#991b1b', border: '#fca5a5' },
-            ].map(s => (
-              <div key={s.key} className="col-md-4">
-                <div className="sv-hover-lift" onClick={() => setFilter(s.key)} style={{ background: filter === s.key ? s.bg : '#fff', border: `1.5px solid ${filter === s.key ? s.border : '#e2e8f0'}`, borderRadius: 16, padding: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ fontSize: 32 }}>{s.icon}</div>
-                  <div>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: s.col, lineHeight: 1 }}>{counts[s.key]}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{s.label}</div>
-                  </div>
+        <div className="row g-3 mb-4 mt-2">
+          {[
+            { key: 'pending', label: isAdmin ? 'New Queue' : 'My Pending', icon: '⏳', bg: '#fef9c3', col: '#854d0e', border: '#fde047' },
+            { key: 'approved', label: isAdmin ? 'Active Permitees' : 'Approved', icon: '✅', bg: '#dcfce7', col: '#166534', border: '#86efac' },
+            { key: 'rejected', label: 'Rejected', icon: '❌', bg: '#fee2e2', col: '#991b1b', border: '#fca5a5' },
+          ].map(s => (
+            <div key={s.key} className="col-md-4">
+              <div className="sv-hover-lift" onClick={() => setFilter(s.key)} style={{ background: filter === s.key ? s.bg : '#fff', border: `1.5px solid ${filter === s.key ? s.border : '#e2e8f0'}`, borderRadius: 16, padding: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ fontSize: 32 }}>{s.icon}</div>
+                <div>
+                  <div style={{ fontSize: 32, fontWeight: 900, color: s.col, lineHeight: 1 }}>{counts[s.key]}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{s.label}</div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
 
         <div className="sv-card border-0 shadow-sm" style={{ borderRadius: 28 }}>
           <div className="sv-card-header bg-white border-0 py-4 px-4">

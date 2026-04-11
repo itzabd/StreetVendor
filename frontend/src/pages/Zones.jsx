@@ -10,6 +10,12 @@ export default function Zones() {
   const [formData, setFormData] = useState({ name: '', area: '', description: '', boundary_geojson: [] });
   const [loading, setLoading] = useState(false);
   
+  // Spot Management State
+  const [activeZoneForSpots, setActiveZoneForSpots] = useState(null);
+  const [zoneSpots, setZoneSpots] = useState([]);
+  const [newSpot, setNewSpot] = useState({ spot_number: '', description: '', latitude: null, longitude: null });
+  const [spotLoading, setSpotLoading] = useState(false);
+
   // Force map to pan to specific center
   const [mapCenterOverride, setMapCenterOverride] = useState(null);
 
@@ -57,6 +63,69 @@ export default function Zones() {
     } else {
       addToast('This zone does not have coordinates mapped.', 'warning');
     }
+  }
+
+  // --- SPOT MANAGEMENT LOGIC ---
+  async function loadZoneSpots(zoneId) {
+    try {
+      const token = await getToken();
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/spots?zone_id=${zoneId}`, { headers: { Authorization: `Bearer ${token}` } });
+      setZoneSpots(res.data);
+    } catch (err) {
+      addToast('Failed to load spots', 'danger');
+    }
+  }
+
+  function handleManageSpots(zone) {
+    setActiveZoneForSpots(zone);
+    loadZoneSpots(zone.id);
+    handlePanToZone(zone);
+    setTimeout(() => {
+      document.getElementById('spot-manager-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  }
+
+  function handleCloseSpots() {
+    setActiveZoneForSpots(null);
+    setZoneSpots([]);
+    setNewSpot({ spot_number: '', description: '', latitude: null, longitude: null });
+  }
+
+  async function handleAddSpot(e) {
+    e.preventDefault();
+    setSpotLoading(true);
+    try {
+      const token = await getToken();
+      await axios.post(`${import.meta.env.VITE_API_URL}/spots`, {
+        ...newSpot,
+        zone_id: activeZoneForSpots.id
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      addToast('Spot created successfully', 'success');
+      setNewSpot({ spot_number: '', description: '', latitude: null, longitude: null });
+      loadZoneSpots(activeZoneForSpots.id);
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Failed to create spot', 'danger');
+    } finally {
+      setSpotLoading(false);
+    }
+  }
+
+  async function handleDeleteSpot(spotId) {
+    confirmAction({
+      title: 'Delete Spot',
+      message: 'Are you sure you want to delete this spot?',
+      confirmText: 'Yes, Delete',
+      onConfirm: async () => {
+        try {
+          const token = await getToken();
+          await axios.delete(`${import.meta.env.VITE_API_URL}/spots/${spotId}`, { headers: { Authorization: `Bearer ${token}` } });
+          addToast('Spot deleted', 'success');
+          loadZoneSpots(activeZoneForSpots.id);
+        } catch (err) {
+          addToast(err.response?.data?.error || 'Failed to delete spot', 'danger');
+        }
+      }
+    });
   }
 
   async function handleSubmit(e) {
@@ -205,6 +274,14 @@ export default function Zones() {
                           📍 Show
                         </button>
                         <button 
+                          onClick={() => handleManageSpots(z)} 
+                          className="btn btn-sm btn-outline-success me-2" 
+                          style={{ borderRadius: 6 }}
+                          title="Manage Spots"
+                        >
+                          ⚙️ Spots
+                        </button>
+                        <button 
                           onClick={() => handleDelete(z.id)} 
                           className="btn btn-sm" 
                           style={{ background: '#fee2e2', color: '#991b1b', borderRadius: 6 }}
@@ -227,6 +304,131 @@ export default function Zones() {
           </div>
         </div>
       </div>
+      
+      {/* Target Zone Spot Manager Panel */}
+      {activeZoneForSpots && (
+        <div id="spot-manager-panel" className="sv-card mb-4 mt-2 shadow border bg-white" style={{ borderColor: '#1a6b3c !important' }}>
+          <div className="sv-card-header d-flex justify-content-between align-items-center" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <h5 className="mb-0 fw-bold" style={{ color: '#1a6b3c' }}>
+              📍 Manage Spots: {activeZoneForSpots.name}
+            </h5>
+            <button onClick={handleCloseSpots} className="btn-close" aria-label="Close"></button>
+          </div>
+          <div className="card-body p-4">
+            <div className="row g-4">
+              {/* Interactive Spot Map - Full Width */}
+              <div className="col-12">
+                <div className="p-3 rounded-4" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h6 className="fw-bold mb-0 text-success">1. Pick Spot Location on Map</h6>
+                    <div className="small text-muted fw-bold">
+                      {newSpot.latitude ? <span className="text-success">📍 Selected: {newSpot.latitude.toFixed(5)}, {newSpot.longitude.toFixed(5)}</span> : <span>⚠️ Click on map to drop pin</span>}
+                    </div>
+                  </div>
+                  <div style={{ height: '380px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                    <ZoneMap
+                      zones={[activeZoneForSpots]}
+                      spotMarkers={zoneSpots}
+                      boundary={activeZoneForSpots.boundary_geojson}
+                      selectedPolygon={newSpot.latitude ? [[newSpot.latitude, newSpot.longitude]] : []}
+                      onPick={(pt) => setNewSpot(s => ({ ...s, latitude: pt[0], longitude: pt[1] }))}
+                      height="380px"
+                      center={Array.isArray(activeZoneForSpots.boundary_geojson) && activeZoneForSpots.boundary_geojson.length > 0 ? activeZoneForSpots.boundary_geojson[0] : [activeZoneForSpots.latitude || 23.8103, activeZoneForSpots.longitude || 90.4125]}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="row g-4 mt-1">
+              {/* Create Spot Form */}
+              <div className="col-md-5">
+                <div className="p-4 rounded-4 shadow-sm" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+                  <h6 className="fw-bold mb-4" style={{ color: '#0f172a' }}>2. Spot Details</h6>
+                  <form onSubmit={handleAddSpot}>
+                    <div className="mb-3">
+                      <label className="form-label small fw-semibold">Spot Number / ID *</label>
+                      <input 
+                        type="text" 
+                        className="form-control form-control-sm" 
+                        value={newSpot.spot_number} 
+                        onChange={e => setNewSpot({ ...newSpot, spot_number: e.target.value })} 
+                        required 
+                        placeholder="e.g. A-12, Kiosk-5"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="form-label small fw-semibold">Description (Optional)</label>
+                      <input 
+                        type="text" 
+                        className="form-control form-control-sm" 
+                        value={newSpot.description} 
+                        onChange={e => setNewSpot({ ...newSpot, description: e.target.value })} 
+                        placeholder="Location details"
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-success w-100 py-2 fw-bold shadow-sm" style={{ borderRadius: 8 }} disabled={spotLoading || !newSpot.latitude}>
+                      {spotLoading ? 'Adding...' : '+ Add Spot at Location'}
+                    </button>
+                    {!newSpot.latitude && (
+                      <div className="text-danger small mt-2 text-center">Please click on the map to set location</div>
+                    )}
+                  </form>
+                </div>
+              </div>
+
+              {/* Spot List */}
+              <div className="col-md-7">
+                <div className="p-4 rounded-4 shadow-sm h-100" style={{ background: '#fff', border: '1px solid #e2e8f0' }}>
+                  <h6 className="fw-bold mb-3" style={{ color: '#0f172a' }}>Current Zone Spots ({zoneSpots.length})</h6>
+                  <div className="table-responsive border rounded" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                  <table className="sv-table mb-0">
+                    <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                      <tr>
+                        <th className="py-3 px-3">Spot Number</th>
+                        <th className="py-3 px-3">Details</th>
+                        <th className="py-3 px-3">Status</th>
+                        <th className="text-end py-3 px-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {zoneSpots.map(s => (
+                        <tr key={s.id}>
+                          <td className="fw-bold px-3">{s.spot_number}</td>
+                          <td className="small text-muted px-3">{s.description || '—'}</td>
+                          <td className="px-3">
+                            <span className={`badge ${s.status === 'available' ? 'bg-success bg-opacity-25 text-success' : 'bg-secondary bg-opacity-25 text-secondary'} border-0`}>
+                              {s.status}
+                            </span>
+                          </td>
+                          <td className="text-end px-3">
+                            <button 
+                              onClick={() => handleDeleteSpot(s.id)} 
+                              className="btn btn-sm btn-light text-danger fw-bold border" 
+                              style={{ padding: '2px 8px', fontSize: 11 }}
+                            >
+                              ✕ Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {zoneSpots.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="text-center py-5 text-muted small">
+                            No spots created in this zone yet.<br/>Create one using the form.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      )}
     </div>
   );
 }
+

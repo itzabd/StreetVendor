@@ -18,10 +18,7 @@ const publicController = {
             spot_number, 
             latitude, 
             longitude,
-            blocks:block_id (
-              block_name,
-              zones:zone_id (name, area)
-            )
+            zones:zone_id (name, area)
           )
         `)
         .eq('status', 'active');

@@ -13,8 +13,10 @@ const vendorLinks = [
 
 const adminLinks = [
   { to: '/admin', icon: '📊', label: 'Dashboard', end: true },
+  { to: '/admin/zones', icon: '🗺️', label: 'Zones' },
   { to: '/admin/applications', icon: '📝', label: 'Applications' },
-  { to: '/admin/guest-reports', icon: '📍', label: 'Guest Reports' },
+  { to: '/admin/permissions', icon: '🔑', label: 'Licenses' },
+  { to: '/admin/guest-reports', icon: '🚨', label: 'Guest Reports' },
   { to: '/admin/complaints', icon: '📣', label: 'Complaints' },
   { to: '/admin/rent', icon: '💰', label: 'Rent Records' },
   { to: '/admin/profile', icon: '👤', label: 'My Profile' },
