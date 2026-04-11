@@ -92,11 +92,10 @@ export default function Navbar() {
   };
 
   const initials = profile?.full_name ? profile.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
-  const avatarUrl = user?.user_metadata?.avatar_url;
   const unreadCount = notifications.filter(n => !(n.readBy || []).includes(profile?.id)).length;
 
   return (
-    <div className="sv-topbar d-flex justify-content-between align-items-center position-relative">
+    <div className="sv-topbar d-flex justify-content-between align-items-center">
       <div className="sv-topbar-title">{title}</div>
       
       <div className="d-flex align-items-center gap-4">
@@ -180,8 +179,8 @@ export default function Navbar() {
               <div style={{ fontSize: 11, color: '#94a3b8' }}>{isAdmin ? '🔑 Administrator' : '🛒 Vendor'}</div>
             </div>
             
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }} />
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Avatar" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }} />
             ) : (
               <div className="sv-avatar">{initials}</div>
             )}

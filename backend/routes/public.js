@@ -9,6 +9,7 @@ router.get('/vendors', publicController.getAllVendors);
 // Public/Guest allowed routes
 router.post('/rate', optionalAuthenticate, publicController.submitRating);
 router.post('/report', publicController.submitReport);
+router.get('/verify/:id', publicController.verifyLicense);
 
 // Admin only management of guest reports
 router.get('/reports', authenticate, requireAdmin, publicController.getReports);

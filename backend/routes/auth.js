@@ -5,8 +5,8 @@ const supabase = require('../config/supabase');
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   const { email, password, full_name, phone, nid_number } = req.body;
-  if (!email || !password || !full_name) {
-    return res.status(400).json({ error: 'email, password, and full_name are required' });
+  if (!email || !password || !full_name || !nid_number) {
+    return res.status(400).json({ error: 'email, password, full_name, and nid_number are required' });
   }
 
   // Create auth user

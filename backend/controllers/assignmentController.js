@@ -4,7 +4,7 @@ async function getAll(req, res) {
   const isAdmin = req.profile && req.profile.role === 'admin';
   let query = supabase
     .from('spot_assignments')
-    .select('*, profiles(full_name, phone), spots(*, blocks(block_name, zones(*)))')
+    .select('*, profiles(full_name, phone), spots(*, zones(name))')
     .order('created_at', { ascending: false });
   if (!isAdmin) query = query.eq('vendor_id', req.user.id);
   const { data, error } = await query;

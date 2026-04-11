@@ -12,6 +12,13 @@ CREATE TABLE IF NOT EXISTS profiles (
   nid_number TEXT,
   role TEXT NOT NULL DEFAULT 'vendor' CHECK (role IN ('vendor', 'admin')),
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
+  home_address TEXT,
+  onboarding_completed BOOLEAN DEFAULT FALSE,
+  tin_number TEXT,
+  business_name TEXT,
+  business_type TEXT,
+  operating_hours TEXT,
+  avatar_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

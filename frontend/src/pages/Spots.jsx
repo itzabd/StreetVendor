@@ -10,12 +10,11 @@ export default function Spots() {
   const { confirmAction } = useConfirm();
   const [spots, setSpots] = useState([]);
   const [zones, setZones] = useState([]);
-  const [blocks, setBlocks] = useState([]);
   
   // Selection state
   const [selectedZone, setSelectedZone] = useState('');
   const [selectedZoneObj, setSelectedZoneObj] = useState(null);
-  const [formData, setFormData] = useState({ block_id: '', spot_number: '', description: '', latitude: null, longitude: null });
+  const [formData, setFormData] = useState({ zone_id: '', spot_number: '', description: '', latitude: null, longitude: null });
   
   const { getToken } = useAuth();
 
@@ -26,12 +25,11 @@ export default function Spots() {
 
   useEffect(() => {
     if (selectedZone) {
-      loadBlocksForZone(selectedZone);
       const z = zones.find(x => x.id === selectedZone);
       if (z) z.boundary_geojson = typeof z.boundary_geojson === 'string' ? JSON.parse(z.boundary_geojson) : z.boundary_geojson;
       setSelectedZoneObj(z || null);
+      setFormData(prev => ({ ...prev, zone_id: selectedZone }));
     } else {
-      setBlocks([]);
       setSelectedZoneObj(null);
     }
   }, [selectedZone, zones]);
@@ -48,12 +46,6 @@ export default function Spots() {
     setZones(res.data);
   }
 
-  async function loadBlocksForZone(zoneId) {
-    const token = await getToken();
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/blocks?zone_id=${zoneId}`, { headers: { Authorization: `Bearer ${token}` } });
-    setBlocks(res.data);
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
     try {
@@ -63,7 +55,7 @@ export default function Spots() {
       loadSpots();
       addToast('Spot created successfully', 'success');
     } catch (err) {
-      addToast('Failed to create spot', 'danger');
+      addToast(err.response?.data?.error || 'Failed to create spot', 'danger');
     }
   }
 
@@ -92,51 +84,45 @@ export default function Spots() {
 
   return (
     <div className="p-4 animate-entrance">
-      <h3 className="fw-bold mb-4">Vendor Spots</h3>
+      <h3 className="fw-bold mb-4">Vendor Spots Management</h3>
       
-      <div className="card shadow-sm mb-4">
-        <div className="card-body">
-          <h5 className="card-title text-primary">Create New Spot</h5>
+      <div className="card shadow-sm mb-4 border-0" style={{ borderRadius: 20 }}>
+        <div className="card-body p-4">
+          <h5 className="card-title text-primary fw-bold mb-4">Create New Spot</h5>
           <form onSubmit={handleSubmit} className="row g-3">
-            <div className="col-md-3">
-              <select className="form-select" value={selectedZone} onChange={e => { setSelectedZone(e.target.value); setFormData({...formData, block_id: ''}); }}>
-                <option value="">-- Select Zone First --</option>
+            <div className="col-md-4">
+              <label className="form-label small fw-bold">Select Zone</label>
+              <select className="form-select" value={selectedZone} onChange={e => setSelectedZone(e.target.value)}>
+                <option value="">-- Choose Vending Zone --</option>
                 {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
               </select>
             </div>
             <div className="col-md-3">
-              <select className="form-select" value={formData.block_id} onChange={e => setFormData({...formData, block_id: e.target.value})} required disabled={!selectedZone}>
-                <option value="">-- Select Block --</option>
-                {blocks.map(b => <option key={b.id} value={b.id}>{b.block_name}</option>)}
-              </select>
+              <label className="form-label small fw-bold">Spot UI/Number *</label>
+              <input type="text" placeholder="e.g. GB-101" className="form-control" value={formData.spot_number} onChange={e => setFormData({...formData, spot_number: e.target.value})} required />
             </div>
-            <div className="col-md-2">
-              <input type="text" placeholder="Spot UI/Number *" className="form-control" value={formData.spot_number} onChange={e => setFormData({...formData, spot_number: e.target.value})} required />
+            <div className="col-md-3">
+              <label className="form-label small fw-bold">Description</label>
+              <input type="text" placeholder="Near main gate, etc." className="form-control" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
             </div>
-            <div className="col-md-2">
-              <input type="text" placeholder="Description" className="form-control" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
-            </div>
-            <div className="col-md-2">
+            <div className="col-md-2 d-flex align-items-end">
               <button 
                 type="submit" 
-                className="btn btn-primary w-100" 
-                disabled={selectedZoneObj && !formData.latitude}
-                title={selectedZoneObj && !formData.latitude ? 'Please pinpoint the spot on the map first' : ''}
+                className="btn btn-primary w-100 py-2 shadow-sm fw-bold" 
+                disabled={!selectedZone || (selectedZoneObj && !formData.latitude)}
+                style={{ borderRadius: 10 }}
               >Add Spot</button>
-              {selectedZoneObj && !formData.latitude && (
-                <div className="small text-danger mt-1" style={{ fontSize: 11 }}>⚠️ Pin required on map</div>
-              )}
             </div>
             
             {selectedZoneObj && (
-              <div className="col-12 mt-4">
+              <div className="col-12 mt-4 pt-3 border-top">
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <label className="form-label text-primary fw-bold mb-0">📍 Pinpoint Spot Location on Map</label>
-                  <span className="small text-muted border px-2 py-1 bg-light rounded shadow-sm">
-                    {formData.latitude ? `Selected: [${formData.latitude.toFixed(4)}, ${formData.longitude.toFixed(4)}]` : 'No location selected'}
+                  <span className="small text-muted border px-3 py-1 bg-light rounded-pill shadow-sm">
+                    {formData.latitude ? `Selected: [${formData.latitude.toFixed(4)}, ${formData.longitude.toFixed(4)}]` : 'Click on map to select location'}
                   </span>
                 </div>
-                <div className="small text-muted mb-2">Search the area or click anywhere inside the <b>{selectedZoneObj.name}</b> zone boundaries below to assign exact GPS coordinates to this spot.</div>
+                <div className="small text-muted mb-3">Click inside the <b>{selectedZoneObj.name}</b> boundaries to set the exact GPS location.</div>
                 <ZoneMap 
                   viewOnly={false}
                   zones={[selectedZoneObj]} 
@@ -153,38 +139,37 @@ export default function Spots() {
         </div>
       </div>
 
-      <div className="table-responsive bg-white rounded shadow-sm">
+      <div className="table-responsive bg-white rounded shadow-sm border-0" style={{ borderRadius: 20 }}>
         <table className="table mb-0 table-hover align-middle">
           <thead className="table-light">
             <tr>
-              <th>Spot Number</th>
-              <th>Block & Zone</th>
+              <th className="px-4">Spot Identity</th>
+              <th>Assigned Zone</th>
               <th>Status</th>
               <th>Description</th>
-              <th className="text-end">Actions</th>
+              <th className="text-end px-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             {spots.map(s => (
               <tr key={s.id}>
-                <td className="fw-semibold text-monospace">
+                <td className="fw-bold text-monospace px-4">
                   {s.spot_number}
                   {s.latitude && s.longitude && (
-                    <div className="small text-primary mt-1" style={{ fontSize: 10 }}>📍 [{Number(s.latitude).toFixed(3)}, {Number(s.longitude).toFixed(3)}]</div>
+                    <div className="small text-primary mt-1" style={{ fontSize: 10, fontWeight: 400 }}>📍 {Number(s.latitude).toFixed(4)}, {Number(s.longitude).toFixed(4)}</div>
                   )}
                 </td>
                 <td>
-                  <div className="small fw-semibold">{s.blocks?.block_name}</div>
-                  <div className="small text-muted">{s.blocks?.zones?.name}</div>
+                  <span className="badge bg-light text-primary border">{s.zones?.name || 'Unassigned'}</span>
                 </td>
                 <td>{getStatusBadge(s.status)}</td>
-                <td className="text-muted small">{s.description || '-'}</td>
-                <td className="text-end">
-                  <button onClick={() => handleDelete(s.id)} className="btn btn-sm btn-outline-danger" disabled={s.status === 'occupied'}>Delete</button>
+                <td className="text-muted small">{s.description || '—'}</td>
+                <td className="text-end px-4">
+                  <button onClick={() => handleDelete(s.id)} className="btn btn-sm btn-outline-danger px-3" disabled={s.status === 'occupied'} style={{ borderRadius: 8 }}>Delete</button>
                 </td>
               </tr>
             ))}
-            {spots.length === 0 && <tr><td colSpan="5" className="text-center py-4 text-muted">No spots found</td></tr>}
+            {spots.length === 0 && <tr><td colSpan="5" className="text-center py-5 text-muted">No spots created yet. Fill the form above to start.</td></tr>}
           </tbody>
         </table>
       </div>

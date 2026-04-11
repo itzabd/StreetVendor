@@ -61,8 +61,8 @@ export default function Register() {
                 <input className="form-control" style={{ borderRadius: 10, padding: '10px 14px' }} placeholder="01XXXXXXXXX" value={form.phone} onChange={e => update('phone', e.target.value)} />
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold" style={{ fontSize: 13 }}>NID Number</label>
-                <input className="form-control" style={{ borderRadius: 10, padding: '10px 14px' }} placeholder="National ID" value={form.nid_number} onChange={e => update('nid_number', e.target.value)} />
+                <label className="form-label fw-semibold" style={{ fontSize: 13 }}>NID Number *</label>
+                <input className="form-control" style={{ borderRadius: 10, padding: '10px 14px' }} placeholder="National ID" value={form.nid_number} onChange={e => update('nid_number', e.target.value)} required />
               </div>
               <div className="col-12 mt-2">
                 <button type="submit" className="btn w-100 fw-semibold" style={{ background: '#1a6b3c', color: '#fff', borderRadius: 10, padding: '12px', fontSize: 14 }} disabled={loading}>

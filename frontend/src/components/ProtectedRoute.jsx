@@ -17,8 +17,27 @@ export default function ProtectedRoute({ children, role }) {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (role && profile?.role !== role) {
-    return <Navigate to={profile?.role === 'admin' ? '/admin' : '/vendor'} replace />;
+  // Force onboarding for vendors if not completed
+  // (Assuming /onboarding is the route for the onboarding page)
+  const isVendor = profile?.role === 'vendor';
+  const needsOnboarding = isVendor && !profile?.onboarding_completed;
+  
+  if (needsOnboarding && window.location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // Already onboarded vendors shouldn't go back to onboarding
+  if (!needsOnboarding && window.location.pathname === '/onboarding') {
+    return <Navigate to="/vendor" replace />;
+  }
+
+  if (role && profile && profile.role !== role) {
+    return <Navigate to={profile.role === 'admin' ? '/admin' : '/vendor'} replace />;
+  }
+
+  // If we are at /vendor and profile is missing, something is wrong, but don't loop
+  if (!profile && window.location.pathname !== '/login' && window.location.pathname !== '/home') {
+     // Optional: show error or handle gracefully. For now, we trust loading handled it.
   }
 
   return children;

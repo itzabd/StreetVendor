@@ -11,13 +11,23 @@ async function getProfile(req, res) {
 }
 
 async function updateProfile(req, res) {
-  const { full_name, phone, nid_number } = req.body;
+  const { 
+    full_name, phone, nid_number, home_address, 
+    tin_number, business_name, business_type, 
+    operating_hours, avatar_url, onboarding_completed 
+  } = req.body;
+  
   const { data, error } = await supabase
     .from('profiles')
-    .update({ full_name, phone, nid_number })
+    .update({ 
+      full_name, phone, nid_number, home_address, 
+      tin_number, business_name, business_type, 
+      operating_hours, avatar_url, onboarding_completed 
+    })
     .eq('id', req.user.id)
     .select()
     .single();
+    
   if (error) return res.status(400).json({ error: error.message });
   res.json(data);
 }

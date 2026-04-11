@@ -4,7 +4,7 @@ async function getAll(req, res) {
   const isAdmin = req.profile && req.profile.role === 'admin';
   let query = supabase
     .from('permissions')
-    .select('*, profiles!vendor_id(full_name), zones(name)')
+    .select('*, profiles!vendor_id(full_name, phone, nid_number, tin_number, home_address, business_name, operating_hours, avatar_url), zones(name), spots(spot_number, latitude, longitude), issuer:profiles!issued_by(full_name)')
     .order('created_at', { ascending: false });
   if (!isAdmin) query = query.eq('vendor_id', req.user.id);
   const { data, error } = await query;
@@ -13,13 +13,13 @@ async function getAll(req, res) {
 }
 
 async function create(req, res) {
-  const { vendor_id, zone_id, permission_type, valid_from, valid_until, notes } = req.body;
+  const { vendor_id, zone_id, spot_id, permission_type, valid_from, valid_until, notes } = req.body;
   if (!vendor_id || !zone_id || !permission_type) {
     return res.status(400).json({ error: 'vendor_id, zone_id, and permission_type are required' });
   }
   const { data, error } = await supabase
     .from('permissions')
-    .insert({ vendor_id, zone_id, permission_type, valid_from, valid_until, notes, status: 'active', issued_by: req.user.id })
+    .insert({ vendor_id, zone_id, spot_id, permission_type, valid_from, valid_until, notes, status: 'active', issued_by: req.user.id })
     .select()
     .single();
   if (error) return res.status(400).json({ error: error.message });

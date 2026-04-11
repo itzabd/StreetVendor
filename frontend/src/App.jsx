@@ -22,7 +22,9 @@ import Permissions from './pages/Permissions';
 import Complaints from './pages/Complaints';
 import RentRecords from './pages/RentRecords';
 import Profile from './pages/Profile';
+import Onboarding from './pages/Onboarding';
 import AdminGuestReports from './pages/AdminGuestReports';
+import VerifyLicense from './pages/VerifyLicense';
 import ServiceMonitor from './components/ServiceMonitor';
 
 function Layout({ children }) {
@@ -65,6 +67,7 @@ export default function App() {
             <Route path="/login" element={<Navigate to="/home?mode=login" replace />} />
             <Route path="/register" element={<Navigate to="/home?mode=register" replace />} />
             <Route path="/" element={<RootRedirect />} />
+            <Route path="/verify/:id" element={<VerifyLicense />} />
 
             {/* Vendor Routes */}
             <Route path="/vendor" element={<ProtectedRoute role="vendor"><Layout><VendorDashboard /></Layout></ProtectedRoute>} />
@@ -74,6 +77,7 @@ export default function App() {
             <Route path="/vendor/complaints" element={<ProtectedRoute role="vendor"><Layout><Complaints /></Layout></ProtectedRoute>} />
             <Route path="/vendor/rent" element={<ProtectedRoute role="vendor"><Layout><RentRecords /></Layout></ProtectedRoute>} />
             <Route path="/vendor/profile" element={<ProtectedRoute role="vendor"><Layout><Profile /></Layout></ProtectedRoute>} />
+            <Route path="/onboarding" element={<ProtectedRoute role="vendor"><Onboarding /></ProtectedRoute>} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute role="admin"><Layout><AdminDashboard /></Layout></ProtectedRoute>} />

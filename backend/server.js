@@ -10,7 +10,6 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/vendors', require('./routes/vendors'));
 app.use('/api/zones', require('./routes/zones'));
-app.use('/api/blocks', require('./routes/blocks'));
 app.use('/api/spots', require('./routes/spots'));
 app.use('/api/applications', require('./routes/applications'));
 app.use('/api/assignments', require('./routes/assignments'));

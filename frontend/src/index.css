@@ -175,7 +175,7 @@ body {
   min-height: calc(100vh - var(--sv-navbar-height));
   width: calc(100vw - var(--sv-sidebar-width));
   max-width: 100%;
-  padding: 0 24px 24px 24px;
+  padding: 24px 24px 24px 24px;
   background: var(--sv-bg);
   overflow-x: hidden;
 }
@@ -307,7 +307,8 @@ body {
 
 /* ─── Page Heading ────────────────────────────────────────── */
 .sv-page-header {
-  margin-bottom: 22px;
+  margin-top: 0;
+  margin-bottom: 20px;
 }
 .sv-page-header h3 {
   font-size: 20px;

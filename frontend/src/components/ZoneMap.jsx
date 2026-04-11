@@ -325,6 +325,10 @@ export default function ZoneMap({
                       {isSelected ? '✓ SELECTED' : spot.status?.toUpperCase()}
                     </span>
                   </div>
+                  <div style={{ marginTop: 8, fontSize: 11, color: '#64748b', borderTop: '1px solid #f1f5f9', paddingTop: 6 }}>
+                    <div className="fw-bold text-uppercase" style={{ fontSize: 9, letterSpacing: '0.5px' }}>GPS Location</div>
+                    <div style={{ fontFamily: 'monospace' }}>📍 {Number(spot.latitude).toFixed(6)}, {Number(spot.longitude).toFixed(6)}</div>
+                  </div>
                   {spot.blocks?.block_name && <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Block: {spot.blocks.block_name}</div>}
                   {onSpotSelect && (isAvailable || spot.status === 'unverified') && !isSelected && (
                     <button

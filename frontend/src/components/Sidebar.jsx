@@ -8,19 +8,16 @@ const vendorLinks = [
   { to: '/vendor/permissions', icon: '🔑', label: 'Permissions' },
   { to: '/vendor/complaints', icon: '📣', label: 'Complaints' },
   { to: '/vendor/rent', icon: '💰', label: 'Rent Records' },
+  { to: '/vendor/profile', icon: '👤', label: 'My Profile' },
 ];
 
 const adminLinks = [
   { to: '/admin', icon: '📊', label: 'Dashboard', end: true },
-  { to: '/admin/zones', icon: '🗺️', label: 'Zones' },
-  { to: '/admin/blocks', icon: '🏗️', label: 'Blocks' },
-  { to: '/admin/spots', icon: '📍', label: 'Spots' },
-  { to: '/admin/applications', icon: '📋', label: 'Applications' },
+  { to: '/admin/applications', icon: '📝', label: 'Applications' },
   { to: '/admin/guest-reports', icon: '📍', label: 'Guest Reports' },
-  { to: '/admin/assignments', icon: '🔄', label: 'Assignments' },
-  { to: '/admin/permissions', icon: '🔑', label: 'Permissions' },
   { to: '/admin/complaints', icon: '📣', label: 'Complaints' },
   { to: '/admin/rent', icon: '💰', label: 'Rent Records' },
+  { to: '/admin/profile', icon: '👤', label: 'My Profile' },
 ];
 
 export default function Sidebar() {

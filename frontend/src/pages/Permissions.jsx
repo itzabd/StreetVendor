@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
+import { generateLicensePDF } from '../utils/LicensePDF';
 
 export default function Permissions() {
   const { addToast } = useToast();
@@ -116,6 +117,34 @@ export default function Permissions() {
     return <span className={`badge bg-${colors[status]}`}>{status}</span>;
   };
 
+  async function handleDownloadLicense(p) {
+    try {
+      await generateLicensePDF({
+        vendorName:     p.profiles?.full_name,
+        nidNumber:      p.profiles?.nid_number || 'N/A',
+        phone:          p.profiles?.phone,
+        address:        p.profiles?.home_address || 'N/A',
+        tinNumber:      p.profiles?.tin_number || 'N/A',
+        businessName:   p.profiles?.business_name,
+        businessType:   p.profiles?.business_type,
+        operatingHours: p.profiles?.operating_hours,
+        avatar_url:     p.profiles?.avatar_url,
+        permissionType: p.permission_type,
+        zoneName:       p.zones?.name,
+        spotNumber:     p.spots?.spot_number || 'N/A',
+        latitude:       p.spots?.latitude,
+        longitude:      p.spots?.longitude,
+        validFrom:      p.valid_from,
+        validUntil:     p.valid_until,
+        licenseId:      p.id,
+        issuedBy:       p.issuer?.full_name || 'City Corporation Office',
+        designation:    'Licensing Officer',
+      });
+    } catch (err) {
+      addToast('Failed to generate PDF', 'danger');
+    }
+  }
+
   return (
     <div className="animate-entrance">
       <h3 className="fw-bold mb-4">{isAdmin ? 'Vendor Permissions' : 'My Permissions'}</h3>
@@ -169,6 +198,7 @@ export default function Permissions() {
               <th>Status</th>
               <th>Validity</th>
               <th>Notes</th>
+              <th className="text-end">License</th>
               {isAdmin && <th className="text-end">Actions</th>}
             </tr>
           </thead>
@@ -185,6 +215,18 @@ export default function Permissions() {
                   {p.valid_from || '?'} <br/> to <br/> {p.valid_until || 'Ongoing'}
                 </td>
                 <td className="small text-muted">{p.notes || '-'}</td>
+                <td className="text-end">
+                  {p.status === 'active' && (
+                    <button
+                      onClick={() => handleDownloadLicense(p)}
+                      className="btn btn-sm"
+                      title="Download Official License PDF"
+                      style={{ background: 'linear-gradient(135deg, #1a6b3c, #2d8f55)', color: '#fff', borderRadius: 8, fontSize: 11, fontWeight: 600, border: 'none', whiteSpace: 'nowrap' }}
+                    >
+                      📄 License
+                    </button>
+                  )}
+                </td>
                 {isAdmin && (
                   <td className="text-end">
                     {p.status === 'active' && (

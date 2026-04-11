@@ -213,6 +213,24 @@ const publicController = {
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
+  },
+
+  // Public license verification
+  verifyLicense: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { data, error } = await supabase
+        .from('permissions')
+        .select('*, profiles!vendor_id(full_name, business_name, avatar_url), zones(name), spots(spot_number), issuer:profiles!issued_by(full_name)')
+        .eq('id', id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      if (!data) return res.status(404).json({ error: 'License not found' });
+      res.json(data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
 };
 

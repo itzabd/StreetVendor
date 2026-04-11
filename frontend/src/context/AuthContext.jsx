@@ -111,13 +111,18 @@ export function AuthProvider({ children }) {
   }
 
   async function refreshUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-    return user;
+    const { data: { session } } = await supabase.auth.getSession();
+    setUser(session?.user ?? null);
+    if (session?.user) {
+      await fetchProfile(session.access_token);
+    }
+    return session?.user;
   }
 
+    const isOnboarded = user && profile?.onboarding_completed;
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, serviceStatus, login, logout, getToken, refreshUser, checkServiceHealth }}>
+    <AuthContext.Provider value={{ user, profile, loading, isOnboarded, serviceStatus, login, logout, getToken, refreshUser, checkServiceHealth }}>
       {children}
     </AuthContext.Provider>
   );

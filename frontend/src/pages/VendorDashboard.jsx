@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ZoneMap from '../components/ZoneMap';
+import { generateLicensePDF } from '../utils/LicensePDF';
 
 export default function VendorDashboard() {
   const [stats, setStats] = useState({ apps: 0, assignments: 0, complaints: 0, permissions: 0 });
@@ -11,7 +12,6 @@ export default function VendorDashboard() {
   const [activePermission, setActivePermission] = useState(null);
   const [fullSpot, setFullSpot] = useState(null);
   const [fullZone, setFullZone] = useState(null);
-  const [showHelpModal, setShowHelpModal] = useState(false);
   const { profile, getToken } = useAuth();
 
   useEffect(() => { loadDashboardData(); }, []);
@@ -26,6 +26,7 @@ export default function VendorDashboard() {
       axios.get(`${base}/complaints`, { headers: h }).catch(() => ({ data: [] })),
       axios.get(`${base}/permissions`, { headers: h }).catch(() => ({ data: [] })),
     ]);
+
     setStats({
       apps: apps.data.length,
       assignments: assignments.data.filter(a => a.status === 'active').length,
@@ -39,27 +40,10 @@ export default function VendorDashboard() {
     setActiveAssignment(activeAsgn);
     setActivePermission(activePerm);
 
-    if (activeAsgn) {
-      try {
-        const [zonesRes, blocksRes, spotsRes] = await Promise.all([
-          axios.get(`${base}/zones`, { headers: h }),
-          axios.get(`${base}/blocks`, { headers: h }),
-          axios.get(`${base}/spots`, { headers: h })
-        ]);
-
-        const spotMatch = spotsRes.data.find(s => s.id === activeAsgn.spot_id);
-        if (spotMatch) {
-          setFullSpot(spotMatch);
-          const blockMatch = blocksRes.data.find(b => b.id === spotMatch.block_id);
-          if (blockMatch) {
-            const zoneMatch = zonesRes.data.find(z => z.id === blockMatch.zone_id);
-            if (zoneMatch) {
-              setFullZone(zoneMatch);
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Failed robust map data load", err);
+    if (activeAsgn && activeAsgn.spots) {
+      setFullSpot(activeAsgn.spots);
+      if (activeAsgn.spots.zones) {
+        setFullZone(activeAsgn.spots.zones);
       }
     }
   }
@@ -73,7 +57,7 @@ export default function VendorDashboard() {
 
   return (
     <div className="position-relative">
-      {/* Welcome Banner with Shimmer Effect */}
+      {/* Welcome Banner */}
       <div className="animate-entrance sv-shimmer-bg" style={{
         position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #1e293b, #334155, #1e293b)',
         backgroundSize: '200% 100%', borderRadius: 20, padding: '30px 40px', marginBottom: 30, marginTop: '-10px',
@@ -88,7 +72,7 @@ export default function VendorDashboard() {
       {/* Stat Cards */}
       <div className="row g-3 mb-4">
         {statCards.map((s, idx) => (
-          <div key={s.label} className={`col-sm-6 col-xl-3 animate-entrance delay-${idx + 1}`}>
+          <div key={s.label} className={`col-sm-6 col-xl-3 animate-entrance`}>
             <Link to={s.link} style={{ textDecoration: 'none' }}>
               <div className="sv-stat-card sv-hover-lift">
                 <div className="stat-icon">{s.icon}</div>
@@ -103,7 +87,7 @@ export default function VendorDashboard() {
 
       {/* Active Spot & Permission Section */}
       {activeAssignment ? (
-        <div className="row g-4 mb-4 animate-entrance delay-2">
+        <div className="row g-4 mb-4 animate-entrance">
           <div className="col-lg-8">
             <div className="sv-card h-100 overflow-hidden d-flex flex-column" style={{ minHeight: 450, padding: 0 }}>
               <div className="sv-card-header d-flex justify-content-between align-items-center" style={{ padding: '15px 20px', borderBottom: '1px solid #f1f5f9' }}>
@@ -113,7 +97,7 @@ export default function VendorDashboard() {
               <div className="flex-grow-1 position-relative" style={{ minHeight: 0 }}>
                 <ZoneMap
                   zones={fullZone ? [fullZone] : []}
-                  spotMarkers={fullSpot ? [fullSpot] : []}
+                  spotMarkers={fullSpot ? [{ ...fullSpot, status: 'occupied' }] : []}
                   selectedSpotId={fullSpot?.id}
                   viewOnly={true}
                   locked={false}
@@ -138,8 +122,8 @@ export default function VendorDashboard() {
                     </div>
                   </div>
                   <div className="mt-3 p-3 rounded-4" style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                    <div className="fw-bold text-dark">{activeAssignment.spots?.blocks?.zones?.name}</div>
-                    <div className="small text-muted">{activeAssignment.spots?.blocks?.block_name}</div>
+                    <div className="fw-bold text-dark">{activeAssignment.spots?.zones?.name || fullZone?.name}</div>
+                    <div className="small text-muted">{activeAssignment.spots?.block_name || 'Assigned Area'}</div>
                   </div>
                 </div>
 
@@ -157,8 +141,36 @@ export default function VendorDashboard() {
                       <span className="fw-800 text-primary uppercase" style={{ fontSize: 11, letterSpacing: 1 }}>Legal Permission</span>
                     </div>
                     <div className="fs-6 fw-bold text-dark mb-1">{activePermission.permission_type}</div>
-                    <div className="small text-muted">
-                      Granted: <b>{new Date(activePermission.valid_from).toLocaleDateString(undefined, { dateStyle: 'medium' })}</b></div>
+                    <div className="small text-muted mb-3">
+                      Granted: <b>{new Date(activePermission.valid_from).toLocaleDateString(undefined, { dateStyle: 'medium' })}</b>
+                    </div>
+                    <button
+                      onClick={() => generateLicensePDF({
+                        vendorName:     profile?.full_name,
+                        nidNumber:      profile?.nid_number || 'N/A',
+                        phone:          profile?.phone,
+                        address:        profile?.home_address || 'N/A',
+                        tinNumber:      profile?.tin_number || 'N/A',
+                        businessName:   profile?.business_name,
+                        businessType:   profile?.business_type,
+                        operatingHours: profile?.operating_hours,
+                        avatar_url:     profile?.avatar_url,
+                        permissionType: activePermission.permission_type,
+                        zoneName:       activePermission.zones?.name || fullZone?.name,
+                        spotNumber:     fullSpot?.spot_number,
+                        latitude:       fullSpot?.latitude,
+                        longitude:      fullSpot?.longitude,
+                        validFrom:      activePermission.valid_from,
+                        validUntil:     activePermission.valid_until,
+                        licenseId:      activePermission.id,
+                        issuedBy:       activePermission.issuer?.full_name || 'City Corporation Office',
+                        designation:    'Licensing Officer',
+                      })}
+                      className="btn w-100 btn-sm"
+                      style={{ background: 'linear-gradient(135deg, #1a6b3c, #2d8f55)', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 12, border: 'none', padding: '10px' }}
+                    >
+                      📄 Download Official License
+                    </button>
                   </div>
                 )}
               </div>
@@ -166,14 +178,16 @@ export default function VendorDashboard() {
           </div>
         </div>
       ) : (
-        <div className="sv-card mb-4 text-center py-5 animate-entrance delay-2 sv-hover-lift">
+        <div className="sv-card mb-4 text-center py-5 animate-entrance sv-hover-lift">
           <div className="fs-1 mb-3">🏷️</div>
           <h5>No Active Spot Yet</h5>
           <p className="text-muted">Once an admin assigns you a spot, it will appear here on the map.</p>
           <Link to="/vendor/applications" className="btn btn-primary px-4" style={{ borderRadius: 8 }}>Apply for a Zone</Link>
         </div>
       )}
-      <div className="sv-card animate-entrance delay-4 sv-hover-lift" style={{ transition: 'all 0.4s ease' }}>
+
+      {/* Recent Applications */}
+      <div className="sv-card animate-entrance sv-hover-lift" style={{ transition: 'all 0.4s ease' }}>
         <div className="sv-card-header">
           <h5>Recent Applications</h5>
           <Link to="/vendor/applications" style={{ fontSize: 12, color: '#1a6b3c', textDecoration: 'none', fontWeight: 600 }}>View all →</Link>
@@ -202,69 +216,6 @@ export default function VendorDashboard() {
           </tbody>
         </table>
       </div>
-
-      {/* Floating Helpline SOS Button - Fixed to Viewport */}
-      <div className="position-fixed" style={{ bottom: 40, right: 40, zIndex: 10000 }}>
-        <button
-          onClick={() => setShowHelpModal(true)}
-          className="btn d-flex align-items-center justify-content-center shadow-lg border-0"
-          style={{
-            width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
-            fontSize: 26, boxShadow: '0 8px 32px rgba(239, 68, 68, 0.4)', transition: 'all 0.3s ease',
-            animation: 'sv-sos-pulse 2s infinite'
-          }}
-        >
-          🆘
-        </button>
-      </div>
-
-      <style>{`
-        @keyframes sv-sos-pulse {
-          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-          70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
-          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-      `}</style>
-
-      {/* Helpline Modal Component */}
-      {showHelpModal && (
-        <div className="sv-modal-backdrop" onClick={() => setShowHelpModal(false)}>
-          <div className="sv-modal-content" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-            <button className="sv-modal-close" onClick={() => setShowHelpModal(false)}>✕</button>
-            <div className="p-4">
-              <div className="text-center mb-4">
-                <div className="fs-2 mb-2">🛡️</div>
-                <h5 className="fw-800 text-dark mb-1">Emergency & Support</h5>
-                <p className="small text-muted">24/7 dedicated help at your fingertips</p>
-              </div>
-
-              <div className="d-flex flex-column gap-3">
-                <a href="tel:999" className="text-decoration-none">
-                  <div className="p-3 rounded-4 d-flex align-items-center gap-3"
-                    style={{ background: '#fef2f2', border: '1px solid #fee2e2', transition: 'all 0.3s' }}>
-                    <div className="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: 44, height: 44 }}>🚓</div>
-                    <div className="flex-grow-1">
-                      <div className="fw-800 text-danger mb-0" style={{ fontSize: 18 }}>999</div>
-                      <div className="small text-muted fw-semibold">National Emergency</div>
-                    </div>
-                  </div>
-                </a>
-
-                <a href="tel:+880123456789" className="text-decoration-none">
-                  <div className="p-3 rounded-4 d-flex align-items-center gap-3"
-                    style={{ background: '#f0fdf4', border: '1px solid #dcfce7' }}>
-                    <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: 44, height: 44 }}>💼</div>
-                    <div className="flex-grow-1">
-                      <div className="fw-800 text-success mb-0" style={{ fontSize: 16 }}>Support Desk</div>
-                      <div className="small text-muted fw-semibold">Digital Vendor Support</div>
-                    </div>
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
