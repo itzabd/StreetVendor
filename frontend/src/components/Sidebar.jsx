@@ -13,6 +13,7 @@ const vendorLinks = [
 
 const adminLinks = [
   { to: '/admin', icon: '📊', label: 'Dashboard', end: true },
+  { to: '/admin/users', icon: '👥', label: 'Users' },
   { to: '/admin/zones', icon: '🗺️', label: 'Zones' },
   { to: '/admin/applications', icon: '📝', label: 'Applications' },
   { to: '/admin/permissions', icon: '🔑', label: 'Licenses' },
@@ -30,7 +31,7 @@ export default function Sidebar() {
 
   return (
     <div className="sv-sidebar">
-      <NavLink to="/" className="sv-sidebar-brand">
+      <NavLink to="/" className="sv-sidebar-brand" style={{textDecoration: 'none'}}>
         <div className="brand-icon">🛒</div>
         <div>
           <div className="brand-text">StreetVendor BD</div>
@@ -40,17 +41,39 @@ export default function Sidebar() {
 
       <div className="sv-nav-section">{section}</div>
 
-      {links.map(link => (
-        <NavLink
-          key={link.to}
-          to={link.to}
-          end={link.end}
-          className={({ isActive }) => `sv-nav-link${isActive ? ' active' : ''}`}
-        >
-          <span className="nav-icon">{link.icon}</span>
-          {link.label}
-        </NavLink>
-      ))}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {links.map(link => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            end={link.end}
+            className={({ isActive }) => `sv-nav-link${isActive ? ' active' : ''}`}
+          >
+            <span className="nav-icon">{link.icon}</span>
+            {link.label}
+          </NavLink>
+        ))}
+
+        {!isAdmin && (
+          <div style={{
+            margin: '20px 16px',
+            padding: '16px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+            borderRadius: '12px',
+          }}>
+            <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '14px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>🚑</span> Emergency SOS
+            </div>
+            <div style={{ fontSize: '13px', color: '#fca5a5', marginBottom: '6px' }}>
+              <span style={{ display: 'inline-block', width: '20px' }}>👮</span> Police: <strong>999</strong>
+            </div>
+            <div style={{ fontSize: '13px', color: '#fca5a5' }}>
+              <span style={{ display: 'inline-block', width: '20px' }}>🏥</span> Hospital: <strong>16263</strong>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="sv-sidebar-footer">
         <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 8 }}>

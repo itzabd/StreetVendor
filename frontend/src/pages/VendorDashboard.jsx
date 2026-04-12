@@ -56,45 +56,47 @@ export default function VendorDashboard() {
   ];
 
   return (
-    <div className="position-relative">
-      {/* Welcome Banner */}
-      <div className="animate-entrance sv-shimmer-bg" style={{
-        position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #1e293b, #334155, #1e293b)',
-        backgroundSize: '200% 100%', borderRadius: 20, padding: '30px 40px', marginBottom: 30, marginTop: '-10px',
-        color: '#fff', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', animation: 'sv-shimmer-shift 8s linear infinite, svEntrance 0.8s ease-out'
-      }}>
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>Welcome, {profile?.full_name ? profile.full_name.split(' ')[0] : 'Vendor'} 👋</div>
-          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14 }}>Manage your street vending operations and track your legal permissions.</div>
+    <div className="vendor-dashboard-container animate-entrance">
+      {/* Welcome Section */}
+      <div className="dashboard-hero mb-5">
+        <div className="hero-content">
+          <h2 className="fw-900 mb-1">Welcome back, {profile?.full_name ? profile.full_name.split(' ')[0] : 'Merchant'}!</h2>
+          <p className="opacity-75 mb-0">Track your street vending permits and manage your assigned spot in real-time.</p>
+        </div>
+        <div className="hero-status-pill">
+          <span className="dot active"></span>
+          <span className="label">Live Registry Active</span>
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="row g-3 mb-4">
+      {/* Modern Stat Grid */}
+      <div className="row g-4 mb-5">
         {statCards.map((s, idx) => (
-          <div key={s.label} className={`col-sm-6 col-xl-3 animate-entrance`}>
-            <Link to={s.link} style={{ textDecoration: 'none' }}>
-              <div className="sv-stat-card sv-hover-lift">
-                <div className="stat-icon">{s.icon}</div>
-                <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
-                <div className="stat-label">{s.label}</div>
-                <div className="stat-accent" style={{ background: s.color }}></div>
+          <div key={s.label} className="col-sm-6 col-xl-3">
+            <Link to={s.link} className="stat-card-modern sv-hover-lift">
+              <div className="icon-box" style={{ background: s.color + '10', color: s.color }}>{s.icon}</div>
+              <div className="content">
+                <div className="value">{s.value}</div>
+                <div className="label">{s.label}</div>
               </div>
             </Link>
           </div>
         ))}
       </div>
 
-      {/* Active Spot & Permission Section */}
+      {/* Active Spot & Info Card */}
       {activeAssignment ? (
-        <div className="row g-4 mb-4 animate-entrance">
+        <div className="row g-4 mb-5">
           <div className="col-lg-8">
-            <div className="sv-card h-100 overflow-hidden d-flex flex-column" style={{ minHeight: 450, padding: 0 }}>
-              <div className="sv-card-header d-flex justify-content-between align-items-center" style={{ padding: '15px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                <h5 className="mb-0" style={{ fontSize: 16 }}>📍 My Active Spot</h5>
-                <span className="badge bg-success px-3 py-2 rounded-pill shadow-sm" style={{ fontSize: 10 }}>ACTIVE</span>
+            <div className="modern-glass-card h-100 overflow-hidden d-flex flex-column" style={{ minHeight: 480 }}>
+              <div className="card-header-premium">
+                <div className="d-flex align-items-center gap-2">
+                  <span className="card-dot"></span>
+                  <h5 className="mb-0 fw-800">Assigned Operational Spot</h5>
+                </div>
+                <span className="status-pill-green">LIVE TRACKING</span>
               </div>
-              <div className="flex-grow-1 position-relative" style={{ minHeight: 0 }}>
+              <div className="flex-grow-1">
                 <ZoneMap
                   zones={fullZone ? [fullZone] : []}
                   spotMarkers={fullSpot ? [{ ...fullSpot, status: 'occupied' }] : []}
@@ -108,114 +110,158 @@ export default function VendorDashboard() {
             </div>
           </div>
           <div className="col-lg-4">
-            <div className="sv-card h-100 border-0 shadow-lg" style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)', borderRadius: 20 }}>
-              <div className="sv-card-header bg-transparent border-0 pt-4 px-4">
-                <h6 className="text-uppercase fw-bold text-muted mb-0" style={{ letterSpacing: '1px', fontSize: 10 }}>Current Status</h6>
-              </div>
-              <div className="card-body px-4 pb-4">
-                <div className="mb-4">
-                  <div className="d-flex align-items-center gap-3 mb-2">
-                    <div className="flex-shrink-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: 44, height: 44, fontSize: 18 }}>📍</div>
-                    <div>
-                      <div className="fs-2 fw-800 text-dark mb-0 lh-1">#{activeAssignment.spots?.spot_number}</div>
-                      <div className="small text-muted fw-semibold uppercase">Assigned Spot</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 p-3 rounded-4" style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                    <div className="fw-bold text-dark">{activeAssignment.spots?.zones?.name || fullZone?.name}</div>
-                    <div className="small text-muted">{activeAssignment.spots?.block_name || 'Assigned Area'}</div>
-                  </div>
+            <div className="modern-info-card h-100">
+              <div className="id-stamp">Official Record</div>
+              <div className="spot-identity mb-4">
+                <div className="spot-number">#{activeAssignment.spots?.spot_number}</div>
+                <div className="spot-details">
+                  <div className="zone-name">{activeAssignment.spots?.zones?.name || fullZone?.name}</div>
+                  <div className="block-name">{activeAssignment.spots?.block_name || 'Block Assigned'}</div>
                 </div>
-
-                <div className="mb-4 py-3 border-top border-bottom border-light">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div className="small text-muted fw-semibold">Monthly Rent</div>
-                    <div className="fs-5 fw-800 text-success">৳{Number(activeAssignment.rent_amount).toFixed(0)}</div>
-                  </div>
-                </div>
-
-                {activePermission && (
-                  <div className="p-4 rounded-4 position-relative overflow-hidden shadow-sm" style={{ background: 'linear-gradient(135deg, #eff6ff, #dbeafe)', border: '1px solid #bfdbfe' }}>
-                    <div className="position-absolute" style={{ top: -10, right: -10, fontSize: 40, opacity: 0.1 }}>🛡️</div>
-                    <div className="d-flex align-items-center gap-2 mb-2">
-                      <span className="fw-800 text-primary uppercase" style={{ fontSize: 11, letterSpacing: 1 }}>Legal Permission</span>
-                    </div>
-                    <div className="fs-6 fw-bold text-dark mb-1">{activePermission.permission_type}</div>
-                    <div className="small text-muted mb-3">
-                      Granted: <b>{new Date(activePermission.valid_from).toLocaleDateString(undefined, { dateStyle: 'medium' })}</b>
-                    </div>
-                    <button
-                      onClick={() => generateLicensePDF({
-                        vendorName:     profile?.full_name,
-                        nidNumber:      profile?.nid_number || 'N/A',
-                        phone:          profile?.phone,
-                        address:        profile?.home_address || 'N/A',
-                        tinNumber:      profile?.tin_number || 'N/A',
-                        businessName:   profile?.business_name,
-                        businessType:   profile?.business_type,
-                        operatingHours: profile?.operating_hours,
-                        avatar_url:     profile?.avatar_url,
-                        permissionType: activePermission.permission_type,
-                        zoneName:       activePermission.zones?.name || fullZone?.name,
-                        spotNumber:     fullSpot?.spot_number,
-                        latitude:       fullSpot?.latitude,
-                        longitude:      fullSpot?.longitude,
-                        validFrom:      activePermission.valid_from,
-                        validUntil:     activePermission.valid_until,
-                        licenseId:      activePermission.id,
-                        issuedBy:       activePermission.issuer?.full_name || 'City Corporation Office',
-                        designation:    'Licensing Officer',
-                      })}
-                      className="btn w-100 btn-sm"
-                      style={{ background: 'linear-gradient(135deg, #1a6b3c, #2d8f55)', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 12, border: 'none', padding: '10px' }}
-                    >
-                      📄 Download Official License
-                    </button>
-                  </div>
-                )}
               </div>
+
+              <div className="rent-strip mb-4">
+                <span className="label">Monthly Rental</span>
+                <span className="value">৳{Number(activeAssignment.rent_amount).toFixed(0)}</span>
+              </div>
+
+              {activePermission && (
+                <div className="permission-artifact">
+                  <div className="artifact-header">
+                    <span className="icon">🛡️</span>
+                    <span className="label">Legal Permit</span>
+                  </div>
+                  <h6 className="fw-800 mb-1">{activePermission.permission_type}</h6>
+                  <p className="expiry">Valid from {new Date(activePermission.valid_from).toLocaleDateString()}</p>
+                  
+                  <button
+                    onClick={() => generateLicensePDF({
+                      vendorName:     profile?.full_name,
+                      nidNumber:      profile?.nid_number || 'N/A',
+                      phone:          profile?.phone,
+                      address:        profile?.home_address || 'N/A',
+                      tinNumber:      profile?.tin_number || 'N/A',
+                      businessName:   profile?.business_name,
+                      businessType:   profile?.business_type,
+                      operatingHours: profile?.operating_hours,
+                      avatar_url:     profile?.avatar_url,
+                      permissionType: activePermission.permission_type,
+                      zoneName:       activePermission.zones?.name || fullZone?.name,
+                      spotNumber:     fullSpot?.spot_number,
+                      latitude:       fullSpot?.latitude,
+                      longitude:      fullSpot?.longitude,
+                      validFrom:      activePermission.valid_from,
+                      validUntil:     activePermission.valid_until,
+                      licenseId:      activePermission.id,
+                      issuedBy:       activePermission.issuer?.full_name || 'City Corporation Office',
+                      designation:    'Licensing Officer',
+                    })}
+                    className="download-btn-modern"
+                  >
+                    📄 Download Official License
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       ) : (
-        <div className="sv-card mb-4 text-center py-5 animate-entrance sv-hover-lift">
-          <div className="fs-1 mb-3">🏷️</div>
-          <h5>No Active Spot Yet</h5>
-          <p className="text-muted">Once an admin assigns you a spot, it will appear here on the map.</p>
-          <Link to="/vendor/applications" className="btn btn-primary px-4" style={{ borderRadius: 8 }}>Apply for a Zone</Link>
+        <div className="empty-state-card mb-5 animate-entrance">
+          <div className="empty-icon">📍</div>
+          <h4 className="fw-800">No Spot Assigned Yet</h4>
+          <p className="text-muted">Applications being reviewed in the registry.</p>
+          <Link to="/vendor/applications" className="btn-modern primary">Submit Application</Link>
         </div>
       )}
 
-      {/* Recent Applications */}
-      <div className="sv-card animate-entrance sv-hover-lift" style={{ transition: 'all 0.4s ease' }}>
-        <div className="sv-card-header">
-          <h5>Recent Applications</h5>
-          <Link to="/vendor/applications" style={{ fontSize: 12, color: '#1a6b3c', textDecoration: 'none', fontWeight: 600 }}>View all →</Link>
+      {/* Recent Activity Table */}
+      <div className="modern-glass-card">
+        <div className="card-header-premium">
+          <h5 className="mb-0 fw-800">Latest Applications</h5>
+          <Link to="/vendor/applications" className="view-more">View Archive →</Link>
         </div>
-        <table className="sv-table">
-          <thead>
-            <tr>
-              <th>Zone</th>
-              <th>Status</th>
-              <th>Applied On</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recentApps.length === 0 && (
-              <tr><td colSpan={3} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8', fontSize: 13 }}>No applications yet. <Link to="/vendor/applications">Apply for a zone</Link></td></tr>
-            )}
-            {recentApps.map(a => (
-              <tr key={a.id}>
-                <td style={{ fontWeight: 600 }}>{a.zones?.name || '—'}</td>
-                <td>
-                  <span className={`sv-badge sv-badge-${a.status === 'approved' ? 'success' : a.status === 'rejected' ? 'danger' : 'warning'}`}>{a.status}</span>
-                </td>
-                <td style={{ color: '#64748b', fontSize: 12 }}>{new Date(a.created_at).toLocaleDateString()}</td>
+        <div className="table-responsive">
+          <table className="modern-table">
+            <thead>
+              <tr>
+                <th>Target Zone</th>
+                <th>Processing Status</th>
+                <th className="text-end">Filed Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {recentApps.length === 0 && (
+                <tr><td colSpan={3} className="text-center py-5 text-muted">No applications found.</td></tr>
+              )}
+              {recentApps.map(a => (
+                <tr key={a.id}>
+                  <td className="fw-700 text-dark">{a.zones?.name || 'Vending Zone'}</td>
+                  <td>
+                    <span className={`status-pill-mini ${a.status}`}>
+                      {a.status.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="text-end text-muted small fw-600">{new Date(a.created_at).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <style>{`
+        .vendor-dashboard-container { padding: 40px; max-width: 1200px; margin: 0 auto; background: #fdfdfd; }
+        
+        .dashboard-hero { background: #1e293b; color: #fff; padding: 40px; border-radius: 24px; display: flex; justify-content: space-between; align-items: center; }
+        .hero-status-pill { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 100px; display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .hero-status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+
+        .stat-card-modern { background: #fff; border: 1px solid #edf2f7; padding: 24px; border-radius: 20px; display: flex; align-items: center; gap: 20px; transition: 0.3s; text-decoration: none; }
+        .stat-card-modern:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .stat-card-modern .icon-box { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .stat-card-modern .value { font-size: 24px; font-weight: 900; color: #1e293b; line-height: 1; margin-bottom: 2px; }
+        .stat-card-modern .label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.02em; }
+
+        .modern-glass-card { background: #fff; border: 1px solid #edf2f7; border-radius: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .card-header-premium { padding: 24px 30px; border-bottom: 1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; }
+        .card-dot { width: 10px; height: 10px; background: #1a6b3c; border-radius: 2px; }
+        .status-pill-green { background: #dcfce7; color: #166534; font-size: 10px; font-weight: 800; padding: 6px 14px; border-radius: 100px; }
+
+        .modern-info-card { background: #fff; border: 1px solid #edf2f7; border-radius: 24px; padding: 30px; display: flex; flex-direction: column; position: relative; }
+        .id-stamp { position: absolute; top: 30px; right: 30px; font-size: 9px; font-weight: 800; text-transform: uppercase; color: #94a3b8; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; }
+        .spot-number { font-size: 48px; font-weight: 900; color: #1e293b; letter-spacing: -2px; line-height: 1; }
+        .zone-name { font-size: 18px; font-weight: 800; color: #1a6b3c; margin-top: 5px; }
+        .block-name { font-size: 13px; font-weight: 600; color: #64748b; }
+
+        .rent-strip { background: #f8fafc; padding: 16px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .rent-strip .label { font-size: 12px; font-weight: 700; color: #64748b; }
+        .rent-strip .value { font-size: 18px; font-weight: 900; color: #1a6b3c; }
+
+        .permission-artifact { background: linear-gradient(135deg, #1a6b3c, #155730); border-radius: 20px; padding: 24px; color: #fff; box-shadow: 0 15px 35px rgba(26, 107, 60, 0.2); }
+        .artifact-header { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+        .artifact-header .label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; }
+        .permission-artifact .expiry { font-size: 11px; opacity: 0.7; margin-bottom: 20px; }
+        .download-btn-modern { width: 100%; padding: 12px; border-radius: 12px; border: none; background: rgba(255,255,255,0.1); color: #fff; font-weight: 800; font-size: 12px; transition: 0.3s; backdrop-filter: blur(10px); }
+        .download-btn-modern:hover { background: #fff; color: #1a6b3c; transform: translateY(-2px); }
+
+        .modern-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .modern-table th { background: #fcfdfe; padding: 16px 30px; font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; border-bottom: 1px solid #f8fafc; }
+        .modern-table td { padding: 16px 30px; vertical-align: middle; border-bottom: 1px solid #fcfdfe; }
+        
+        .status-pill-mini { padding: 4px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; }
+        .status-pill-mini.approved { background: #dcfce7; color: #166534; }
+        .status-pill-mini.pending { background: #fef9c3; color: #854d0e; }
+        .status-pill-mini.rejected { background: #fee2e2; color: #991b1b; }
+
+        .btn-modern.primary { background: #1a6b3c; color: #fff; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 800; text-decoration: none; display: inline-block; }
+        .view-more { font-size: 12px; font-weight: 700; color: #1a6b3c; text-decoration: none; }
+
+        .empty-state-card { background: #fff; border: 2px dashed #e2e8f0; border-radius: 24px; padding: 60px; text-align: center; }
+        .empty-icon { font-size: 40px; margin-bottom: 20px; opacity: 0.5; }
+
+        @keyframes svIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-entrance { animation: svIn 0.5s ease-out forwards; }
+      `}</style>
     </div>
   );
 }

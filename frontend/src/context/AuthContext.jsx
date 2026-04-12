@@ -7,6 +7,7 @@ const AuthContext = createContext({});
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [serviceStatus, setServiceStatus] = useState({ database: 'ok', api: 'ok' });
   
@@ -62,6 +63,7 @@ export function AuthProvider({ children }) {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       try {
+        setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) await fetchProfile(session.access_token);
       } catch (err) {
@@ -73,6 +75,7 @@ export function AuthProvider({ children }) {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchProfile(session.access_token);
@@ -122,7 +125,7 @@ export function AuthProvider({ children }) {
     const isOnboarded = user && profile?.onboarding_completed;
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isOnboarded, serviceStatus, login, logout, getToken, refreshUser, checkServiceHealth }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, isOnboarded, serviceStatus, login, logout, getToken, refreshUser, checkServiceHealth }}>
       {children}
     </AuthContext.Provider>
   );

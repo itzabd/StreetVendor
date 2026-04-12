@@ -179,7 +179,8 @@ export default function LandingPage() {
   };
 
   const filteredVendors = vendors.filter(v => {
-    const matchesSearch = v.profiles?.full_name?.toLowerCase().includes(search.toLowerCase());
+    const nameStr = (v.profiles?.business_name || v.profiles?.full_name || '').toLowerCase();
+    const matchesSearch = nameStr.includes(search.toLowerCase());
     if (filter === 'all') return matchesSearch;
     const r = v.ratings;
     const max = Math.max(r.good, r.reasonable, r.worst);
@@ -190,12 +191,27 @@ export default function LandingPage() {
     return matchesSearch;
   });
 
-  const spotMarkers = vendors.map(v => ({
-    ...v.spots,
-    status: (v.ratings.good || 0) >= (v.ratings.worst || 0) ? 'available' : 'occupied',
-    vendor_name: v.profiles?.full_name,
-    ratings: v.ratings
-  }));
+  const spotMarkers = vendors.map(v => {
+    const r = v.ratings || { good: 0, reasonable: 0, worst: 0 };
+    const max = Math.max(r.good, r.reasonable, r.worst);
+    
+    // Determine color based on majority rating
+    let displayColor = null;
+    if (max > 0) {
+      if (r.good === max) displayColor = '#16a34a'; // Green
+      else if (r.reasonable === max) displayColor = '#d97706'; // Orange
+      else displayColor = '#dc2626'; // Red
+    }
+
+    return {
+      ...v.spots,
+      status: v.is_guest_report ? 'unverified' : v.spots?.status || 'occupied',
+      vendor_name: v.profiles?.business_name || v.profiles?.full_name,
+      operating_hours: v.profiles?.operating_hours,
+      ratings: r,
+      displayColor
+    };
+  });
 
   // Fix Leaflet resize on mobile
   useEffect(() => {

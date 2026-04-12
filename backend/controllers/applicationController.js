@@ -62,13 +62,18 @@ async function create(req, res) {
 }
 
 async function updateStatus(req, res) {
-  const { status } = req.body;
+  const { status, admin_notes } = req.body;
   if (!['pending', 'approved', 'rejected'].includes(status)) {
     return res.status(400).json({ error: 'Invalid status' });
   }
   const { data, error } = await supabase
     .from('vendor_applications')
-    .update({ status, reviewed_by: req.user.id, reviewed_at: new Date().toISOString() })
+    .update({ 
+      status, 
+      admin_notes: admin_notes || null,
+      reviewed_by: req.user.id, 
+      reviewed_at: new Date().toISOString() 
+    })
     .eq('id', req.params.id)
     .select()
     .single();

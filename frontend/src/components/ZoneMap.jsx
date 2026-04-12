@@ -26,8 +26,8 @@ function isPointInPolygon(point, polygon) {
 }
 
 // Create a compact dot icon for spot markers (avoids overlap)
-function createSpotIcon(status, isSelected, isLocked) {
-  const color = isSelected ? '#7c3aed' : (status === 'available' ? '#16a34a' : status === 'occupied' ? '#dc2626' : '#d97706');
+function createSpotIcon(status, isSelected, isLocked, customColor) {
+  const color = isSelected ? '#7c3aed' : (customColor || (status === 'available' ? '#16a34a' : status === 'occupied' ? '#dc2626' : '#d97706'));
   const ring = isSelected ? `box-shadow:0 0 0 3px #fff,0 0 0 5px ${color};` : 'box-shadow:0 1px 4px rgba(0,0,0,0.4);';
   const pulse = isLocked ? `
     @keyframes sv-marker-pulse {
@@ -297,7 +297,7 @@ export default function ZoneMap({
               <Marker
                 key={`spot-${spot.id}`}
                 position={[parseFloat(spot.latitude), parseFloat(spot.longitude)]}
-                icon={createSpotIcon(spot.status, isSelected, locked)}
+                icon={createSpotIcon(spot.status, isSelected, locked, spot.displayColor)}
                 eventHandlers={onSpotSelect && isAvailable ? {
                   click: (e) => { e.originalEvent.stopPropagation(); onSpotSelect(spot); }
                 } : {}}
@@ -306,23 +306,23 @@ export default function ZoneMap({
                   className="" pane="tooltipPane"
                 >
                   <span style={{
-                    background: isSelected ? '#7c3aed' : (spot.status === 'available' ? '#16a34a' : (spot.status === 'unverified' ? '#f59e0b' : '#dc2626')),
+                    background: isSelected ? '#7c3aed' : (spot.displayColor || (spot.status === 'available' ? '#16a34a' : (spot.status === 'unverified' ? '#f59e0b' : '#dc2626'))),
                     color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 700,
                     whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-                  }}>{spot.label || spot.vendor_name || spot.spot_number || 'Spot'}</span>
+                  }}>{spot.business_name || spot.vendor_name || spot.label || spot.spot_number || 'Spot'}</span>
                 </Tooltip>
                 <Popup>
                   <div style={{ fontWeight: 700, fontSize: 14 }}>
                     {spot.is_guest_report ? '📍 ' : '📌 '}
-                    {spot.label || spot.vendor_name || `Spot ${spot.spot_number || ''}`}
+                    {spot.business_name || spot.vendor_name || spot.label || `Spot ${spot.spot_number || ''}`}
                   </div>
                   <div style={{ marginTop: 4 }}>
                     <span style={{
-                      background: isSelected ? '#ede9fe' : (spot.status === 'available' ? '#dcfce7' : (spot.status === 'unverified' ? '#fef3c7' : '#fee2e2')),
-                      color: isSelected ? '#6d28d9' : (spot.status === 'available' ? '#15803d' : (spot.status === 'unverified' ? '#b45309' : '#991b1b')),
+                      background: isSelected ? '#ede9fe' : (spot.displayColor ? `${spot.displayColor}20` : (spot.status === 'available' ? '#dcfce7' : (spot.status === 'unverified' ? '#fef3c7' : '#fee2e2'))),
+                      color: isSelected ? '#6d28d9' : (spot.displayColor || (spot.status === 'available' ? '#15803d' : (spot.status === 'unverified' ? '#b45309' : '#991b1b'))),
                       padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600
                     }}>
-                      {isSelected ? '✓ SELECTED' : spot.status?.toUpperCase()}
+                      {isSelected ? '✓ SELECTED' : (spot.status === 'available' ? '🟢 AVAILABLE' : (spot.operating_hours ? `🕒 ${spot.operating_hours.toUpperCase()}` : '🕒 HOURS NOT SPECIFIED'))}
                     </span>
                   </div>
                   <div style={{ marginTop: 8, fontSize: 11, color: '#64748b', borderTop: '1px solid #f1f5f9', paddingTop: 6 }}>

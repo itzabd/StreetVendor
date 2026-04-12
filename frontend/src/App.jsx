@@ -13,6 +13,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import VendorDashboard from './pages/VendorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminUsers from './pages/AdminUsers';
 import Zones from './pages/Zones';
 import Blocks from './pages/Blocks';
 import Spots from './pages/Spots';
@@ -81,6 +82,7 @@ export default function App() {
 
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute role="admin"><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute role="admin"><Layout><AdminUsers /></Layout></ProtectedRoute>} />
             <Route path="/admin/zones" element={<ProtectedRoute role="admin"><Layout><Zones /></Layout></ProtectedRoute>} />
             <Route path="/admin/blocks" element={<ProtectedRoute role="admin"><Layout><Blocks /></Layout></ProtectedRoute>} />
             <Route path="/admin/spots" element={<ProtectedRoute role="admin"><Layout><Spots /></Layout></ProtectedRoute>} />

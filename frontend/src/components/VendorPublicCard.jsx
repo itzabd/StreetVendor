@@ -39,7 +39,7 @@ export default function VendorPublicCard({ vendor, isFavorite, onToggleFavorite,
             </div>
             <div>
               <h6 className="mb-0 fw-800 text-dark" style={{ fontSize: 15 }}>
-                {vendor.profiles?.full_name}
+                {vendor.profiles?.business_name || vendor.profiles?.full_name}
                 {vendor.profiles?.status === 'unverified' && (
                   <span className="badge bg-danger ms-2" style={{ fontSize: 8, verticalAlign: 'middle' }}>UNVERIFIED</span>
                 )}

@@ -50,6 +50,7 @@ export default function Applications() {
     spot_id: '', start_date: '', end_date: '',
     rent_amount: '', permission_type: 'General Vending', admin_notes: ''
   });
+  const [rejectionReason, setRejectionReason] = useState('');
   const [drawerLoading, setDrawerLoading] = useState(false);
 
   const { profile, getToken } = useAuth();
@@ -219,20 +220,25 @@ export default function Applications() {
     }
   }
 
-  async function handleReject(appId, vendorId, zoneName) {
-    confirmAction({
-      title: 'Reject Application',
-      message: 'Are you sure you want to reject this application?',
-      confirmText: 'Yes, Reject',
-      onConfirm: async () => {
-        const token = await getToken();
-        await axios.put(`${import.meta.env.VITE_API_URL}/applications/${appId}`, { status: 'rejected' }, { headers: { Authorization: `Bearer ${token}` } });
-        pushNotif(vendorId, 'Application Rejected ❌', `Your application for ${zoneName || 'a zone'} was rejected.`);
-        addToast('Application rejected', 'success');
-        setWorkspaceApp(null);
-        loadApps();
-      }
-    });
+  async function handleReject(appId, vendorId, zoneName, reason = '') {
+    try {
+      setDrawerLoading(true);
+      const token = await getToken();
+      await axios.put(`${import.meta.env.VITE_API_URL}/applications/${appId}`, { 
+        status: 'rejected',
+        admin_notes: reason 
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      
+      pushNotif(vendorId, 'Application Rejected ❌', `Your application for ${zoneName || 'a zone'} was rejected. Reason: ${reason || 'Not specified'}`);
+      addToast('Application rejected', 'success');
+      setWorkspaceApp(null);
+      setRejectionReason('');
+      loadApps();
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Failed to reject application', 'danger');
+    } finally {
+      setDrawerLoading(false);
+    }
   }
 
   function pushNotif(vendorId, title, message) {
@@ -315,18 +321,33 @@ export default function Applications() {
                                 <tbody>
                                   {vendorSpotMarkers.map(s => {
                                     const isSelected = selectedSpot?.id === s.id;
+                                    const isOccupied = s.status === 'occupied';
+                                    const canSelect = !isOccupied;
+
                                     return (
-                                      <tr key={s.id} onClick={() => setSelectedSpot(s)} style={{ cursor: 'pointer', background: isSelected ? '#f0fdf4' : '' }}>
-                                        <td className="fw-bold px-3">{s.is_guest_report ? s.vendor_name : s.spot_number}</td>
+                                      <tr 
+                                        key={s.id} 
+                                        onClick={() => canSelect && setSelectedSpot(s)} 
+                                        style={{ 
+                                          cursor: canSelect ? 'pointer' : 'not-allowed', 
+                                          background: isSelected ? '#f0fdf4' : '',
+                                          opacity: isOccupied ? 0.6 : 1
+                                        }}
+                                      >
+                                        <td className="fw-bold px-3">
+                                          {s.is_guest_report ? s.vendor_name : s.spot_number}
+                                          {isOccupied && <span className="badge bg-light text-danger border ms-2" style={{ fontSize: 9 }}>OCCUPIED</span>}
+                                        </td>
                                         <td className="text-muted">{s.description || '—'}</td>
                                         <td className="text-end px-3">
                                           <button 
                                             type="button" 
                                             className={`btn btn-sm ${isSelected ? 'btn-success fw-bold' : 'btn-outline-success'}`}
-                                            onClick={(e) => { e.stopPropagation(); setSelectedSpot(s); }}
+                                            onClick={(e) => { e.stopPropagation(); canSelect && setSelectedSpot(s); }}
+                                            disabled={!canSelect}
                                             style={{ padding: '2px 10px', fontSize: 11, borderRadius: 12 }}
                                           >
-                                            {isSelected ? '✅ Selected' : 'Choose'}
+                                            {isSelected ? '✅ Selected' : isOccupied ? 'Locked' : 'Choose'}
                                           </button>
                                         </td>
                                       </tr>
@@ -419,6 +440,11 @@ export default function Applications() {
                         {a.zones?.name && <span className="sv-badge sv-badge-primary me-2 px-3">🏙️ {a.zones.name}</span>}
                         {preferredSpot && <span className="sv-badge bg-warning text-dark me-2 px-3">📍 Prefers {preferredSpot}</span>}
                       </div>
+                      {a.status === 'rejected' && a.admin_notes && (
+                        <div className="mt-2 p-2 rounded-3" style={{ background: '#fff1f2', border: '1px solid #fecdd3', fontSize: 12, color: '#9f1239' }}>
+                          <strong>⚠️ Rejection Reason:</strong> {a.admin_notes}
+                        </div>
+                      )}
                     </div>
                     <div className="text-end flex-shrink-0">
                       <span style={{ background: statusColors[a.status]?.[0], color: statusColors[a.status]?.[1], borderRadius: 12, padding: '6px 16px', fontSize: 12, fontWeight: 800 }}>{a.status.toUpperCase()}</span>
@@ -582,8 +608,18 @@ export default function Applications() {
                         {drawerLoading ? '⚡ PROCESSING...' : '🌟 APPROVE & ISSUE LICENSE'}
                       </button>
 
-                      <button onClick={() => handleReject(workspaceApp.id, workspaceApp.vendor_id, workspaceApp.zones?.name)}
-                        className="btn btn-link w-100 text-danger fw-bold text-decoration-none" style={{ fontSize: 13 }}>
+                    <div className="mt-4 pt-4 border-top">
+                      <label className="form-label small fw-bold text-danger mb-1" style={{ fontSize: 12 }}>Rejection Reason / Internal Notes</label>
+                      <textarea 
+                        className="form-control mb-3" 
+                        rows="2" 
+                        style={{ borderRadius: 10, fontSize: 13 }}
+                        placeholder="Explain why this application is being rejected..."
+                        value={rejectionReason}
+                        onChange={e => setRejectionReason(e.target.value)}
+                      ></textarea>
+                      <button onClick={() => handleReject(workspaceApp.id, workspaceApp.vendor_id, workspaceApp.zones?.name, rejectionReason)}
+                        className="btn btn-outline-danger w-100 fw-bold py-2" style={{ borderRadius: 12, fontSize: 13 }}>
                         Reject this application
                       </button>
                     </div>
@@ -593,7 +629,8 @@ export default function Applications() {
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
     </>
   );
 }

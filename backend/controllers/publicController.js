@@ -12,7 +12,7 @@ const publicController = {
           vendor_id,
           status,
           rent_amount,
-          profiles:vendor_id (id, full_name, phone, status),
+          profiles:vendor_id (id, full_name, business_name, operating_hours, phone, status),
           spots:spot_id (
             id, 
             spot_number, 
