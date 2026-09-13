@@ -279,7 +279,9 @@ const publicController = {
       if (error) throw error;
       res.json(data);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      // Return empty array for demo — no DB table yet
+      console.warn('getReports DB unavailable, returning empty showcase array:', err.message);
+      res.json([]);
     }
   },
 

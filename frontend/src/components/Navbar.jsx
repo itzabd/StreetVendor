@@ -23,7 +23,7 @@ const pageTitles = {
 };
 
 export default function Navbar() {
-  const { profile, user, logout } = useAuth();
+  const { profile, user, logout, isDemo, switchDemoRole } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const title = pageTitles[location.pathname] || 'StreetVendor BD';

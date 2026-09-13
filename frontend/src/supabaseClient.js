@@ -4,7 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("CRITICAL: Supabase environment variables are missing! Site will not load properly.");
+  console.warn("Supabase env vars missing — demo mode will work without them.");
 }
 
 const supabase = createClient(

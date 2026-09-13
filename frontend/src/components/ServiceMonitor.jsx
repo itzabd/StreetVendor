@@ -3,11 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function ServiceMonitor() {
-  const { serviceStatus } = useAuth();
+  const { serviceStatus = { database: 'ok', api: 'ok' } } = useAuth();
   const { addToast, removeToast } = useToast();
   const toastIdRef = useRef(null);
 
-  const isError = serviceStatus.database === 'error' || serviceStatus.api === 'error';
+  const isError = (serviceStatus?.database === 'error') || (serviceStatus?.api === 'error');
 
   useEffect(() => {
     if (isError) {
