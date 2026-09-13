@@ -105,7 +105,8 @@ export default function ZoneMap({
   height = '400px',
   center,
   zoom = null,
-  locked = false
+  locked = false,
+  hideDefaultLegend = false
 }) {
   const defaultCenter = center || [23.8103, 90.4125];
   const [mapCenter, setMapCenter] = useState(defaultCenter);
@@ -189,7 +190,7 @@ export default function ZoneMap({
       )}
 
       {/* Spot legend for vendor view */}
-      {viewOnly && !locked && spotMarkers.length > 0 && (
+      {viewOnly && !locked && spotMarkers.length > 0 && !hideDefaultLegend && (
         <div style={{ position: 'absolute', bottom: 16, right: 16, zIndex: 1000, background: '#fff', padding: '8px 12px', borderRadius: 10, boxShadow: '0 2px 10px rgba(0,0,0,0.15)', fontSize: 12 }}>
           <div className="fw-semibold mb-1 text-muted" style={{ fontSize: 11 }}>SPOT STATUS</div>
           <div className="d-flex flex-column gap-1">

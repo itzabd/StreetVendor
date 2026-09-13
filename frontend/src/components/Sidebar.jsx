@@ -58,19 +58,19 @@ export default function Sidebar() {
         {!isAdmin && (
           <div style={{
             margin: '20px 16px',
-            padding: '16px',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
-            borderRadius: '12px',
+            padding: '14px',
+            background: 'rgba(200, 55, 45, 0.12)',
+            border: '1px solid rgba(200, 55, 45, 0.4)',
+            borderRadius: '2px',
           }}>
-            <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '14px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>🚑</span> Emergency SOS
+            <div style={{ color: '#FCA5A5', fontFamily: 'var(--sv-font-mono, monospace)', fontWeight: 'bold', fontSize: '11.5px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>🚨</span> EMERGENCY HOTLINE
             </div>
-            <div style={{ fontSize: '13px', color: '#fca5a5', marginBottom: '6px' }}>
-              <span style={{ display: 'inline-block', width: '20px' }}>👮</span> Police: <strong>999</strong>
+            <div className="font-monospace" style={{ fontSize: '12px', color: '#FEE2E2', marginBottom: '4px' }}>
+              Police Dispatch: <strong>999</strong>
             </div>
-            <div style={{ fontSize: '13px', color: '#fca5a5' }}>
-              <span style={{ display: 'inline-block', width: '20px' }}>🏥</span> Hospital: <strong>16263</strong>
+            <div className="font-monospace" style={{ fontSize: '12px', color: '#FEE2E2' }}>
+              Ambulance/Govt: <strong>16263</strong>
             </div>
           </div>
         )}

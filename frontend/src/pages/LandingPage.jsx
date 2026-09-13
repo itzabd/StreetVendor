@@ -10,8 +10,6 @@ export default function LandingPage() {
   const { user, profile, enterDemoMode, isDemo } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const discoveryRef = useRef(null);
-  const heroRef = useRef(null);
 
   // Discovery States
   const [authMode, setAuthMode] = useState(null);
@@ -20,9 +18,10 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [mobileTab, setMobileTab] = useState('map'); // 'map' or 'list' for responsive UX
   const base = import.meta.env.VITE_API_URL;
 
-  // Fallback curated vendors for resilient showcase
+  // Fallback curated vendors for resilient Dhaka municipal showcase
   const FALLBACK_VENDORS = [
     {
       id: 'demo-asgn-01',
@@ -36,7 +35,6 @@ export default function LandingPage() {
         operating_hours: '07:00 AM - 10:30 PM',
         phone: '+880 1711-234567',
         status: 'active',
-        avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
       },
       spots: {
         id: 'demo-spot-01',
@@ -60,7 +58,6 @@ export default function LandingPage() {
         operating_hours: '08:00 AM - 11:00 PM',
         phone: '+880 1812-345678',
         status: 'active',
-        avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
       },
       spots: {
         id: 'demo-spot-02',
@@ -84,7 +81,6 @@ export default function LandingPage() {
         operating_hours: '03:00 PM - 10:00 PM',
         phone: '+880 1913-456789',
         status: 'active',
-        avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150'
       },
       spots: {
         id: 'demo-spot-03',
@@ -100,53 +96,119 @@ export default function LandingPage() {
       id: 'demo-asgn-04',
       vendor_id: '00000000-0000-0000-0000-000000000014',
       status: 'active',
-      rent_amount: 4500,
+      rent_amount: 3100,
       profiles: {
         id: '00000000-0000-0000-0000-000000000014',
-        full_name: 'Mohammad Shahid',
-        business_name: 'Old Dhaka Shahi Halim & Cha',
-        operating_hours: '06:00 AM - 11:30 PM',
+        full_name: 'Faruk Hossain',
+        business_name: 'Dhaka Streetwear & Accessories',
+        operating_hours: '11:00 AM - 09:30 PM',
         phone: '+880 1614-567890',
         status: 'active',
-        avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150'
       },
       spots: {
         id: 'demo-spot-04',
-        spot_number: 'LB-02',
-        latitude: 23.7196,
-        longitude: 90.3881,
+        spot_number: 'NM-15',
+        latitude: 23.7335,
+        longitude: 90.3842,
         status: 'occupied',
-        zones: { name: 'Lalbagh Heritage Zone', area: 'Old Dhaka' }
+        zones: { name: 'New Market Footwear Corridor', area: 'Dhaka South' }
       },
-      ratings: { good: 75, reasonable: 8, worst: 3 }
+      ratings: { good: 29, reasonable: 8, worst: 3 }
     },
     {
       id: 'demo-asgn-05',
       vendor_id: '00000000-0000-0000-0000-000000000015',
       status: 'active',
-      rent_amount: 5000,
+      rent_amount: 3600,
       profiles: {
         id: '00000000-0000-0000-0000-000000000015',
-        full_name: 'Zahangir Hossain',
-        business_name: 'Gulshan Green Coconut & Organic Drinks',
-        operating_hours: '08:30 AM - 08:00 PM',
+        full_name: 'Shah Alam',
+        business_name: 'Alam Fast Food & Biryani Corner',
+        operating_hours: '12:00 PM - 11:30 PM',
         phone: '+880 1715-678901',
         status: 'active',
-        avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150'
       },
       spots: {
         id: 'demo-spot-05',
-        spot_number: 'GL-15',
+        spot_number: 'GL-03',
         latitude: 23.7925,
-        longitude: 90.4167,
+        longitude: 90.4078,
         status: 'occupied',
-        zones: { name: 'Gulshan-2 Diplomatic Zone', area: 'Dhaka North' }
+        zones: { name: 'Gulshan-1 Food Alley', area: 'Dhaka North' }
       },
-      ratings: { good: 41, reasonable: 5, worst: 1 }
-    }
+      ratings: { good: 51, reasonable: 7, worst: 1 }
+    },
+    {
+      id: 'demo-asgn-06',
+      vendor_id: '00000000-0000-0000-0000-000000000016',
+      status: 'active',
+      rent_amount: 2800,
+      profiles: {
+        id: '00000000-0000-0000-0000-000000000016',
+        full_name: 'Rokeya Khatun',
+        business_name: 'Rokeya Handicrafts & Jute Bags',
+        operating_hours: '10:00 AM - 08:00 PM',
+        phone: '+880 1816-789012',
+        status: 'active',
+      },
+      spots: {
+        id: 'demo-spot-06',
+        spot_number: 'OD-11',
+        latitude: 23.7104,
+        longitude: 90.4074,
+        status: 'occupied',
+        zones: { name: 'Sadarghat Riverfront Strip', area: 'Old Dhaka' }
+      },
+      ratings: { good: 38, reasonable: 3, worst: 0 }
+    },
+    {
+      id: 'demo-asgn-07',
+      vendor_id: '00000000-0000-0000-0000-000000000017',
+      status: 'active',
+      rent_amount: 3200,
+      profiles: {
+        id: '00000000-0000-0000-0000-000000000017',
+        full_name: 'Nasir Uddin',
+        business_name: 'Nasir Electronics & Mobile Repair',
+        operating_hours: '10:00 AM - 10:00 PM',
+        phone: '+880 1917-890123',
+        status: 'active',
+      },
+      spots: {
+        id: 'demo-spot-07',
+        spot_number: 'UT-09',
+        latitude: 23.8732,
+        longitude: 90.3965,
+        status: 'occupied',
+        zones: { name: 'Uttara Sector 3 Station Gate', area: 'Dhaka North' }
+      },
+      ratings: { good: 42, reasonable: 5, worst: 2 }
+    },
+    {
+      id: 'demo-asgn-08',
+      vendor_id: '00000000-0000-0000-0000-000000000018',
+      status: 'active',
+      rent_amount: 3000,
+      profiles: {
+        id: '00000000-0000-0000-0000-000000000018',
+        full_name: 'Belal Ahmed',
+        business_name: 'Chawkbazar Spices & Dry Fruits',
+        operating_hours: '08:30 AM - 09:00 PM',
+        phone: '+880 1518-901234',
+        status: 'active',
+      },
+      spots: {
+        id: 'demo-spot-08',
+        spot_number: 'CB-22',
+        latitude: 23.7175,
+        longitude: 90.3980,
+        status: 'occupied',
+        zones: { name: 'Chawkbazar Heritage Trade Lane', area: 'Old Dhaka' }
+      },
+      ratings: { good: 70, reasonable: 9, worst: 1 }
+    },
   ];
 
-  // Map States
   const [mapCenter, setMapCenter] = useState([23.8103, 90.4125]);
   const [mapZoom, setMapZoom] = useState(13);
   const [isReporting, setIsReporting] = useState(false);
@@ -174,16 +236,6 @@ export default function LandingPage() {
     if (user) fetchFavorites();
     else loadGuestFavorites();
   }, [user]);
-
-  // Spotlight Mouse Tracking
-  const handleMouseMove = (e) => {
-    if (!heroRef.current) return;
-    const rect = heroRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    heroRef.current.style.setProperty('--mouse-x', `${x}px`);
-    heroRef.current.style.setProperty('--mouse-y', `${y}px`);
-  };
 
   const fetchVendors = async () => {
     try {
@@ -222,7 +274,6 @@ export default function LandingPage() {
     if (local) setFavorites(JSON.parse(local));
   };
 
-
   const handleToggleFavorite = async (vendorId) => {
     if (!user) {
       const newFavs = favorites.includes(vendorId)
@@ -248,37 +299,34 @@ export default function LandingPage() {
     }
   };
 
-  const handleRate = async (vendorId, type) => {
-    try {
-      const token = await (async () => {
-        const { data: { session } } = await (await import('../supabaseClient')).default.auth.getSession();
-        return session?.access_token;
-      })();
-      const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      await axios.post(`${base}/public/rate`, { vendor_id: vendorId, rating_type: type }, headers);
+  const handleRate = async (vendorId, ratingType) => {
+    // Optimistic UI update
+    setVendors(prev => prev.map(v => {
+      const id = v.vendor_id || v.id;
+      if (id === vendorId) {
+        const r = { ...(v.ratings || { good: 0, reasonable: 0, worst: 0 }) };
+        r[ratingType] = (r[ratingType] || 0) + 1;
+        return { ...v, ratings: r };
+      }
+      return v;
+    }));
 
-      setVendors(vendors.map(v => {
-        const vid = v.vendor_id || v.id;
-        if (vid === vendorId) {
-          const newRatings = { ...v.ratings };
-          newRatings[type]++;
-          return { ...v, ratings: newRatings };
-        }
-        return v;
-      }));
+    try {
+      await axios.post(`${base}/public/rate`, { vendor_id: vendorId, rating: ratingType });
     } catch (err) {
       console.error('Rating failed', err);
     }
   };
 
   const handleSelectVendor = (vendor) => {
-    // Support both registered vendors (vendor.spots) and guest reports (vendor.latitude/longitude)
     const lat = vendor.spots?.latitude ?? vendor.latitude;
     const lng = vendor.spots?.longitude ?? vendor.longitude;
     if (lat && lng) {
       setMapCenter([parseFloat(lat), parseFloat(lng)]);
-      setMapZoom(18);
-      discoveryRef.current?.scrollIntoView({ behavior: 'smooth' });
+      setMapZoom(17);
+      if (window.innerWidth < 992) {
+        setMobileTab('map');
+      }
     }
   };
 
@@ -299,18 +347,10 @@ export default function LandingPage() {
       setReportData({ vendor_name: '', category: '', reported_by_name: '', comment: '' });
       setIsReporting(false);
       setTimeout(() => setReportSuccess(false), 5000);
-      fetchVendors(); // Refresh map (will show unverified if admin approved previously, but here it's just a refetch)
+      fetchVendors();
     } catch (err) {
       console.error('Report failed', err);
     }
-  };
-
-  const [isExplorerOpen, setIsExplorerOpen] = useState(false);
-
-  // ... (previous state/effects)
-
-  const toggleExplorer = () => {
-    setIsExplorerOpen(!isExplorerOpen);
   };
 
   const handleDashboardRedirect = () => {
@@ -319,12 +359,16 @@ export default function LandingPage() {
   };
 
   const filteredVendors = vendors.filter(v => {
-    const nameStr = (v.profiles?.business_name || v.profiles?.full_name || '').toLowerCase();
-    const matchesSearch = nameStr.includes(search.toLowerCase());
+    const nameStr = (v.profiles?.business_name || v.profiles?.full_name || v.vendor_name || '').toLowerCase();
+    const zoneStr = (v.spots?.zones?.name || v.spots?.blocks?.zones?.name || v.category || '').toLowerCase();
+    const spotStr = (v.spots?.spot_number || '').toLowerCase();
+    const q = search.toLowerCase();
+    const matchesSearch = nameStr.includes(q) || zoneStr.includes(q) || spotStr.includes(q);
+
     if (filter === 'all') return matchesSearch;
-    const r = v.ratings;
+    const r = v.ratings || { good: 0, reasonable: 0, worst: 0 };
     const max = Math.max(r.good, r.reasonable, r.worst);
-    if (max === 0) return false;
+    if (max === 0) return matchesSearch;
     if (filter === 'good') return r.good === max && matchesSearch;
     if (filter === 'reasonable') return r.reasonable === max && matchesSearch;
     if (filter === 'worst') return r.worst === max && matchesSearch;
@@ -335,316 +379,330 @@ export default function LandingPage() {
     const r = v.ratings || { good: 0, reasonable: 0, worst: 0 };
     const max = Math.max(r.good, r.reasonable, r.worst);
     
-    // Determine color based on majority rating
     let displayColor = null;
     if (max > 0) {
-      if (r.good === max) displayColor = '#16a34a'; // Green
-      else if (r.reasonable === max) displayColor = '#d97706'; // Orange
-      else displayColor = '#dc2626'; // Red
+      if (r.good === max) displayColor = '#0D6942'; // Civic Green
+      else if (r.reasonable === max) displayColor = '#C58A2B'; // Ochre
+      else displayColor = '#C8372D'; // Vermilion
     }
 
     return {
       ...v.spots,
-      status: v.is_guest_report ? 'unverified' : v.spots?.status || 'occupied',
-      vendor_name: v.profiles?.business_name || v.profiles?.full_name,
+      latitude: v.spots?.latitude ?? v.latitude,
+      longitude: v.spots?.longitude ?? v.longitude,
+      spot_number: v.spots?.spot_number || (v.is_guest_report ? 'UNVERIFIED' : 'SPOT'),
+      status: v.is_guest_report ? 'unverified' : (v.spots?.status || 'occupied'),
+      vendor_name: v.profiles?.business_name || v.profiles?.full_name || v.vendor_name,
       operating_hours: v.profiles?.operating_hours,
       ratings: r,
       displayColor
     };
   });
 
-  // Fix Leaflet resize on mobile
-  useEffect(() => {
-    if (isExplorerOpen) {
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 500);
-    }
-  }, [isExplorerOpen]);
+  const jumpToWard = (lat, lng, zoomLevel = 15) => {
+    setMapCenter([lat, lng]);
+    setMapZoom(zoomLevel);
+  };
 
   return (
-    <div className={`sv-landing ${isExplorerOpen ? 'discovery-open' : ''}`}>
-
-      {/* Sticky Premium Navbar */}
-      <nav className="sv-landing-v2-nav d-flex justify-content-between align-items-center px-4 py-3">
-        <div className="d-flex align-items-center gap-3">
-          <div style={{ width: 40, height: 40, background: '#f59e0b', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🛒</div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 18, color: '#fff' }}>StreetVendor <span className="text-warning">BD</span></div>
-            <div style={{ fontSize: 10, opacity: 0.6, color: '#fff', textTransform: 'uppercase' }}>Digital Identity System</div>
+    <div className="sv-broadside-page">
+      {/* ─── Top Broadside Navigation ───────────────────────── */}
+      <header className="sv-broadside-nav">
+        <div className="sv-nav-seal">
+          <div className="sv-seal-icon">⚖️</div>
+          <div className="sv-nav-titles">
+            <h1>StreetVendor BD</h1>
+            <div className="sv-meta-tag">Dhaka Municipal Vending Registry & Spatial Ledger</div>
           </div>
         </div>
-        <div className="d-flex gap-2 align-items-center">
+
+        <div className="sv-nav-actions">
           {user ? (
-            <button onClick={handleDashboardRedirect} className="btn btn-warning btn-sm px-4 fw-bold shadow-sm">
-              {isDemo ? '⭐ Demo Dashboard' : 'Dashboard'}
+            <button onClick={handleDashboardRedirect} className="btn sv-btn-warning btn-sm px-3">
+              {isDemo ? '⭐ Active Demo Session' : 'Go to Portal'}
             </button>
           ) : (
             <>
+              {/* Dual Frictionless Demo Entries */}
               <button 
                 onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }} 
-                className="btn btn-sm px-3 fw-bold shadow-sm d-flex align-items-center gap-1"
-                style={{ background: '#22c55e', color: '#fff', borderRadius: 8, border: 'none' }}
-                title="Immediately try core features without registration"
+                className="btn btn-sm sv-btn-primary px-3 font-monospace"
+                title="Immediately test vendor spot M10-04, rent records & QR license PDF generator"
               >
-                <span>🚀</span> Try Demo
+                ⚡ Try Demo (Merchant)
               </button>
-              <button onClick={() => setAuthMode('login')} className="btn btn-link text-white text-decoration-none small fw-semibold">Sign In</button>
-              <button onClick={() => setAuthMode('register')} className="btn btn-warning btn-sm px-4 fw-bold">Register</button>
+
+              <button 
+                onClick={() => { enterDemoMode('admin'); navigate('/admin'); }} 
+                className="btn btn-sm sv-btn-warning px-3 font-monospace"
+                title="Immediately test licensing desk, zone boundaries & applications review"
+              >
+                🔑 Try Demo (Officer)
+              </button>
+
+              <button 
+                onClick={() => setAuthMode('login')} 
+                className="btn btn-sm btn-outline-light font-monospace"
+                style={{ fontSize: '11.5px', borderRadius: 2 }}
+              >
+                Sign In
+              </button>
+
+              <button 
+                onClick={() => setAuthMode('register')} 
+                className="btn btn-sm font-monospace"
+                style={{ background: '#FFF7E6', color: '#141716', border: '1px solid #C58A2B', fontSize: '11.5px', borderRadius: 2 }}
+              >
+                Register
+              </button>
             </>
           )}
         </div>
-      </nav>
+      </header>
 
-      {/* 1. Hero Section (Branding) */}
-      <section className="sv-landing-hero-section sv-spotlight-container" ref={heroRef} onMouseMove={handleMouseMove}>
-        <div className="sv-spotlight-overlay"></div>
-        <div className="sv-bg-blobs">
-          <div className="sv-bg-blob blob-1"></div>
-          <div className="sv-bg-blob blob-2"></div>
-        </div>
+      {/* ─── Mobile View Toggler Tabs (<992px) ──────────────── */}
+      <div className="sv-mobile-view-tabs">
+        <button 
+          className={`sv-mobile-tab-btn ${mobileTab === 'map' ? 'active' : ''}`}
+          onClick={() => setMobileTab('map')}
+        >
+          🗺️ GIS Cartography Canvas
+        </button>
+        <button 
+          className={`sv-mobile-tab-btn ${mobileTab === 'list' ? 'active' : ''}`}
+          onClick={() => setMobileTab('list')}
+        >
+          📋 Spot Directory ({filteredVendors.length})
+        </button>
+      </div>
 
-        <div className="container h-100 d-flex align-items-center">
-          <div className="row align-items-center w-100 g-5 justify-content-between">
-            <div className="col-lg-5">
-              <div className="animate-entrance pt-lg-5 pt-4" style={{ animationDelay: '0.1s' }}>
-                <span className="badge bg-warning text-dark mb-4 px-3 py-2 shadow-sm" style={{ fontSize: 13, borderRadius: 8, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bangladesh Street Vendor Platform</span>
-              </div>
-              <h1 className="animate-entrance m-0" style={{ fontSize: 60, fontWeight: 900, color: '#fff', lineHeight: 1.05, marginBottom: 24, letterSpacing: '-0.04em', animationDelay: '0.2s' }}>
-                Modernizing <br /><span className="text-warning">Street Trade</span>
-              </h1>
-              <p className="animate-entrance" style={{ fontSize: 18, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: 40, maxWidth: 520, fontWeight: 400, animationDelay: '0.3s' }}>
-                Empowering vendors with digital identity, smart location tracking, and community-driven verification. Join the city's most transparent trade ecosystem.
-              </p>
-              <div className="d-flex gap-3 flex-wrap animate-entrance" style={{ animationDelay: '0.4s' }}>
-                <button onClick={toggleExplorer} className="btn btn-warning btn-lg fw-800 px-4 py-3 shadow-lg rounded-pill sv-btn-glow" style={{ fontSize: 16 }}>
-                  🗺️ Explore City Map
-                </button>
-                <button 
-                  onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }} 
-                  className="btn btn-lg fw-800 px-4 py-3 rounded-pill shadow-lg" 
-                  style={{ fontSize: 16, background: '#22c55e', color: '#fff', border: 'none' }}
-                >
-                  🛒 Try Demo (Vendor)
-                </button>
-                <button 
-                  onClick={() => { enterDemoMode('admin'); navigate('/admin'); }} 
-                  className="btn btn-outline-light btn-lg px-4 py-3 rounded-pill" 
-                  style={{ fontSize: 16 }}
-                >
-                  🔑 Try Demo (Admin)
-                </button>
-              </div>
-
-              <div className="animate-entrance mt-3 d-flex align-items-center gap-2 flex-wrap" style={{ animationDelay: '0.5s' }}>
-                <span className="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-2 py-1" style={{ fontSize: 11, borderRadius: 6 }}>
-                  ⚡ Instant Access
-                </span>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
-                  No registration required. Try vendor operations, spot applications & admin approvals immediately.
-                </span>
-              </div>
-
-              {/* Mission Stats */}
-
-              <div className="d-flex gap-5 mt-5 flex-wrap pb-5 mb-5">
-                {[
-                  { n: 'Verified Identity', d: 'Secure biometric records', icon: '🆔' },
-                  { n: 'Smart Mapping', d: 'Digital zone management', icon: '🎯' },
-                  { n: 'Public Trust', d: 'Reputation tracking', icon: '🌟' },
-                ].map((s, i) => (
-                  <div key={i} className="animate-entrance d-flex align-items-center gap-3" style={{ animationDelay: `${0.6 + i*0.1}s` }}>
-                    <div style={{ fontSize: 24, opacity: 0.8 }}>{s.icon}</div>
-                    <div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 16, marginBottom: 2 }}>{s.n}</div>
-                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{s.d}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+      {/* ─── Main Broadside Asymmetric Layout ────────────────── */}
+      <main className={`sv-broadside-layout mobile-view-${mobileTab}`}>
+        
+        {/* LEFT COLUMN: Civic Ledger & Spot Directory */}
+        <section className="sv-ledger-docket">
+          {/* Official Gazette Decree Header */}
+          <div className="sv-decree-banner">
+            <div className="sv-docket-stamp">
+              <span>🏛️</span> DNCC / DSCC MUNICIPAL TRADE SPATIAL LEDGER • DHAKA
             </div>
-
-            {/* Feature Cards Grid */}
-            <div className="col-lg-5">
-              <div className="row g-4 d-flex justify-content-center">
-                {[
-                  { icon: '🪪', title: 'Digital ID', desc: 'Secure verified identity for all registered street vendors.', delay: '0.3s' },
-                  { icon: '📍', title: 'Location Tracking', desc: 'Live map of verified trade spots across the city.', delay: '0.45s' },
-                  { icon: '📋', title: 'Spot Approval', desc: 'Verified process for application and trade zoning.', delay: '0.6s' },
-                  { icon: '📊', title: 'Trade Data', desc: 'Insightful analytics for smarter city management.', delay: '0.75s' },
-                ].map((f, i) => (
-                  <div key={i} className="col-sm-6 animate-entrance" style={{ animationDelay: f.delay }}>
-                    <div className="sv-feature-card">
-                      <div className="sv-feature-icon">{f.icon}</div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 17, marginBottom: 10 }}>{f.title}</div>
-                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, lineHeight: 1.6 }}>{f.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <h2 className="sv-decree-title">
+              Spatial Allocation & Digital Trade Licensing System
+            </h2>
+            <p className="sv-decree-subtitle">
+              An authoritative civic registry formalizing informal urban commerce. Connecting designated GPS trade spots, verified biometric merchant permits, and community-audited service trust.
+            </p>
           </div>
-        </div>
 
-      </section>
-
-      {/* 2. Bottom Sheet Discovery Portal */}
-      <section className={`sv-discovery-sheet ${isExplorerOpen ? 'is-open' : ''}`}>
-
-        {/* Pull Handle */}
-        <div className="sv-sheet-handle" onClick={toggleExplorer}>
-          <div className="sv-handle-bar"></div>
-          <div className="text-white fw-bold small animate-pulse">
-            {isExplorerOpen ? 'Pull down to close' : 'Explore City Map'}
-          </div>
-          {!isExplorerOpen && (
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-              Slide up to discover verified vendors and trade spots
-            </div>
-          )}
-        </div>
-
-        <div className="sv-discovery-content">
-          {/* Left Sidebar: Vendor Discovery */}
-          <div className="discovery-pane p-4" style={{ width: 420, overflowY: 'auto', background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(30px)', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
-            <div className="mb-4 d-flex justify-content-between align-items-start">
-              <div>
-                <h4 className="fw-900 mb-1" style={{ color: '#ffffff', letterSpacing: '-0.02em' }}>Discovery Portal</h4>
-                <p className="small mb-0" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Find verified vendors and trade spots</p>
+          {/* Frictionless Demo Command Matrix */}
+          <div className="sv-guest-command-box">
+            <div className="sv-guest-command-header">
+              <div className="sv-guest-command-title">
+                <span>⚡</span> Instant Public Showcase Session — No Sign-Up
               </div>
-              <button
-                onClick={toggleExplorer}
-                className="btn btn-sm btn-outline-light border-0 opacity-50 hover-opacity-100"
-                style={{ padding: '4px 8px', borderRadius: 8 }}
+              <span className="font-monospace text-muted" style={{ fontSize: '10px' }}>
+                [FULL INTERACTION READY]
+              </span>
+            </div>
+
+            <div className="sv-guest-action-grid">
+              <div 
+                className="sv-guest-tile vendor"
+                onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }}
               >
-                ✕
+                <div>
+                  <div className="sv-guest-tile-role">Merchant Actor</div>
+                  <div className="sv-guest-tile-name">Rahim Uddin</div>
+                  <div className="sv-guest-tile-desc">
+                    Allocated spot <strong>M10-04</strong> in Mirpur. Test live spot location, monthly lease ledger, and <strong>download official verified QR license PDF</strong>.
+                  </div>
+                </div>
+                <div className="sv-guest-tile-btn">
+                  Enter Merchant Desk →
+                </div>
+              </div>
+
+              <div 
+                className="sv-guest-tile admin"
+                onClick={() => { enterDemoMode('admin'); navigate('/admin'); }}
+              >
+                <div>
+                  <div className="sv-guest-tile-role">Licensing Officer Actor</div>
+                  <div className="sv-guest-tile-name">Tanvir Ahmed</div>
+                  <div className="sv-guest-tile-desc">
+                    Municipal Oversight Panel. Audit polygon zone boundaries, review 2 pending merchant applications, and inspect unverified citizen spot reports.
+                  </div>
+                </div>
+                <div className="sv-guest-tile-btn">
+                  Enter Officer Desk →
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Municipal Metrics Ledger Strip */}
+          <div className="sv-metrics-strip">
+            <div className="sv-metric-cell">
+              <div className="sv-metric-num">5</div>
+              <div className="sv-metric-label">Municipal Wards</div>
+            </div>
+            <div className="sv-metric-cell">
+              <div className="sv-metric-num">8</div>
+              <div className="sv-metric-label">Demarcated Spots</div>
+            </div>
+            <div className="sv-metric-cell">
+              <div className="sv-metric-num">100%</div>
+              <div className="sv-metric-label">QR License Sync</div>
+            </div>
+            <div className="sv-metric-cell">
+              <div className="sv-metric-num">GPS</div>
+              <div className="sv-metric-label">Live Telemetry</div>
+            </div>
+          </div>
+
+          {/* Spot Directory Search & Controls */}
+          <div>
+            <div className="sv-directory-header">
+              <h3 className="sv-directory-title">
+                Active Demarcated Spots ({filteredVendors.length})
+              </h3>
+              
+              <button 
+                onClick={() => setIsReporting(!isReporting)}
+                className="btn btn-sm font-monospace"
+                style={{
+                  background: isReporting ? 'var(--sv-danger)' : 'var(--sv-bg-card)',
+                  color: isReporting ? '#fff' : 'var(--sv-ink)',
+                  border: '1px solid var(--sv-border)',
+                  fontSize: '11px',
+                  borderRadius: 2
+                }}
+              >
+                {isReporting ? '✕ Cancel Report' : '🚩 Report Unofficial Spot'}
               </button>
             </div>
 
-            <div className="d-flex gap-2 mb-4">
-              <div className="position-relative flex-grow-1">
-                <span className="position-absolute top-50 start-0 translate-middle-y ps-3" style={{ opacity: 0.6 }}>🔍</span>
-                <input
-                  type="text"
-                  className="form-control bg-dark border-secondary bg-opacity-50 text-white ps-5 py-2 rounded-3"
-                  placeholder="Search vendors..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  style={{ fontSize: 13, border: '1px solid rgba(255,255,255,0.1)' }}
-                />
-              </div>
-            </div>
-
-            <div className="d-flex gap-2 mb-4 scrollbar-hide" style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 5, scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {[
-                { key: 'all',        label: 'All Spots' },
-                { key: 'good',       label: '👍 Good' },
-                { key: 'reasonable', label: '⚖️ Reasonable' },
-                { key: 'worst',      label: '👎 Bad' },
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setFilter(key)}
-                  className={`btn btn-sm px-3 rounded-pill ${filter === key ? 'btn-warning fw-bold text-dark' : 'btn-outline-light opacity-50'}`}
-                  style={{ fontSize: 12, border: filter === key ? 'none' : '1px solid rgba(255,255,255,0.2)', whiteSpace: 'nowrap' }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {isReporting ? (
-              <div className="report-flow animate-entrance bg-warning bg-opacity-10 p-4 rounded-4 border border-warning border-opacity-30 mb-4 shadow-lg">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h6 className="mb-0 fw-bold text-warning">📍 Reporting New Spot</h6>
-                  <button onClick={() => setIsReporting(false)} className="btn-close btn-close-white small"></button>
+            {/* Reporting Form Docket (If Open) */}
+            {isReporting && (
+              <div className="mt-3 p-3 mb-3" style={{ background: 'var(--sv-bg-card)', border: '2px solid var(--sv-danger)' }}>
+                <div className="d-flex align-items-center justify-content-between mb-2 pb-2" style={{ borderBottom: '1px solid var(--sv-border-light)' }}>
+                  <span className="font-monospace fw-bold" style={{ color: 'var(--sv-danger)', fontSize: '11.5px' }}>
+                    🚩 CITIZEN SPOT GRIEVANCE / REPORT FORM
+                  </span>
+                  <span className="font-monospace text-muted" style={{ fontSize: '10px' }}>
+                    Click map to pin GPS coordinates
+                  </span>
                 </div>
 
                 {reportSuccess ? (
-                  <div className="alert alert-success py-2 small mb-0">Report submitted! Waiting for verification.</div>
+                  <div className="alert alert-success py-2 font-monospace" style={{ fontSize: '12px', borderRadius: 2 }}>
+                    ✓ Report recorded in municipal audit queue!
+                  </div>
                 ) : (
-                  <>
-                    {!reportDraft ? (
-                      <p className="small text-white opacity-75 mb-3">Click on the map to pick the exact spot location.</p>
-                    ) : (
-                      <div className="d-flex flex-column gap-3">
-                        <div className="badge bg-dark border border-warning border-opacity-25 text-warning p-3 text-start shadow-sm" style={{ borderRadius: 12 }}>
-                          <div style={{ fontSize: 9, opacity: 0.6, letterSpacing: '0.05em' }}>PICKED LOCATION</div>
-                          <div style={{ fontSize: 11, fontWeight: 700 }}>{reportDraft[0].toFixed(5)}, {reportDraft[1].toFixed(5)}</div>
-                        </div>
-                        <div className="mb-3">
-                          <label className="form-label small text-warning opacity-75 mb-1 fw-bold" style={{ fontSize: 10, letterSpacing: '0.05em' }}>VENDOR NAME</label>
-                          <input
-                            type="text"
-                            className="form-control form-control-sm bg-dark border-secondary text-white py-2"
-                            placeholder="e.g. Mofiz's Tea Stall"
-                            value={reportData.vendor_name}
-                            onChange={(e) => setReportData({ ...reportData, vendor_name: e.target.value })}
-                            style={{ borderRadius: 10, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}
-                          />
-                        </div>
-                        <div className="mb-3">
-                          <label className="form-label small text-warning opacity-75 mb-1 fw-bold" style={{ fontSize: 10, letterSpacing: '0.05em' }}>CATEGORY</label>
-                          <select
-                            className="form-select form-select-sm bg-dark border-secondary text-white py-2"
-                            value={reportData.category}
-                            onChange={(e) => setReportData({ ...reportData, category: e.target.value })}
-                            style={{ borderRadius: 10, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}
-                          >
-                            <option value="">Select Category</option>
-                            <option value="Tea/Coffee">Tea/Coffee</option>
-                            <option value="Snacks/Street Food">Snacks/Street Food</option>
-                            <option value="Fruit/Juice">Fruit/Juice</option>
-                            <option value="Vegetables">Vegetables</option>
-                            <option value="Clothing/Goods">Clothing/Goods</option>
-                          </select>
-                        </div>
-                        <div className="mb-4">
-                          <label className="form-label small text-warning opacity-75 mb-1 fw-bold" style={{ fontSize: 10, letterSpacing: '0.05em' }}>REPORTER NAME (OPTIONAL)</label>
-                          <input
-                            type="text"
-                            className="form-control form-control-sm bg-dark border-secondary text-white py-2"
-                            placeholder="Your name or alias"
-                            value={reportData.reported_by_name}
-                            onChange={(e) => setReportData({ ...reportData, reported_by_name: e.target.value })}
-                            style={{ borderRadius: 10, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}
-                          />
-                        </div>
-                        <button
-                          onClick={handleSubmitReport}
-                          disabled={!reportData.vendor_name}
-                          className="btn btn-warning btn-sm w-100 fw-bold py-2 shadow-sm"
-                          style={{ borderRadius: 10, letterSpacing: '0.05em' }}
-                        >
-                          SUBMIT REPORT
-                        </button>
+                  <div>
+                    {reportDraft ? (
+                      <div className="font-monospace mb-2 p-1" style={{ background: 'var(--sv-bg-muted)', fontSize: '11px', border: '1px solid var(--sv-border-light)' }}>
+                        📍 Pinned GPS: <strong>{reportDraft[0].toFixed(5)}, {reportDraft[1].toFixed(5)}</strong>
                       </div>
+                    ) : (
+                      <p className="font-monospace text-danger mb-2" style={{ fontSize: '11px' }}>
+                        * Please click anywhere on the Cartography Canvas to select the exact spot coordinates.
+                      </p>
                     )}
-                  </>
+
+                    <div className="row g-2 mb-2">
+                      <div className="col-sm-6">
+                        <label className="font-monospace small mb-1" style={{ fontSize: '10px' }}>VENDOR / SPOT NAME *</label>
+                        <input 
+                          type="text" 
+                          className="form-control form-control-sm"
+                          placeholder="e.g. Unregistered Fuchka Cart"
+                          value={reportData.vendor_name}
+                          onChange={e => setReportData({ ...reportData, vendor_name: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-sm-6">
+                        <label className="font-monospace small mb-1" style={{ fontSize: '10px' }}>COMMERCE CATEGORY</label>
+                        <select 
+                          className="form-select form-select-sm"
+                          value={reportData.category}
+                          onChange={e => setReportData({ ...reportData, category: e.target.value })}
+                        >
+                          <option value="">Select Category</option>
+                          <option value="Tea/Coffee">Tea & Beverages</option>
+                          <option value="Snacks/Street Food">Snacks & Street Food</option>
+                          <option value="Fruit/Juice">Fresh Fruit & Juice</option>
+                          <option value="Vegetables">Vegetables & Produce</option>
+                          <option value="Clothing/Goods">Clothing & Accessories</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mb-2">
+                      <label className="font-monospace small mb-1" style={{ fontSize: '10px' }}>REPORTER ALIAS / PHONE (OPTIONAL)</label>
+                      <input 
+                        type="text" 
+                        className="form-control form-control-sm"
+                        placeholder="e.g. Concerned Pedestrian / Local Resident"
+                        value={reportData.reported_by_name}
+                        onChange={e => setReportData({ ...reportData, reported_by_name: e.target.value })}
+                      />
+                    </div>
+
+                    <button 
+                      onClick={handleSubmitReport}
+                      disabled={!reportDraft || !reportData.vendor_name}
+                      className="btn sv-btn-primary btn-sm w-100 font-monospace"
+                    >
+                      Submit Official Grievance Record
+                    </button>
+                  </div>
                 )}
               </div>
-            ) : (
-              <button
-                onClick={() => setIsReporting(true)}
-                className="btn btn-outline-warning btn-sm w-100 mb-4 fw-bold py-2 rounded-3 border-2"
-                style={{ borderStyle: 'dashed' }}
-              >
-                + Pin Your Report
-              </button>
             )}
 
-            <div className="vendor-list">
+            {/* Filter Search Bar & Filter Buttons */}
+            <div className="d-flex flex-column gap-2 mt-3 mb-3">
+              <input 
+                type="text" 
+                className="form-control form-control-sm"
+                placeholder="Search spot code, merchant, or area (e.g. M10-04, Mirpur, Malek)..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ fontSize: '13px' }}
+              />
+
+              <div className="sv-filter-tabs">
+                {[
+                  { key: 'all', label: 'All Records' },
+                  { key: 'good', label: 'High Public Trust' },
+                  { key: 'reasonable', label: 'Fair Reputation' },
+                  { key: 'worst', label: 'Flagged Spots' }
+                ].map(tab => (
+                  <button 
+                    key={tab.key}
+                    onClick={() => setFilter(tab.key)}
+                    className={`sv-filter-btn ${filter === tab.key ? 'active' : ''}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Card List */}
+            <div className="sv-spot-list-scroll">
               {loading ? (
-                <div className="text-center py-5">
-                  <div className="spinner-border text-warning mb-3"></div>
-                  <div className="text-white small">Refreshing city map...</div>
+                <div className="text-center py-4 font-monospace">
+                  <div className="spinner-border spinner-border-sm text-dark mb-2"></div>
+                  <div className="small text-muted">Retrieving municipal spot registry...</div>
                 </div>
               ) : filteredVendors.length === 0 ? (
-                <div className="text-center py-5">
-                  <div className="text-muted small">No vendors found matching your search</div>
+                <div className="p-4 text-center font-monospace" style={{ background: 'var(--sv-bg-card)', border: '1px solid var(--sv-border)' }}>
+                  No spots matching query "{search}".
                 </div>
               ) : (
-                filteredVendors.map((v) => (
+                filteredVendors.map(v => (
                   <VendorPublicCard
                     key={v.vendor_id || v.id}
                     vendor={v}
@@ -656,96 +714,88 @@ export default function LandingPage() {
                 ))
               )}
             </div>
+          </div>
+        </section>
 
-            {/* In-sidebar Footer */}
-            <div className="mt-5 pt-4 text-center border-top border-white border-opacity-10 opacity-30">
-              <p style={{ color: '#fff', fontSize: 10, letterSpacing: '0.05em', marginBottom: 0 }}>
-                © {new Date().getFullYear()} STREETVENDOR BD
-              </p>
-              <p style={{ color: '#fff', fontSize: 9, opacity: 0.6 }}>Digital Infrastructure for Cities</p>
+        {/* RIGHT COLUMN: Live GIS Cartography Canvas */}
+        <section className="sv-cartography-canvas">
+          {/* Canvas Meta Header */}
+          <div className="sv-map-ledger-bar">
+            <div className="d-flex align-items-center gap-2">
+              <span style={{ color: '#C58A2B' }}>●</span>
+              <span>LIVE GIS ALLOCATION CANVAS — DHAKA METROPOLITAN</span>
+            </div>
+            <div className="d-none d-md-block text-muted">
+              COORDINATES: {mapCenter[0].toFixed(4)}°N, {mapCenter[1].toFixed(4)}°E
             </div>
           </div>
 
-          {/* Right Side: Map */}
-          <div className="flex-grow-1 position-relative">
+          <div className="sv-map-inner-wrap">
+            {/* Quick Ward Navigation Bar */}
+            <div className="sv-map-ward-selector">
+              <span className="font-monospace text-muted" style={{ fontSize: '10px', alignSelf: 'center' }}>
+                WARDE:
+              </span>
+              <button onClick={() => jumpToWard(23.8068, 90.3687, 16)} className="sv-ward-jump-btn">
+                Mirpur-10
+              </button>
+              <button onClick={() => jumpToWard(23.7516, 90.3938, 16)} className="sv-ward-jump-btn">
+                Karwan Bazar
+              </button>
+              <button onClick={() => jumpToWard(23.7533, 90.3769, 16)} className="sv-ward-jump-btn">
+                Dhanmondi
+              </button>
+              <button onClick={() => jumpToWard(23.7104, 90.4074, 16)} className="sv-ward-jump-btn">
+                Old Dhaka
+              </button>
+              <button onClick={() => jumpToWard(23.8103, 90.4125, 13)} className="sv-ward-jump-btn">
+                Reset View
+              </button>
+            </div>
+
+            {/* Embedded Interactive ZoneMap */}
             <ZoneMap
               spotMarkers={spotMarkers}
               viewOnly={!isReporting}
+              hideDefaultLegend={true}
               onPick={isReporting ? handlePointPick : null}
               selectedPolygon={reportDraft ? [reportDraft] : []}
               height="100%"
               center={mapCenter}
               zoom={mapZoom}
-              key={`map-${mapZoom}`}
+              key={`map-${mapZoom}-${mapCenter[0]}`}
             />
 
-            <div className="position-absolute sv-map-legend animate-entrance" style={{ 
-              top: 20, left: 20, zIndex: 1000, pointerEvents: 'none',
-              background: 'rgba(15, 23, 42, 0.9)',
-              backdropFilter: 'blur(12px)',
-              borderRadius: 16,
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              padding: '16px',
-              maxWidth: 220,
-              color: 'white'
-            }}>
-              <div className="fw-bold small mb-1">🗺️ Live Map Guide</div>
-              <div style={{ fontSize: 10, opacity: 0.8 }}>Marker colors indicate crowdsourced reputation:</div>
-              <div className="mt-2 d-flex flex-column gap-1">
+            {/* Map Legend */}
+            <div className="sv-canvas-legend">
+              <div className="fw-bold mb-1">CIVIC SPOT STATUS</div>
+              <div className="d-flex flex-column gap-1">
                 <div className="d-flex align-items-center gap-2">
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a' }}></span>
-                  <span style={{ fontSize: 9 }}>Mostly Positive Feedback</span>
+                  <span style={{ width: 9, height: 9, background: '#0D6942', display: 'inline-block' }}></span>
+                  <span>Approved & Trusted Spot</span>
                 </div>
                 <div className="d-flex align-items-center gap-2">
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626' }}></span>
-                  <span style={{ fontSize: 9 }}>Needs Improvement</span>
+                  <span style={{ width: 9, height: 9, background: '#C58A2B', display: 'inline-block' }}></span>
+                  <span>Active Demarcation</span>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <span style={{ width: 9, height: 9, background: '#C8372D', display: 'inline-block' }}></span>
+                  <span>Unverified / Citizen Report</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
+      </main>
+
+      {/* Auth Modal for Login/Register */}
       <AuthModal
         isOpen={!!authMode}
         initialMode={authMode || 'login'}
         onClose={() => setAuthMode(null)}
         onSuccess={handleDashboardRedirect}
       />
-
-      <style>{`
-        .sv-landing { scroll-behavior: smooth; overflow-x: hidden; }
-        .discovery-pane::-webkit-scrollbar { width: 5px; }
-        .discovery-pane::-webkit-scrollbar-track { background: transparent; }
-        .discovery-pane::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        
-        .scrollbar-hide::-webkit-scrollbar { display: none !important; }
-        .scrollbar-hide { 
-          -ms-overflow-style: none !important; 
-          scrollbar-width: none !important; 
-        }
-
-        .animate-entrance { animation: svEntrance 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
-        @keyframes svEntrance {
-          from { opacity: 0; transform: translateY(40px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-pulse { animation: svPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes svPulse {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.05); }
-        }
-
-        .sv-btn-glow { position: relative; }
-        .sv-btn-glow:hover { box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); transform: scale(1.05); }
-        
-        @keyframes svLineDrive {
-          0% { height: 0; opacity: 0; }
-          50% { height: 40px; opacity: 1; }
-          100% { height: 0; opacity: 0; transform: translateY(40px); }
-        }
-      `}</style>
     </div>
   );
 }
