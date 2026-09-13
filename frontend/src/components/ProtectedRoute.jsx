@@ -3,24 +3,26 @@ import { useAuth } from '../context/AuthContext';
 
 // role: 'admin' | 'vendor' | null (just authenticated)
 export default function ProtectedRoute({ children, role }) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, isDemo } = useAuth();
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-        <div className="spinner-border text-success" role="status">
-          <span className="visually-hidden">Loading...</span>
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', background: '#f8fafc' }}>
+        <div className="text-center">
+          <div className="spinner-border text-success mb-2" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <div className="text-muted small fw-bold">Loading StreetVendor BD...</div>
         </div>
       </div>
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user && !isDemo) return <Navigate to="/home?mode=login" replace />;
 
-  // Force onboarding for vendors if not completed
-  // (Assuming /onboarding is the route for the onboarding page)
+  // Force onboarding for real registered vendors if not completed (bypassed in demo mode)
   const isVendor = profile?.role === 'vendor';
-  const needsOnboarding = isVendor && !profile?.onboarding_completed;
+  const needsOnboarding = !isDemo && isVendor && !profile?.onboarding_completed;
   
   if (needsOnboarding && window.location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
@@ -35,10 +37,6 @@ export default function ProtectedRoute({ children, role }) {
     return <Navigate to={profile.role === 'admin' ? '/admin' : '/vendor'} replace />;
   }
 
-  // If we are at /vendor and profile is missing, something is wrong, but don't loop
-  if (!profile && window.location.pathname !== '/login' && window.location.pathname !== '/home') {
-     // Optional: show error or handle gracefully. For now, we trust loading handled it.
-  }
-
   return children;
 }
+

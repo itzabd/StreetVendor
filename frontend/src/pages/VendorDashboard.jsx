@@ -12,31 +12,75 @@ export default function VendorDashboard() {
   const [activePermission, setActivePermission] = useState(null);
   const [fullSpot, setFullSpot] = useState(null);
   const [fullZone, setFullZone] = useState(null);
-  const { profile, getToken } = useAuth();
+  const { profile, getToken, isDemo } = useAuth();
 
-  useEffect(() => { loadDashboardData(); }, []);
+  useEffect(() => { loadDashboardData(); }, [isDemo]);
 
   async function loadDashboardData() {
     const token = await getToken();
     const h = { Authorization: `Bearer ${token}` };
     const base = import.meta.env.VITE_API_URL;
-    const [apps, assignments, complaints, permissions] = await Promise.all([
+    const [appsRes, asgnRes, compRes, permRes] = await Promise.all([
       axios.get(`${base}/applications`, { headers: h }).catch(() => ({ data: [] })),
       axios.get(`${base}/assignments`, { headers: h }).catch(() => ({ data: [] })),
       axios.get(`${base}/complaints`, { headers: h }).catch(() => ({ data: [] })),
       axios.get(`${base}/permissions`, { headers: h }).catch(() => ({ data: [] })),
     ]);
 
-    setStats({
-      apps: apps.data.length,
-      assignments: assignments.data.filter(a => a.status === 'active').length,
-      complaints: complaints.data.filter(c => c.status === 'open').length,
-      permissions: permissions.data.filter(p => p.status === 'active').length,
-    });
-    setRecentApps(apps.data.slice(0, 5));
+    let apps = appsRes.data || [];
+    let assignments = asgnRes.data || [];
+    let complaints = compRes.data || [];
+    let permissions = permRes.data || [];
 
-    const activeAsgn = assignments.data.find(a => a.status === 'active');
-    const activePerm = permissions.data.find(p => p.status === 'active');
+    if (isDemo && assignments.length === 0) {
+      assignments = [{
+        id: 'asgn-demo-01',
+        vendor_id: profile?.id,
+        status: 'active',
+        rent_amount: 3500,
+        spots: {
+          id: 'spot-03',
+          spot_number: 'M10-04',
+          latitude: 23.8068,
+          longitude: 90.3687,
+          status: 'occupied',
+          block_name: 'Block A (North Sector)',
+          zones: { name: 'Mirpur Commercial Hub', area: 'Zone-4, Mirpur' }
+        }
+      }];
+    }
+
+    if (isDemo && permissions.length === 0) {
+      permissions = [{
+        id: 'perm-demo-01',
+        permission_type: 'Official Street Vending Permit (Class A)',
+        valid_from: '2026-01-01',
+        valid_until: '2026-12-31',
+        status: 'active',
+        zones: { name: 'Mirpur Commercial Hub' },
+        issuer: { full_name: 'Tanvir Ahmed (City Licensing Officer)' }
+      }];
+    }
+
+    if (isDemo && apps.length === 0) {
+      apps = [{
+        id: 'app-demo-01',
+        created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+        status: 'approved',
+        zones: { name: 'Mirpur Commercial Hub' }
+      }];
+    }
+
+    setStats({
+      apps: apps.length,
+      assignments: assignments.filter(a => a.status === 'active').length,
+      complaints: complaints.filter(c => c.status === 'open').length,
+      permissions: permissions.filter(p => p.status === 'active').length,
+    });
+    setRecentApps(apps.slice(0, 5));
+
+    const activeAsgn = assignments.find(a => a.status === 'active');
+    const activePerm = permissions.find(p => p.status === 'active');
     setActiveAssignment(activeAsgn);
     setActivePermission(activePerm);
 
@@ -47,6 +91,7 @@ export default function VendorDashboard() {
       }
     }
   }
+
 
   const statCards = [
     { icon: '📝', label: 'My Applications', value: stats.apps, color: '#1a6b3c', link: '/vendor/applications' },

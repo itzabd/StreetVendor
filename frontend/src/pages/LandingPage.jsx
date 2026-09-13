@@ -7,7 +7,7 @@ import VendorPublicCard from '../components/VendorPublicCard';
 import axios from 'axios';
 
 export default function LandingPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, enterDemoMode, isDemo } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const discoveryRef = useRef(null);
@@ -22,9 +22,133 @@ export default function LandingPage() {
   const [search, setSearch] = useState('');
   const base = import.meta.env.VITE_API_URL;
 
+  // Fallback curated vendors for resilient showcase
+  const FALLBACK_VENDORS = [
+    {
+      id: 'demo-asgn-01',
+      vendor_id: '00000000-0000-0000-0000-000000000001',
+      status: 'active',
+      rent_amount: 3500,
+      profiles: {
+        id: '00000000-0000-0000-0000-000000000001',
+        full_name: 'Rahim Uddin',
+        business_name: "Rahim's Tea & Fuchka Corner",
+        operating_hours: '07:00 AM - 10:30 PM',
+        phone: '+880 1711-234567',
+        status: 'active',
+        avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+      },
+      spots: {
+        id: 'demo-spot-01',
+        spot_number: 'M10-04',
+        latitude: 23.8068,
+        longitude: 90.3687,
+        status: 'occupied',
+        zones: { name: 'Mirpur Commercial Zone', area: 'Dhaka North' }
+      },
+      ratings: { good: 34, reasonable: 5, worst: 1 }
+    },
+    {
+      id: 'demo-asgn-02',
+      vendor_id: '00000000-0000-0000-0000-000000000012',
+      status: 'active',
+      rent_amount: 4200,
+      profiles: {
+        id: '00000000-0000-0000-0000-000000000012',
+        full_name: 'Abdul Malek',
+        business_name: 'Bismillah Fresh Fruit & Juice Bar',
+        operating_hours: '08:00 AM - 11:00 PM',
+        phone: '+880 1812-345678',
+        status: 'active',
+        avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
+      },
+      spots: {
+        id: 'demo-spot-02',
+        spot_number: 'KB-08',
+        latitude: 23.7516,
+        longitude: 90.3938,
+        status: 'occupied',
+        zones: { name: 'Karwan Bazar Trade Hub', area: 'Dhaka Central' }
+      },
+      ratings: { good: 48, reasonable: 6, worst: 2 }
+    },
+    {
+      id: 'demo-asgn-03',
+      vendor_id: '00000000-0000-0000-0000-000000000013',
+      status: 'active',
+      rent_amount: 3800,
+      profiles: {
+        id: '00000000-0000-0000-0000-000000000013',
+        full_name: 'Morium Begum',
+        business_name: 'Mama Pitha & Traditional Snacks',
+        operating_hours: '03:00 PM - 10:00 PM',
+        phone: '+880 1913-456789',
+        status: 'active',
+        avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150'
+      },
+      spots: {
+        id: 'demo-spot-03',
+        spot_number: 'DH-27',
+        latitude: 23.7533,
+        longitude: 90.3769,
+        status: 'occupied',
+        zones: { name: 'Dhanmondi Cultural Square', area: 'Dhaka South' }
+      },
+      ratings: { good: 62, reasonable: 4, worst: 0 }
+    },
+    {
+      id: 'demo-asgn-04',
+      vendor_id: '00000000-0000-0000-0000-000000000014',
+      status: 'active',
+      rent_amount: 4500,
+      profiles: {
+        id: '00000000-0000-0000-0000-000000000014',
+        full_name: 'Mohammad Shahid',
+        business_name: 'Old Dhaka Shahi Halim & Cha',
+        operating_hours: '06:00 AM - 11:30 PM',
+        phone: '+880 1614-567890',
+        status: 'active',
+        avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150'
+      },
+      spots: {
+        id: 'demo-spot-04',
+        spot_number: 'LB-02',
+        latitude: 23.7196,
+        longitude: 90.3881,
+        status: 'occupied',
+        zones: { name: 'Lalbagh Heritage Zone', area: 'Old Dhaka' }
+      },
+      ratings: { good: 75, reasonable: 8, worst: 3 }
+    },
+    {
+      id: 'demo-asgn-05',
+      vendor_id: '00000000-0000-0000-0000-000000000015',
+      status: 'active',
+      rent_amount: 5000,
+      profiles: {
+        id: '00000000-0000-0000-0000-000000000015',
+        full_name: 'Zahangir Hossain',
+        business_name: 'Gulshan Green Coconut & Organic Drinks',
+        operating_hours: '08:30 AM - 08:00 PM',
+        phone: '+880 1715-678901',
+        status: 'active',
+        avatar_url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150'
+      },
+      spots: {
+        id: 'demo-spot-05',
+        spot_number: 'GL-15',
+        latitude: 23.7925,
+        longitude: 90.4167,
+        status: 'occupied',
+        zones: { name: 'Gulshan-2 Diplomatic Zone', area: 'Dhaka North' }
+      },
+      ratings: { good: 41, reasonable: 5, worst: 1 }
+    }
+  ];
+
   // Map States
   const [mapCenter, setMapCenter] = useState([23.8103, 90.4125]);
-  const [mapZoom, setMapZoom] = useState(14);
+  const [mapZoom, setMapZoom] = useState(13);
   const [isReporting, setIsReporting] = useState(false);
   const [reportData, setReportData] = useState({
     vendor_name: '',
@@ -35,6 +159,15 @@ export default function LandingPage() {
 
   const [reportDraft, setReportDraft] = useState(null);
   const [reportSuccess, setReportSuccess] = useState(false);
+
+  // Sync mode query parameter (e.g. ?mode=login or ?mode=register)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode');
+    if (mode === 'login' || mode === 'register') {
+      setAuthMode(mode);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     fetchVendors();
@@ -55,9 +188,14 @@ export default function LandingPage() {
   const fetchVendors = async () => {
     try {
       const res = await axios.get(`${base}/public/vendors`);
-      setVendors(res.data);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setVendors(res.data);
+      } else {
+        setVendors(FALLBACK_VENDORS);
+      }
     } catch (err) {
-      console.error('Failed to fetch vendors', err);
+      console.warn('Using fallback showcase vendors:', err.message || err);
+      setVendors(FALLBACK_VENDORS);
     } finally {
       setLoading(false);
     }
@@ -69,6 +207,7 @@ export default function LandingPage() {
         const { data: { session } } = await (await import('../supabaseClient')).default.auth.getSession();
         return session?.access_token;
       })();
+      if (!token) return;
       const res = await axios.get(`${base}/public/favorites`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -82,6 +221,7 @@ export default function LandingPage() {
     const local = localStorage.getItem('sv_guest_favorites');
     if (local) setFavorites(JSON.parse(local));
   };
+
 
   const handleToggleFavorite = async (vendorId) => {
     if (!user) {
@@ -234,11 +374,21 @@ export default function LandingPage() {
             <div style={{ fontSize: 10, opacity: 0.6, color: '#fff', textTransform: 'uppercase' }}>Digital Identity System</div>
           </div>
         </div>
-        <div className="d-flex gap-3 align-items-center">
+        <div className="d-flex gap-2 align-items-center">
           {user ? (
-            <button onClick={handleDashboardRedirect} className="btn btn-warning btn-sm px-4 fw-bold shadow-sm">Dashboard</button>
+            <button onClick={handleDashboardRedirect} className="btn btn-warning btn-sm px-4 fw-bold shadow-sm">
+              {isDemo ? '⭐ Demo Dashboard' : 'Dashboard'}
+            </button>
           ) : (
             <>
+              <button 
+                onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }} 
+                className="btn btn-sm px-3 fw-bold shadow-sm d-flex align-items-center gap-1"
+                style={{ background: '#22c55e', color: '#fff', borderRadius: 8, border: 'none' }}
+                title="Immediately try core features without registration"
+              >
+                <span>🚀</span> Try Demo
+              </button>
               <button onClick={() => setAuthMode('login')} className="btn btn-link text-white text-decoration-none small fw-semibold">Sign In</button>
               <button onClick={() => setAuthMode('register')} className="btn btn-warning btn-sm px-4 fw-bold">Register</button>
             </>
@@ -266,16 +416,37 @@ export default function LandingPage() {
               <p className="animate-entrance" style={{ fontSize: 18, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: 40, maxWidth: 520, fontWeight: 400, animationDelay: '0.3s' }}>
                 Empowering vendors with digital identity, smart location tracking, and community-driven verification. Join the city's most transparent trade ecosystem.
               </p>
-              <div className="d-flex gap-4 flex-wrap animate-entrance" style={{ animationDelay: '0.4s' }}>
-                <button onClick={toggleExplorer} className="btn btn-warning btn-lg fw-800 px-5 py-3 shadow-lg rounded-pill sv-btn-glow" style={{ fontSize: 18 }}>
-                  Explore city Map
+              <div className="d-flex gap-3 flex-wrap animate-entrance" style={{ animationDelay: '0.4s' }}>
+                <button onClick={toggleExplorer} className="btn btn-warning btn-lg fw-800 px-4 py-3 shadow-lg rounded-pill sv-btn-glow" style={{ fontSize: 16 }}>
+                  🗺️ Explore City Map
                 </button>
-                <button onClick={() => setAuthMode('register')} className="btn btn-outline-light btn-lg px-5 py-3 rounded-pill" style={{ fontSize: 18 }}>
-                  Register Today
+                <button 
+                  onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }} 
+                  className="btn btn-lg fw-800 px-4 py-3 rounded-pill shadow-lg" 
+                  style={{ fontSize: 16, background: '#22c55e', color: '#fff', border: 'none' }}
+                >
+                  🛒 Try Demo (Vendor)
+                </button>
+                <button 
+                  onClick={() => { enterDemoMode('admin'); navigate('/admin'); }} 
+                  className="btn btn-outline-light btn-lg px-4 py-3 rounded-pill" 
+                  style={{ fontSize: 16 }}
+                >
+                  🔑 Try Demo (Admin)
                 </button>
               </div>
 
+              <div className="animate-entrance mt-3 d-flex align-items-center gap-2 flex-wrap" style={{ animationDelay: '0.5s' }}>
+                <span className="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-2 py-1" style={{ fontSize: 11, borderRadius: 6 }}>
+                  ⚡ Instant Access
+                </span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
+                  No registration required. Try vendor operations, spot applications & admin approvals immediately.
+                </span>
+              </div>
+
               {/* Mission Stats */}
+
               <div className="d-flex gap-5 mt-5 flex-wrap pb-5 mb-5">
                 {[
                   { n: 'Verified Identity', d: 'Secure biometric records', icon: '🆔' },

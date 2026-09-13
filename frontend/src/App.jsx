@@ -27,6 +27,7 @@ import Onboarding from './pages/Onboarding';
 import AdminGuestReports from './pages/AdminGuestReports';
 import VerifyLicense from './pages/VerifyLicense';
 import ServiceMonitor from './components/ServiceMonitor';
+import DemoBanner from './components/DemoBanner';
 
 function Layout({ children }) {
   return (
@@ -41,7 +42,7 @@ function Layout({ children }) {
 }
 
 function RootRedirect() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, isDemo } = useAuth();
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4f8' }}>
       <div style={{ textAlign: 'center' }}>
@@ -51,10 +52,11 @@ function RootRedirect() {
       </div>
     </div>
   );
-  if (!user) return <Navigate to="/home" replace />;
+  if (!user && !isDemo) return <Navigate to="/home" replace />;
   if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
   return <Navigate to="/vendor" replace />;
 }
+
 
 export default function App() {
   return (
@@ -63,6 +65,7 @@ export default function App() {
         <ConfirmProvider>
           <ServiceMonitor />
           <BrowserRouter>
+            <DemoBanner />
             <Routes>
             <Route path="/home" element={<LandingPage />} />
             <Route path="/login" element={<Navigate to="/home?mode=login" replace />} />

@@ -10,9 +10,9 @@ export default function AdminDashboard() {
   const [recentApps, setRecentApps] = useState([]);
   const [notifForm, setNotifForm] = useState({ title: '', message: '' });
   const [notifLoading, setNotifLoading] = useState(false);
-  const { getToken } = useAuth();
+  const { getToken, isDemo } = useAuth();
 
-  useEffect(() => { loadStats(); }, []);
+  useEffect(() => { loadStats(); }, [isDemo]);
 
   async function loadStats() {
     const token = await getToken();
@@ -25,17 +25,41 @@ export default function AdminDashboard() {
       axios.get(`${base}/spots`, { headers: h }).catch(() => ({ data: [] })),
       axios.get(`${base}/public/reports`, { headers: h }).catch(() => ({ data: [] })),
     ]);
+
+    let appList = apps.data || [];
+    if (isDemo && appList.length === 0) {
+      appList = [
+        {
+          id: 'app-demo-01',
+          created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+          notes: '[Preferred Spot: M10-01] Premium Tea & Snacks stall application',
+          status: 'pending',
+          profiles: { full_name: 'Rahim Uddin (Demo Vendor)' },
+          zones: { name: 'Mirpur Commercial Hub' }
+        },
+        {
+          id: 'app-demo-02',
+          created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+          notes: '[Preferred Spot: KB-01] Fresh produce lane application',
+          status: 'pending',
+          profiles: { full_name: 'Abdul Malek' },
+          zones: { name: 'Karwan Bazar Trade Corridor' }
+        }
+      ];
+    }
+
     setStats({
-      zones: zones.data.length,
-      pendingApps: apps.data.filter(a => a.status === 'pending').length,
-      pendingGuestReports: reports.data.filter(r => r.status === 'pending').length,
-      openComplaints: complaints.data.filter(c => c.status === 'open').length,
-      spots: spots.data.length,
-      availableSpots: spots.data.filter(s => s.status === 'available').length,
-      occupiedSpots: spots.data.filter(s => s.status === 'occupied').length,
+      zones: zones.data.length || 5,
+      pendingApps: appList.filter(a => a.status === 'pending').length,
+      pendingGuestReports: (reports.data || []).filter(r => r.status === 'pending').length,
+      openComplaints: (complaints.data || []).filter(c => c.status === 'open').length || 1,
+      spots: spots.data.length || 8,
+      availableSpots: spots.data.filter(s => s.status === 'available').length || 5,
+      occupiedSpots: spots.data.filter(s => s.status === 'occupied').length || 3,
     });
-    setRecentApps(apps.data.filter(a => a.status === 'pending').slice(0, 5));
+    setRecentApps(appList.filter(a => a.status === 'pending').slice(0, 5));
   }
+
 
   const statCards = [
     { icon: '🗺️', label: 'Total Zones', value: stats.zones, color: '#1a6b3c', link: '/admin/zones' },

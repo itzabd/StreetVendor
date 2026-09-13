@@ -24,8 +24,9 @@ const adminLinks = [
 ];
 
 export default function Sidebar() {
-  const { profile, logout } = useAuth();
+  const { profile, logout, isDemo, switchDemoRole } = useAuth();
   const isAdmin = profile?.role === 'admin';
+
   const links = isAdmin ? adminLinks : vendorLinks;
   const section = isAdmin ? 'Admin Panel' : 'Vendor Panel';
 
@@ -78,14 +79,33 @@ export default function Sidebar() {
       <div className="sv-sidebar-footer">
         <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 8 }}>
           <div style={{ fontWeight: 600, color: '#fff', fontSize: 13 }}>{profile?.full_name || 'User'}</div>
-          <span className="badge" style={{ background: isAdmin ? '#f59e0b' : 'rgba(255,255,255,0.15)', color: isAdmin ? '#000' : '#fff', fontSize: 10, borderRadius: 8 }}>
-            {isAdmin ? 'Admin' : 'Vendor'}
-          </span>
+          <div className="d-flex align-items-center gap-1 mt-1">
+            <span className="badge" style={{ background: isAdmin ? '#f59e0b' : 'rgba(255,255,255,0.15)', color: isAdmin ? '#000' : '#fff', fontSize: 10, borderRadius: 8 }}>
+              {isAdmin ? 'Admin' : 'Vendor'}
+            </span>
+            {isDemo && (
+              <span className="badge bg-success" style={{ fontSize: 9, borderRadius: 6 }}>
+                DEMO
+              </span>
+            )}
+          </div>
         </div>
-        <button onClick={logout} className="btn btn-sm w-100" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', fontSize: 12 }}>
-          🚪 Sign Out
+
+        {isDemo && (
+          <button 
+            onClick={() => switchDemoRole(isAdmin ? 'vendor' : 'admin')} 
+            className="btn btn-sm w-100 mb-2 fw-bold text-dark" 
+            style={{ background: '#f59e0b', fontSize: 11, borderRadius: 8 }}
+          >
+            🔁 {isAdmin ? 'Switch to Vendor' : 'Switch to Admin'}
+          </button>
+        )}
+
+        <button onClick={logout} className="btn btn-sm w-100" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', fontSize: 12, borderRadius: 8 }}>
+          {isDemo ? '✕ Exit Demo' : '🚪 Sign Out'}
         </button>
       </div>
     </div>
   );
 }
+

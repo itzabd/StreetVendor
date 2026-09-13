@@ -176,18 +176,36 @@ export default function Navbar() {
           >
             <div style={{ textAlign: 'right', lineHeight: 1.3 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{profile?.full_name || 'User'}</div>
-              <div style={{ fontSize: 11, color: '#94a3b8' }}>{isAdmin ? '🔑 Administrator' : '🛒 Vendor'}</div>
+              <div style={{ fontSize: 11, color: isDemo ? '#16a34a' : '#94a3b8', fontWeight: isDemo ? 700 : 500 }}>
+                {isDemo ? (isAdmin ? '⭐ Demo Admin' : '⭐ Demo Vendor') : (isAdmin ? '🔑 Administrator' : '🛒 Vendor')}
+              </div>
             </div>
             
             {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Avatar" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }} />
+              <img src={profile.avatar_url} alt="Avatar" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: isDemo ? '2px solid #22c55e' : '2px solid #e2e8f0' }} />
             ) : (
               <div className="sv-avatar">{initials}</div>
             )}
           </div>
 
           {showProfileMenu && (
-            <div className="position-absolute end-0 mt-2 shadow bg-white rounded-3 py-2" style={{ width: 200, zIndex: 1000, border: '1px solid #e2e8f0' }}>
+            <div className="position-absolute end-0 mt-2 shadow bg-white rounded-3 py-2" style={{ width: 220, zIndex: 1000, border: '1px solid #e2e8f0' }}>
+              {isDemo && (
+                <>
+                  <button 
+                    className="dropdown-item py-2 px-3 fw-bold text-success" 
+                    onClick={() => {
+                      const next = isAdmin ? 'vendor' : 'admin';
+                      switchDemoRole(next);
+                      navigate(next === 'admin' ? '/admin' : '/vendor');
+                      setShowProfileMenu(false);
+                    }}
+                  >
+                    🔁 Switch to {isAdmin ? 'Vendor View' : 'Admin View'}
+                  </button>
+                  <div className="dropdown-divider"></div>
+                </>
+              )}
               <button 
                 className="dropdown-item py-2 px-3 fw-semibold text-secondary" 
                 onClick={() => {
@@ -203,14 +221,16 @@ export default function Navbar() {
                 onClick={() => {
                   logout();
                   setShowProfileMenu(false);
+                  navigate('/home');
                 }}
               >
-                🚪 Sign Out
+                {isDemo ? '✕ Exit Demo Mode' : '🚪 Sign Out'}
               </button>
             </div>
           )}
         </div>
       </div>
     </div>
+
   );
 }
