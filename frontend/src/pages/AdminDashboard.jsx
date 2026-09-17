@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -12,9 +12,7 @@ export default function AdminDashboard() {
   const [notifLoading, setNotifLoading] = useState(false);
   const { getToken, isDemo } = useAuth();
 
-  useEffect(() => { loadStats(); }, [isDemo]);
-
-  async function loadStats() {
+  const loadStats = useCallback(async () => {
     const token = await getToken();
     const h = { Authorization: `Bearer ${token}` };
     const base = import.meta.env.VITE_API_URL;
@@ -54,18 +52,22 @@ export default function AdminDashboard() {
       pendingGuestReports: (reports.data || []).filter(r => r.status === 'pending').length,
       openComplaints: (complaints.data || []).filter(c => c.status === 'open').length || 1,
       spots: spots.data?.length || 8,
-      availableSpots: (spots.data || []).filter(s => s.status === 'available').length || 5,
-      occupiedSpots: (spots.data || []).filter(s => s.status === 'occupied').length || 3,
+      availableSpots: (spots.data || []).filter(s => s.status === 'available').length || 6,
+      occupiedSpots: (spots.data || []).filter(s => s.status === 'occupied').length || 2,
     });
     setRecentApps(appList.filter(a => a.status === 'pending').slice(0, 5));
-  }
+  }, [getToken, isDemo]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   const statCards = [
-    { label: 'Spatial Zones', value: stats.zones, link: '/admin/zones', tag: 'GIS Boundaries' },
-    { label: 'Demarcated Spots', value: stats.spots, link: '/admin/spots', tag: 'Total Tracked' },
-    { label: 'Pending Applications', value: stats.pendingApps, link: '/admin/applications', tag: 'Awaiting Audit' },
-    { label: 'Citizen Reports', value: stats.pendingGuestReports, link: '/admin/guest-reports', tag: 'Unverified Spots' },
-    { label: 'Open Complaints', value: stats.openComplaints, link: '/admin/complaints', tag: 'Grievance Ledger' },
+    { label: 'Spatial Zones', value: stats.zones, sub: 'Demarcated areas', link: '/admin/zones' },
+    { label: 'Demarcated Spots', value: stats.spots, sub: 'Total mapped positions', link: '/admin/spots' },
+    { label: 'Pending Applications', value: stats.pendingApps, sub: 'Awaiting audit review', link: '/admin/applications', alert: stats.pendingApps > 0 },
+    { label: 'Citizen Reports', value: stats.pendingGuestReports, sub: 'Unverified trade spots', link: '/admin/guest-reports' },
+    { label: 'Open Inquiries', value: stats.openComplaints, sub: 'Grievance records', link: '/admin/complaints' },
   ];
 
   function handleSendNotif(e) {
@@ -85,110 +87,109 @@ export default function AdminDashboard() {
       setNotifForm({ title: '', message: '' });
       setNotifLoading(false);
       addToast('Official gazette dispatch broadcasted to registered merchants!', 'success');
-    }, 500);
+    }, 400);
   }
 
   return (
-    <div>
-      {/* Official Municipal Oversight Banner */}
-      <div className="sv-card mb-4" style={{ borderLeft: '5px solid var(--sv-accent)' }}>
-        <div className="p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      
+      {/* Municipal Oversight Banner */}
+      <div className="sv-card" style={{ padding: '20px 24px', borderLeft: '4px solid var(--sv-status-warning)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div className="d-flex align-items-center gap-2 mb-1">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <span className="sv-badge sv-badge-warning">
-                🏛️ DHAKA CITY CORPORATION • LICENSING DESK
+                City Corporation Oversight Desk
               </span>
-              <span className="font-monospace text-muted" style={{ fontSize: '11px' }}>
-                ADMINISTRATIVE AUDIT SESSION
+              <span style={{ fontSize: '12px', color: 'var(--sv-text-muted)' }}>
+                DNCC / DSCC Licensing Authority
               </span>
             </div>
-            <h2 className="mb-1 fw-800" style={{ fontSize: '26px' }}>
-              Municipal Oversight Panel & Spatial Demarcation Desk
+            <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 2px' }}>
+              Municipal Spatial Demarcation & Licensing Desk
             </h2>
-            <p className="mb-0 text-muted sv-font-editorial" style={{ fontSize: '15px' }}>
-              GIS ward demarcation, merchant application review, spot allocation audits, and citizen grievance regulation.
-            </p>
+            <div style={{ fontSize: '13px', color: 'var(--sv-text-secondary)' }}>
+              Urban GIS boundary management, trade permit approval workflow, and public service compliance.
+            </div>
           </div>
 
-          <div className="d-flex gap-2 flex-wrap">
-            <Link to="/admin/zones" className="btn sv-btn-primary btn-sm font-monospace">
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Link to="/admin/zones" className="btn btn-outline-dark btn-sm">
               + Demarcate Zone
             </Link>
-            <Link to="/admin/applications" className="btn sv-btn-warning btn-sm font-monospace">
+            <Link to="/admin/applications" className="btn btn-primary btn-sm">
               Review Applications ({stats.pendingApps})
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Stat Grid */}
-      <div className="row g-3 mb-4">
-        {statCards.map(s => (
-          <div key={s.label} className="col-sm-6 col-lg">
+      {/* Metrics Row */}
+      <div className="row g-3">
+        {statCards.map((s, idx) => (
+          <div key={idx} className="col-sm-6 col-lg">
             <Link to={s.link} style={{ textDecoration: 'none' }}>
-              <div className="sv-stat-card">
-                <div className="d-flex justify-content-between align-items-start mb-1">
-                  <span className="sv-stat-label">{s.label}</span>
-                  <span className="font-monospace" style={{ fontSize: '10px', color: 'var(--sv-ink-light)' }}>
-                    {s.tag}
-                  </span>
+              <div className="sv-card" style={{ padding: '16px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)', fontWeight: 500, marginBottom: '4px' }}>
+                  {s.label}
                 </div>
-                <div className="sv-stat-value">{s.value}</div>
-                <div className="font-monospace mt-1" style={{ fontSize: '11px', color: 'var(--sv-primary)' }}>
-                  Audit Records →
+                <div className="sv-mono-data" style={{ fontSize: '22px', fontWeight: 700, color: s.alert ? 'var(--sv-status-warning)' : 'var(--sv-text-primary)' }}>
+                  {s.value}
                 </div>
-                <div className="sv-stat-accent" style={{ background: 'var(--sv-accent)' }}></div>
+                <div style={{ fontSize: '11px', color: 'var(--sv-text-secondary)', marginTop: '2px' }}>
+                  {s.sub}
+                </div>
               </div>
             </Link>
           </div>
         ))}
       </div>
 
-      {/* Spot Occupancy Ledger */}
-      <div className="row g-3 mb-4">
+      {/* Capacity & Allocation Breakdown */}
+      <div className="row g-3">
         <div className="col-md-6">
-          <div className="sv-card p-3 h-100" style={{ borderLeft: '4px solid var(--sv-success)' }}>
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="font-monospace fw-bold" style={{ fontSize: '12px', color: 'var(--sv-success)' }}>
-                ● AVAILABLE ALLOCATION SPOTS
+          <div className="sv-card" style={{ padding: '18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--sv-text-secondary)' }}>
+                AVAILABLE TRADE DEMARCATIONS
               </span>
               <span className="sv-badge sv-badge-success">OPEN CAPACITY</span>
             </div>
-            <div className="font-monospace fw-900" style={{ fontSize: '36px', color: 'var(--sv-ink)', lineHeight: 1 }}>
-              {stats.availableSpots}
+            <div className="sv-mono-data" style={{ fontSize: '28px', fontWeight: 700, color: 'var(--sv-status-success)' }}>
+              {stats.availableSpots} Spots
             </div>
-            <div className="font-monospace small text-muted mt-2">
-              Surveyed trade positions ready for licensed merchant assignment.
+            <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)', marginTop: '4px' }}>
+              Surveyed spatial spots available for licensed merchant assignment.
             </div>
           </div>
         </div>
 
         <div className="col-md-6">
-          <div className="sv-card p-3 h-100" style={{ borderLeft: '4px solid var(--sv-primary)' }}>
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="font-monospace fw-bold" style={{ fontSize: '12px', color: 'var(--sv-primary)' }}>
-                ● OCCUPIED ALLOCATION SPOTS
+          <div className="sv-card" style={{ padding: '18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--sv-text-secondary)' }}>
+                OCCUPIED LEASE DEMARCATIONS
               </span>
-              <span className="sv-badge sv-badge-dark">UNDER ACTIVE LEASE</span>
+              <span className="sv-badge sv-badge-neutral">UNDER LEASE</span>
             </div>
-            <div className="font-monospace fw-900" style={{ fontSize: '36px', color: 'var(--sv-ink)', lineHeight: 1 }}>
-              {stats.occupiedSpots}
+            <div className="sv-mono-data" style={{ fontSize: '28px', fontWeight: 700, color: 'var(--sv-text-primary)' }}>
+              {stats.occupiedSpots} Spots
             </div>
-            <div className="font-monospace small text-muted mt-2">
-              Actively occupied by verified merchants generating monthly municipal revenue.
+            <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)', marginTop: '4px' }}>
+              Actively occupied by registered merchants generating monthly municipal revenue.
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Row: Pending Applications & Gazette Dispatch */}
+      {/* Main Review & Dispatch Grid */}
       <div className="row g-4">
-        {/* Pending Applications Audit Docket */}
+        {/* Pending Applications Review Desk */}
         <div className="col-lg-7">
           <div className="sv-card h-100">
             <div className="sv-card-header">
-              <h5>Pending Merchant Applications</h5>
-              <Link to="/admin/applications" className="font-monospace" style={{ fontSize: '11.5px', color: 'var(--sv-primary)', textDecoration: 'none', fontWeight: 700 }}>
+              <h5>Pending Merchant Applications Queue</h5>
+              <Link to="/admin/applications" style={{ fontSize: '12px', color: 'var(--sv-primary)', textDecoration: 'none', fontWeight: 600 }}>
                 Open Review Desk →
               </Link>
             </div>
@@ -196,26 +197,26 @@ export default function AdminDashboard() {
               <table className="sv-table">
                 <thead>
                   <tr>
-                    <th>APPLICANT</th>
-                    <th>TARGET ZONE</th>
-                    <th>SUBMISSION NOTES</th>
-                    <th className="text-end">FILED DATE</th>
+                    <th>Applicant</th>
+                    <th>Target Zone</th>
+                    <th>Notes</th>
+                    <th style={{ textAlign: 'right' }}>Submitted</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentApps.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="text-center py-4 text-muted font-monospace">
-                        No pending applications awaiting municipal review.
+                      <td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: 'var(--sv-text-muted)', fontSize: '12.5px' }}>
+                        No pending applications awaiting audit
                       </td>
                     </tr>
                   ) : (
                     recentApps.map(a => (
                       <tr key={a.id}>
-                        <td className="fw-bold font-monospace">{a.profiles?.full_name || 'Merchant'}</td>
-                        <td className="font-monospace">{a.zones?.name || 'Dhaka Central'}</td>
-                        <td className="text-muted small">{a.notes || 'No special notes'}</td>
-                        <td className="text-end font-monospace small text-muted">
+                        <td style={{ fontWeight: 600 }}>{a.profiles?.full_name || 'Merchant'}</td>
+                        <td>{a.zones?.name || 'Dhaka Central'}</td>
+                        <td style={{ fontSize: '12px', color: 'var(--sv-text-secondary)' }}>{a.notes || 'No special notes'}</td>
+                        <td className="sv-mono-data" style={{ textAlign: 'right', fontSize: '12px', color: 'var(--sv-text-muted)' }}>
                           {new Date(a.created_at).toLocaleDateString()}
                         </td>
                       </tr>
@@ -227,40 +228,42 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Gazette Broadcast Dispatch */}
+        {/* Gazette Directive Dispatch */}
         <div className="col-lg-5">
-          <div className="sv-card h-100 p-4">
-            <div className="d-flex justify-content-between align-items-center mb-3 pb-2" style={{ borderBottom: '1px solid var(--sv-border-light)' }}>
-              <span className="font-monospace fw-bold" style={{ fontSize: '12px', color: 'var(--sv-ink)' }}>
-                📢 OFFICIAL GAZETTE DISPATCH
+          <div className="sv-card h-100" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12.5px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--sv-text-secondary)' }}>
+                Official Gazette Dispatch
               </span>
-              <span className="font-monospace text-muted" style={{ fontSize: '10px' }}>
-                ALL ACTIVE MERCHANTS
-              </span>
+              <span className="sv-badge sv-badge-neutral">MERCHANT BROADCAST</span>
             </div>
-            <p className="text-muted sv-font-editorial small mb-3">
-              Broadcast official regulatory notices, rent reminders, or spatial zone updates directly to active vendors.
+            <p style={{ fontSize: '12.5px', color: 'var(--sv-text-muted)', marginBottom: '14px' }}>
+              Transmit formal municipal regulatory notices, zone boundary updates, or lease fee directives.
             </p>
 
-            <form onSubmit={handleSendNotif}>
-              <div className="mb-2">
-                <label className="font-monospace small mb-1" style={{ fontSize: '10.5px' }}>DISPATCH SUBJECT</label>
+            <form onSubmit={handleSendNotif} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sv-text-secondary)', display: 'block', marginBottom: '4px' }}>
+                  DISPATCH SUBJECT
+                </label>
                 <input 
                   type="text" 
                   className="form-control form-control-sm"
-                  placeholder="e.g. Monthly Lease Fee Reminder / Ward Demarcation Notice"
+                  placeholder="e.g. Monthly Lease Fee Due Notice / Ward Boundary Update"
                   value={notifForm.title}
                   onChange={e => setNotifForm({ ...notifForm, title: e.target.value })}
                   required
                 />
               </div>
 
-              <div className="mb-3">
-                <label className="font-monospace small mb-1" style={{ fontSize: '10.5px' }}>DISPATCH DIRECTIVE BODY</label>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sv-text-secondary)', display: 'block', marginBottom: '4px' }}>
+                  DIRECTIVE MESSAGE BODY
+                </label>
                 <textarea 
                   rows={4}
-                  className="form-control form-control-sm font-monospace"
-                  placeholder="Official message body sent to all merchant dashboards..."
+                  className="form-control form-control-sm"
+                  placeholder="Official notice delivered directly to all active vendor dashboards..."
                   value={notifForm.message}
                   onChange={e => setNotifForm({ ...notifForm, message: e.target.value })}
                   required
@@ -269,10 +272,11 @@ export default function AdminDashboard() {
 
               <button 
                 type="submit" 
-                className="btn sv-btn-primary btn-sm w-100 font-monospace"
+                className="btn btn-primary btn-sm w-100"
                 disabled={notifLoading}
+                style={{ marginTop: '4px' }}
               >
-                {notifLoading ? 'Transmitting Dispatch...' : 'Broadcast Gazette Directive →'}
+                {notifLoading ? 'Transmitting...' : 'Broadcast Gazette Directive →'}
               </button>
             </form>
           </div>

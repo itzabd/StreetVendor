@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { jsPDF } from 'jspdf';
-import '../index.css'; // using main styles
 
 export default function AdminUsers() {
-  const { session } = useAuth();
+  const { session, getToken, isDemo } = useAuth();
   const { addToast } = useToast();
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Edit State
   const [editingVendor, setEditingVendor] = useState(null);
@@ -25,23 +26,103 @@ export default function AdminUsers() {
     status: ''
   });
 
-  useEffect(() => {
-    if (session) fetchVendors();
-  }, [session]);
-
-  const fetchVendors = async () => {
+  const fetchVendors = useCallback(async () => {
     try {
+      const token = (await getToken()) || session?.access_token;
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/vendors/all`, {
-        headers: { Authorization: `Bearer ${session?.access_token}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setVendors(res.data);
-    } catch (error) {
-      console.error(error);
-      addToast('Failed to fetch vendors', 'error');
+      let list = res.data || [];
+      if (isDemo && list.length === 0) {
+        list = [
+          {
+            id: 'demo-user-01',
+            full_name: 'Rahim Uddin',
+            business_name: "Rahim's Tea & Fuchka Corner",
+            phone: '+880 1711-234567',
+            nid_number: '1988269012345678',
+            business_type: 'Food & Beverage',
+            operating_hours: '07:00 AM - 10:30 PM',
+            home_address: 'Section 10, Mirpur, Dhaka',
+            role: 'vendor',
+            status: 'active',
+            created_at: '2026-01-10T10:00:00Z',
+            avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+          },
+          {
+            id: 'demo-user-02',
+            full_name: 'Abdul Malek',
+            business_name: 'Bismillah Fresh Fruit & Juice Bar',
+            phone: '+880 1812-345678',
+            nid_number: '1992145098765432',
+            business_type: 'Produce & Fruits',
+            operating_hours: '08:00 AM - 11:00 PM',
+            home_address: 'Tejgaon Industrial Area, Dhaka',
+            role: 'vendor',
+            status: 'active',
+            created_at: '2026-01-15T12:30:00Z',
+            avatar_url: ''
+          },
+          {
+            id: 'demo-user-03',
+            full_name: 'Khadija Begum',
+            business_name: 'Sonar Bangla Traditional Handicrafts',
+            phone: '+880 1913-987654',
+            nid_number: '1985456012398765',
+            business_type: 'Handicrafts & Textiles',
+            operating_hours: '10:00 AM - 08:30 PM',
+            home_address: 'Dhanmondi Road 27, Dhaka',
+            role: 'vendor',
+            status: 'pending',
+            created_at: '2026-02-01T09:15:00Z',
+            avatar_url: ''
+          }
+        ];
+      }
+      setVendors(list);
+    } catch {
+      if (isDemo) {
+        setVendors([
+          {
+            id: 'demo-user-01',
+            full_name: 'Rahim Uddin',
+            business_name: "Rahim's Tea & Fuchka Corner",
+            phone: '+880 1711-234567',
+            nid_number: '1988269012345678',
+            business_type: 'Food & Beverage',
+            operating_hours: '07:00 AM - 10:30 PM',
+            home_address: 'Section 10, Mirpur, Dhaka',
+            role: 'vendor',
+            status: 'active',
+            created_at: '2026-01-10T10:00:00Z',
+            avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+          },
+          {
+            id: 'demo-user-02',
+            full_name: 'Abdul Malek',
+            business_name: 'Bismillah Fresh Fruit & Juice Bar',
+            phone: '+880 1812-345678',
+            nid_number: '1992145098765432',
+            business_type: 'Produce & Fruits',
+            operating_hours: '08:00 AM - 11:00 PM',
+            home_address: 'Tejgaon Industrial Area, Dhaka',
+            role: 'vendor',
+            status: 'active',
+            created_at: '2026-01-15T12:30:00Z',
+            avatar_url: ''
+          }
+        ]);
+      } else {
+        addToast('Failed to fetch merchant registry', 'danger');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken, session?.access_token, isDemo, addToast]);
+
+  useEffect(() => {
+    fetchVendors();
+  }, [fetchVendors]);
 
   const handleEditClick = (vendor) => {
     setEditingVendor(vendor.id);
@@ -65,112 +146,115 @@ export default function AdminUsers() {
   const handleUpdate = async (e, id) => {
     e.preventDefault();
     try {
+      const token = (await getToken()) || session?.access_token;
       await axios.put(`${import.meta.env.VITE_API_URL}/vendors/admin/${id}`, editForm, {
-        headers: { Authorization: `Bearer ${session?.access_token}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
-      addToast('Vendor profile updated', 'success');
+      addToast('Municipal vendor profile updated', 'success');
       setEditingVendor(null);
       fetchVendors();
-    } catch (err) {
-      console.error(err);
-      addToast('Failed to update vendor', 'error');
+    } catch {
+      addToast('Failed to update vendor record', 'danger');
     }
   };
 
   const downloadProfile = (vendor) => {
     const doc = new jsPDF();
-    const primaryColor = '#1a6b3c';
-    const textColor = '#1e293b';
-    const mutedColor = '#64748b';
+    const primaryColor = '#1E4A4A';
+    const textColor = '#322D29';
+    const mutedColor = '#4A6E6E';
 
     // Header
     doc.setFillColor(primaryColor);
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.rect(0, 0, 210, 42, 'F');
     doc.setTextColor('#ffffff');
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('StreetVendor BD', 20, 20);
+    doc.text('DHAKA CITY CORPORATION', 20, 18);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('Official Vendor Profile Digital Record', 20, 30);
-    
-    // Watermark effect
-    doc.setTextColor(230, 230, 230);
-    doc.setFontSize(60);
-    doc.text('VERIFIED', 40, 150, { angle: 45 });
+    doc.text('Municipal Spatial Trade Ledger · Merchant Verification Record', 20, 28);
+    doc.setFontSize(8);
+    doc.text('OFFICIAL CIVIC ARCHIVE · DIGITAL IDENTITY PASSPORT', 20, 36);
 
-    // Profile Details Section
+    // Watermark
+    doc.setTextColor(240, 240, 240);
+    doc.setFontSize(55);
+    doc.text('VERIFIED NID', 30, 150, { angle: 45 });
+
+    // Section 1
     doc.setTextColor(textColor);
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('1. Personal Identity & Account', 20, 55);
-    doc.setDrawColor(226, 232, 240);
-    doc.line(20, 58, 190, 58);
+    doc.text('1. Personal Identity & Account Dossier', 20, 56);
+    doc.setDrawColor(209, 199, 189);
+    doc.line(20, 60, 190, 60);
 
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(mutedColor);
     doc.setFont('helvetica', 'normal');
-    doc.text('FULL NAME (LEGAL)', 20, 68);
-    doc.text('NATIONAL ID (NID)', 110, 68);
-    
-    doc.setTextColor(textColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(vendor.full_name || 'N/A', 20, 74);
-    doc.text(vendor.nid_number || 'N/A', 110, 74);
+    doc.text('LEGAL FULL NAME', 20, 70);
+    doc.text('NATIONAL IDENTITY (NID)', 110, 70);
 
-    doc.setTextColor(mutedColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('ACCOUNT ROLE', 20, 84);
-    doc.text('ACCOUNT STATUS', 110, 84);
-    
     doc.setTextColor(textColor);
     doc.setFont('helvetica', 'bold');
-    doc.text((vendor.role || 'vendor').toUpperCase(), 20, 90);
-    doc.text((vendor.status || 'active').toUpperCase(), 110, 90);
+    doc.text(vendor.full_name || 'N/A', 20, 76);
+    doc.text(vendor.nid_number || 'N/A', 110, 76);
 
     doc.setTextColor(mutedColor);
     doc.setFont('helvetica', 'normal');
-    doc.text('PHONE NUMBER', 20, 100);
-    doc.text('JOIN DATE', 110, 100);
-    
+    doc.text('ACCOUNT ROLE', 20, 86);
+    doc.text('MUNICIPAL STATUS', 110, 86);
+
     doc.setTextColor(textColor);
     doc.setFont('helvetica', 'bold');
-    doc.text(vendor.phone || 'N/A', 20, 106);
-    doc.text(new Date(vendor.created_at).toLocaleDateString(), 110, 106);
+    doc.text((vendor.role || 'vendor').toUpperCase(), 20, 92);
+    doc.text((vendor.status || 'active').toUpperCase(), 110, 92);
 
     doc.setTextColor(mutedColor);
     doc.setFont('helvetica', 'normal');
-    doc.text('HOME ADDRESS', 20, 116);
-    
-    doc.setTextColor(textColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(vendor.home_address || 'N/A', 20, 122, { maxWidth: 160 });
-
-    // Business details
-    doc.setFontSize(16);
-    doc.text('2. Business Information', 20, 145);
-    doc.line(20, 148, 190, 148);
-
-    doc.setFontSize(10);
-    doc.setTextColor(mutedColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('SHOP / BUSINESS NAME', 20, 128);
-    doc.text('BUSINESS TYPE', 110, 128);
+    doc.text('TELEPHONE CONTACT', 20, 102);
+    doc.text('REGISTRATION DATE', 110, 102);
 
     doc.setTextColor(textColor);
     doc.setFont('helvetica', 'bold');
-    doc.text(vendor.business_name || 'N/A', 20, 134);
-    doc.text(vendor.business_type || 'N/A', 110, 134);
+    doc.text(vendor.phone || 'N/A', 20, 108);
+    doc.text(new Date(vendor.created_at || Date.now()).toLocaleDateString('en-GB'), 110, 108);
 
     doc.setTextColor(mutedColor);
     doc.setFont('helvetica', 'normal');
-    doc.text('OPERATING HOURS', 20, 144);
-    doc.text('TIN (TAX ID)', 110, 144);
+    doc.text('RESIDENTIAL ADDRESS', 20, 118);
 
     doc.setTextColor(textColor);
     doc.setFont('helvetica', 'bold');
-    doc.text(vendor.operating_hours || 'N/A', 20, 150);
-    doc.text(vendor.tin_number || 'N/A', 110, 150);
+    doc.text(vendor.home_address || 'Dhaka Metropolitan Area', 20, 124, { maxWidth: 160 });
+
+    // Section 2
+    doc.setFontSize(14);
+    doc.text('2. Trade & Business Classification', 20, 142);
+    doc.setDrawColor(209, 199, 189);
+    doc.line(20, 146, 190, 146);
+
+    doc.setFontSize(9);
+    doc.setTextColor(mutedColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('ENTERPRISE / TRADE NAME', 20, 156);
+    doc.text('COMMERCIAL CATEGORY', 110, 156);
+
+    doc.setTextColor(textColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(vendor.business_name || 'N/A', 20, 162);
+    doc.text(vendor.business_type || 'N/A', 110, 162);
+
+    doc.setTextColor(mutedColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('PERMITTED OPERATING HOURS', 20, 172);
+    doc.text('SYSTEM IDENTIFIER', 110, 172);
+
+    doc.setTextColor(textColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(vendor.operating_hours || 'N/A', 20, 178);
+    doc.text(vendor.id?.slice(0, 12).toUpperCase() || 'N/A', 110, 178);
 
     // Footer
     doc.setDrawColor(primaryColor);
@@ -179,236 +263,370 @@ export default function AdminUsers() {
     doc.setFontSize(8);
     doc.setTextColor(mutedColor);
     doc.setFont('helvetica', 'italic');
-    doc.text(`Record generated on ${new Date().toLocaleString()} | User ID: ${vendor.id}`, 20, 282);
-    doc.text('This is a computer generated document. No signature required.', 20, 287);
+    doc.text(`Official Municipal Verification Record · Generated ${new Date().toLocaleString()} · ID: ${vendor.id}`, 20, 282);
+    doc.text('Authenticated via Dhaka City Corporation Spatial Trade Ledger Platform.', 20, 287);
 
-    doc.save(`vendor_profile_${vendor.id.slice(0, 8)}.pdf`);
-    addToast('PDF Profile generated!', 'success');
+    doc.save(`merchant_dossier_${vendor.id.slice(0, 8)}.pdf`);
+    addToast('Official Merchant PDF Dossier downloaded!', 'success');
   };
 
-  if (loading) return (
-    <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="sv-loader"></div>
-    </div>
-  );
+  const filteredVendors = useMemo(() => {
+    return vendors.filter(v => {
+      const matchStatus = statusFilter === 'all' || v.status === statusFilter;
+      const matchSearch = !searchQuery || 
+        (v.full_name && v.full_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (v.business_name && v.business_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (v.phone && v.phone.includes(searchQuery)) ||
+        (v.nid_number && v.nid_number.includes(searchQuery));
+      return matchStatus && matchSearch;
+    });
+  }, [vendors, statusFilter, searchQuery]);
 
-  return (
-    <div className="admin-users-container animate-entrance">
-      <div className="sv-page-header mb-5">
-        <div className="d-flex justify-content-between align-items-end">
-          <div>
-            <h2 className="fw-900 mb-1" style={{ fontSize: '2.2rem', letterSpacing: '-0.02em' }}>Vendor Hub</h2>
-            <p className="text-muted fw-500">Manage the official digital registry of registered street vendors.</p>
-          </div>
-          <div className="stats-pill">
-            <span className="count">{vendors.length}</span>
-            <span className="label">Total Vendors</span>
+  if (loading) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner-border text-success" role="status"></div>
+          <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--sv-text-muted)' }}>
+            Loading municipal merchant ledger...
           </div>
         </div>
       </div>
-      
-      <div className="glass-card overflow-hidden">
+    );
+  }
+
+  return (
+    <div className="animate-entrance" style={{ maxWidth: 1440, margin: '0 auto', paddingBottom: '48px' }}>
+      {/* Header */}
+      <div className="sv-page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+          <div className="d-flex align-items-center gap-2 mb-1">
+            <span className="apple-pill-badge" style={{ background: 'var(--sv-primary-light)', color: 'var(--sv-primary)', border: '1px solid var(--sv-primary-border)' }}>
+              🏛️ Municipal Civic Registry
+            </span>
+            <span className="apple-pill-badge" style={{ background: 'rgba(5, 150, 105, 0.1)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.25)' }}>
+              Merchant Identity Verification
+            </span>
+          </div>
+          <h2 style={{ fontSize: '26px', fontWeight: 700, margin: 0 }}>
+            Merchant & Officer Registry
+          </h2>
+          <p style={{ fontSize: '13.5px', color: 'var(--sv-text-muted)', margin: '4px 0 0' }}>
+            Official digital identity records, National ID verifications, and spatial vending permit credentials.
+          </p>
+        </div>
+
+        <div className="d-flex align-items-center gap-2">
+          <div className="apple-card px-3 py-2 text-center" style={{ minWidth: 120 }}>
+            <div style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--sv-text-subtle)', textTransform: 'uppercase' }}>Total Merchants</div>
+            <div className="sv-mono-data" style={{ fontSize: '18px', fontWeight: 700, color: 'var(--sv-primary)' }}>{vendors.length}</div>
+          </div>
+          <div className="apple-card px-3 py-2 text-center" style={{ minWidth: 120 }}>
+            <div style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--sv-text-subtle)', textTransform: 'uppercase' }}>NID Verified</div>
+            <div className="sv-mono-data" style={{ fontSize: '18px', fontWeight: 700, color: '#059669' }}>
+              {vendors.filter(v => v.nid_number).length}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter & Search Toolbar */}
+      <div className="apple-card p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div className="apple-segmented-bar">
+          <button 
+            className={`apple-segmented-item ${statusFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('all')}
+          >
+            All Accounts ({vendors.length})
+          </button>
+          <button 
+            className={`apple-segmented-item ${statusFilter === 'active' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('active')}
+          >
+            Active
+          </button>
+          <button 
+            className={`apple-segmented-item ${statusFilter === 'pending' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('pending')}
+          >
+            Pending Verification
+          </button>
+        </div>
+
+        <div style={{ maxWidth: '320px', width: '100%' }}>
+          <input 
+            type="text" 
+            className="form-control" 
+            placeholder="Search by name, trade, NID, phone..." 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ fontSize: '13px', padding: '8px 14px' }}
+          />
+        </div>
+      </div>
+
+      {/* Merchant Ledger Table */}
+      <div className="apple-card p-4">
         <div className="table-responsive">
-          <table className="premium-table">
+          <table className="sv-table mb-0">
             <thead>
               <tr>
-                <th>Identity & Shop</th>
-                <th>Verification</th>
+                <th>Merchant & Enterprise</th>
+                <th>Identity & NID</th>
                 <th>Classification</th>
-                <th className="text-end">Management</th>
+                <th>Status & Role</th>
+                <th className="text-end">Administrative Actions</th>
               </tr>
             </thead>
             <tbody>
-              {vendors.map(v => (
-                <tr key={v.id} className={editingVendor === v.id ? 'editing-row' : ''}>
-                  {editingVendor === v.id ? (
-                    <td colSpan={4} className="edit-form-cell">
-                      <div className="edit-workspace-wrapper animate-entrance">
-                        <div className="workspace-header d-flex align-items-center gap-3 mb-4">
-                          <div className="avatar-preview">
-                            {v.avatar_url ? <img src={v.avatar_url} /> : <span>{v.full_name?.[0] || 'V'}</span>}
+              {filteredVendors.map(v => (
+                editingVendor === v.id ? (
+                  <tr key={v.id}>
+                    <td colSpan={5} style={{ padding: '24px', background: 'var(--sv-surface-subtle)' }}>
+                      <div className="apple-card p-4" style={{ background: '#FFFFFF' }}>
+                        <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                          <div style={{
+                            width: '44px', height: '44px', borderRadius: '12px',
+                            background: 'var(--sv-primary)', color: '#FFFFFF',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '18px', fontWeight: 700
+                          }}>
+                            {v.full_name?.[0] || 'M'}
                           </div>
                           <div>
-                            <h4 className="fw-800 mb-0">Modifying Profile</h4>
-                            <p className="small text-muted mb-0">System ID: {v.id.slice(0, 8)}</p>
+                            <h4 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--sv-text-primary)' }}>
+                              Modifying Municipal Dossier: {v.full_name}
+                            </h4>
+                            <div className="sv-mono-data" style={{ fontSize: '11.5px', color: 'var(--sv-text-subtle)' }}>
+                              System UID: {v.id}
+                            </div>
                           </div>
                         </div>
 
-                        <form onSubmit={(e) => handleUpdate(e, v.id)} className="row g-4">
+                        <form onSubmit={(e) => handleUpdate(e, v.id)} className="row g-3">
                           <div className="col-md-4">
-                            <div className="form-group-premium">
-                              <label>Full Owner Name</label>
-                              <input value={editForm.full_name} onChange={e => setEditForm({...editForm, full_name: e.target.value})} placeholder="Legal Name" />
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="form-group-premium">
-                              <label>Shop Title</label>
-                              <input value={editForm.business_name} onChange={e => setEditForm({...editForm, business_name: e.target.value})} placeholder="Trade Name" />
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="form-group-premium">
-                              <label>Mobile Contact</label>
-                              <input value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})} placeholder="+880..." />
-                            </div>
+                            <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+                              Full Legal Name
+                            </label>
+                            <input 
+                              className="form-control form-control-sm" 
+                              value={editForm.full_name} 
+                              onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} 
+                              required 
+                            />
                           </div>
 
                           <div className="col-md-4">
-                            <div className="form-group-premium">
-                              <label>Business Type</label>
-                              <select value={editForm.business_type} onChange={e => setEditForm({...editForm, business_type: e.target.value})}>
-                                <option value="Food & Beverage">Food & Beverage</option>
-                                <option value="Clothing & Apparel">Clothing & Apparel</option>
-                                <option value="Electronics">Electronics</option>
-                                <option value="Other">Other</option>
-                              </select>
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="form-group-premium">
-                              <label>Operating Hours</label>
-                              <input value={editForm.operating_hours} onChange={e => setEditForm({...editForm, operating_hours: e.target.value})} placeholder="e.g. 9AM - 9PM" />
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="form-group-premium">
-                              <label>NID / Identification</label>
-                              <input value={editForm.nid_number} onChange={e => setEditForm({...editForm, nid_number: e.target.value})} />
-                            </div>
+                            <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+                              Trade / Shop Name
+                            </label>
+                            <input 
+                              className="form-control form-control-sm" 
+                              value={editForm.business_name} 
+                              onChange={e => setEditForm({ ...editForm, business_name: e.target.value })} 
+                            />
                           </div>
 
                           <div className="col-md-4">
-                            <div className="form-group-premium">
-                              <label>Account Status</label>
-                              <select className={`status-select ${editForm.status}`} value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})}>
-                                <option value="active">🟢 Active</option>
-                                <option value="pending">🟡 Pending</option>
-                                <option value="suspended">🔴 Suspended</option>
-                              </select>
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="form-group-premium">
-                              <label>Administrative Role</label>
-                              <select value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})}>
-                                <option value="vendor">Standard Vendor</option>
-                                <option value="admin">System Admin</option>
-                              </select>
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="form-group-premium disabled">
-                              <label>Registered Since</label>
-                              <input value={new Date(v.created_at).toLocaleDateString()} disabled />
-                            </div>
+                            <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+                              Mobile Contact
+                            </label>
+                            <input 
+                              className="form-control form-control-sm" 
+                              value={editForm.phone} 
+                              onChange={e => setEditForm({ ...editForm, phone: e.target.value })} 
+                            />
                           </div>
 
-                          <div className="col-12 mt-2">
-                             <div className="form-group-premium">
-                              <label>Physical Address</label>
-                              <input value={editForm.home_address} onChange={e => setEditForm({...editForm, home_address: e.target.value})} placeholder="Full residence details..." />
-                            </div>
+                          <div className="col-md-4">
+                            <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+                              Trade Category
+                            </label>
+                            <select 
+                              className="form-select form-select-sm" 
+                              value={editForm.business_type} 
+                              onChange={e => setEditForm({ ...editForm, business_type: e.target.value })}
+                            >
+                              <option value="Food & Beverage">Food & Beverage</option>
+                              <option value="Produce & Fruits">Produce & Fruits</option>
+                              <option value="Handicrafts & Textiles">Handicrafts & Textiles</option>
+                              <option value="Electronics & Accessories">Electronics & Accessories</option>
+                              <option value="General Vending">General Vending</option>
+                            </select>
                           </div>
 
-                          <div className="col-12 d-flex gap-3 justify-content-end mt-5">
-                            <button type="button" onClick={cancelEdit} className="btn-modern secondary">Cancel</button>
-                            <button type="submit" className="btn-modern primary">Propagate Changes 🚀</button>
+                          <div className="col-md-4">
+                            <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+                              Permitted Operating Hours
+                            </label>
+                            <input 
+                              className="form-control form-control-sm" 
+                              value={editForm.operating_hours} 
+                              onChange={e => setEditForm({ ...editForm, operating_hours: e.target.value })} 
+                            />
+                          </div>
+
+                          <div className="col-md-4">
+                            <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+                              National ID (NID)
+                            </label>
+                            <input 
+                              className="form-control form-control-sm" 
+                              value={editForm.nid_number} 
+                              onChange={e => setEditForm({ ...editForm, nid_number: e.target.value })} 
+                            />
+                          </div>
+
+                          <div className="col-md-4">
+                            <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+                              Standing Status
+                            </label>
+                            <select 
+                              className="form-select form-select-sm" 
+                              value={editForm.status} 
+                              onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                            >
+                              <option value="active">Active / Verified</option>
+                              <option value="pending">Pending Document Verification</option>
+                              <option value="suspended">Suspended / Under Audit</option>
+                            </select>
+                          </div>
+
+                          <div className="col-md-4">
+                            <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+                              Administrative Role
+                            </label>
+                            <select 
+                              className="form-select form-select-sm" 
+                              value={editForm.role} 
+                              onChange={e => setEditForm({ ...editForm, role: e.target.value })}
+                            >
+                              <option value="vendor">Merchant (Vendor)</option>
+                              <option value="admin">Municipal Officer (Admin)</option>
+                            </select>
+                          </div>
+
+                          <div className="col-md-4">
+                            <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+                              Residential Address
+                            </label>
+                            <input 
+                              className="form-control form-control-sm" 
+                              value={editForm.home_address} 
+                              onChange={e => setEditForm({ ...editForm, home_address: e.target.value })} 
+                              placeholder="Address in Dhaka"
+                            />
+                          </div>
+
+                          <div className="col-12 d-flex justify-content-end gap-2 mt-4">
+                            <button 
+                              type="button" 
+                              onClick={cancelEdit} 
+                              className="apple-pill-btn"
+                              style={{ background: 'var(--sv-surface-subtle)', border: '1px solid var(--sv-border)', color: 'var(--sv-text-secondary)' }}
+                            >
+                              Cancel
+                            </button>
+                            <button 
+                              type="submit" 
+                              className="apple-pill-btn"
+                              style={{ background: 'var(--sv-primary)', color: '#FFFFFF' }}
+                            >
+                              Save Official Changes
+                            </button>
                           </div>
                         </form>
                       </div>
                     </td>
-                  ) : (
-                    <>
-                      <td>
-                        <div className="d-flex align-items-center gap-3">
-                          <div className="hub-avatar">
-                            {v.avatar_url ? <img src={v.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : v.full_name?.[0]}
+                  </tr>
+                ) : (
+                  <tr key={v.id}>
+                    <td>
+                      <div className="d-flex align-items-center gap-3">
+                        <div style={{
+                          width: '40px', height: '40px', borderRadius: '12px',
+                          background: 'var(--sv-primary-light)', color: 'var(--sv-primary)',
+                          border: '1.5px solid var(--sv-primary-border)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontWeight: 700, fontSize: '14px', flexShrink: 0, overflow: 'hidden'
+                        }}>
+                          {v.avatar_url ? (
+                            <img src={v.avatar_url} alt={v.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            v.full_name?.[0] || 'M'
+                          )}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, color: 'var(--sv-text-primary)' }}>
+                            {v.business_name || 'Sole Street Merchant'}
                           </div>
-                          <div>
-                            <div className="shop-name">{v.business_name || 'Individual Merchant'}</div>
-                            <div className="owner-name small text-muted" style={{ fontSize: 11 }}>{v.full_name}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)' }}>
+                            Owner: <strong>{v.full_name}</strong>
                           </div>
                         </div>
-                      </td>
-                      <td>
-                        <div className="contact-display">
-                          <div className="phone fw-bold" style={{ fontSize: 13, color: '#1e293b' }}>{v.phone || '--'}</div>
-                          <div className="nid small text-muted" style={{ fontSize: 11 }}>ID: {v.id.slice(0, 8)}</div>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="badge-stack d-flex align-items-center gap-2">
-                          <span className="type-badge">{v.business_type || 'General'}</span>
-                          <span className={`status-badge-mini ${v.status || 'active'}`}>{v.status || 'active'}</span>
-                        </div>
-                      </td>
-                      <td className="text-end">
-                        <div className="action-buttons">
-                          <button onClick={() => handleEditClick(v)} className="action-btn edit" title="Edit Profile">
-                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/></svg>
-                          </button>
-                          <button onClick={() => downloadProfile(v)} className="action-btn download" title="Download PDF">
-                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
-                          </button>
-                        </div>
-                      </td>
-                    </>
-                  )}
-                </tr>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div className="sv-mono-data" style={{ fontWeight: 600, color: 'var(--sv-text-secondary)', fontSize: '12.5px' }}>
+                        {v.nid_number ? `NID: ${v.nid_number}` : 'NID: Pending'}
+                      </div>
+                      <div style={{ fontSize: '11.5px', color: 'var(--sv-text-muted)', marginTop: '2px' }}>
+                        📞 {v.phone || 'No phone'}
+                      </div>
+                    </td>
+
+                    <td>
+                      <span className="apple-pill-badge" style={{ background: 'var(--sv-surface-subtle)', color: 'var(--sv-text-secondary)', border: '1px solid var(--sv-border)' }}>
+                        {v.business_type || 'General'}
+                      </span>
+                    </td>
+
+                    <td>
+                      <div className="d-flex align-items-center gap-2">
+                        <span className={`apple-pill-badge ${v.status === 'active' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'}`}>
+                          ● {(v.status || 'active').toUpperCase()}
+                        </span>
+                        {v.role === 'admin' && (
+                          <span className="sv-badge sv-badge-primary" style={{ fontSize: '9px' }}>OFFICER</span>
+                        )}
+                      </div>
+                    </td>
+
+                    <td className="text-end">
+                      <div className="d-flex justify-content-end gap-2">
+                        <button 
+                          onClick={() => handleEditClick(v)} 
+                          className="apple-pill-btn"
+                          style={{ background: 'var(--sv-surface-subtle)', border: '1px solid var(--sv-border)', color: 'var(--sv-text-secondary)', padding: '5px 12px', fontSize: '12px' }}
+                          title="Edit Merchant Dossier"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button 
+                          onClick={() => downloadProfile(v)} 
+                          className="apple-pill-btn"
+                          style={{ background: 'var(--sv-primary-light)', border: '1px solid var(--sv-primary-border)', color: 'var(--sv-primary)', padding: '5px 12px', fontSize: '12px' }}
+                          title="Generate PDF Dossier"
+                        >
+                          📄 Dossier
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
               ))}
+              {filteredVendors.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center py-5" style={{ color: 'var(--sv-text-subtle)' }}>
+                    No merchant records match the current filter.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
-
-      <style>{`
-        .admin-users-container { padding: 40px; max-width: 1240px; margin: 0 auto; min-height: 100vh; background: #fdfdfd; }
-        .glass-card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #edf2f7; }
-        
-        .stats-pill { background: #fff; border: 1.5px solid #e2e8f0; padding: 8px 16px; border-radius: 12px; display: flex; align-items: center; gap: 8px; }
-        .stats-pill .count { font-size: 18px; font-weight: 800; color: #1a6b3c; }
-        .stats-pill .label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-
-        .premium-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .premium-table th { background: #fcfdfe; padding: 14px 24px; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #edf2f7; }
-        .premium-table td { padding: 12px 24px; vertical-align: middle; border-bottom: 1px solid #f8fafc; }
-        
-        .hub-avatar { width: 38px; height: 38px; border-radius: 10px; background: #1a6b3c; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; overflow: hidden; flex-shrink: 0; }
-        .shop-name { font-weight: 600; color: #1e293b; font-size: 14px; }
-        .type-badge { background: #f1f5f9; padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; color: #475569; }
-        
-        .status-badge-mini { padding: 3px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
-        .status-badge-mini.active { background: #dcfce7; color: #166534; }
-        .status-badge-mini.pending { background: #fef9c3; color: #854d0e; }
-        .status-badge-mini.suspended { background: #fee2e2; color: #991b1b; }
-
-        .action-buttons { display: flex; gap: 6px; justify-content: flex-end; }
-        .action-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; background: #fff; color: #94a3b8; transition: 0.2s; cursor: pointer; }
-        .action-btn:hover { border-color: #1a6b3c; color: #1a6b3c; background: #f0fdf4; }
-
-        /* Editing Mode */
-        .editing-row { background: #fcfdfe !important; }
-        .edit-form-cell { padding: 24px !important; }
-        .edit-workspace-wrapper { background: #fff; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; }
-        
-        .avatar-preview { width: 48px; height: 48px; border-radius: 12px; background: #1a6b3c; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; overflow: hidden; }
-        .form-group-premium { display: flex; flex-direction: column; gap: 4px; }
-        .form-group-premium label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-        .form-group-premium input, .form-group-premium select { padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 13px; font-weight: 500; color: #1e293b; transition: 0.2s; width: 100%; }
-        .form-group-premium input:focus { outline: none; border-color: #1a6b3c; box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.05); }
-        .form-group-premium.disabled input { background: #f8fafc; color: #94a3b8; }
-
-        .btn-modern { padding: 8px 20px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s; }
-        .btn-modern.primary { background: #1a6b3c; color: #fff; border: none; }
-        .btn-modern.primary:hover { background: #155730; }
-        .btn-modern.secondary { background: #fff; color: #64748b; border: 1px solid #e2e8f0; }
-
-        .sv-loader { width: 24px; height: 24px; border: 2px solid #f3f3f3; border-top: 2px solid #1a6b3c; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes svIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-entrance { animation: svIn 0.4s ease-out forwards; }
-      `}</style>
     </div>
   );
 }

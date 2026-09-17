@@ -20,7 +20,7 @@ export default function Onboarding() {
     tin_number: '',
     business_name: '',
     business_type: '',
-    operating_hours: '6:00 AM – 9:00 PM',
+    operating_hours: '07:00 AM – 10:00 PM',
     avatar_url: '',
     agreed: false
   });
@@ -47,10 +47,9 @@ export default function Onboarding() {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Add a cache buster to ensure the browser reloads the image
       const finalUrl = `${publicUrl}?t=${Date.now()}`;
       update('avatar_url', finalUrl);
-      addToast('Photograph uploaded successfully!', 'success');
+      addToast('Profile photograph uploaded successfully!', 'success');
     } catch (err) {
       addToast(err.message || 'Upload failed', 'danger');
     } finally {
@@ -60,7 +59,7 @@ export default function Onboarding() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.agreed) return addToast('Please agree to the terms and conditions', 'warning');
+    if (!form.agreed) return addToast('Please accept the Municipal Operating Code terms', 'warning');
     
     setLoading(true);
     try {
@@ -71,61 +70,126 @@ export default function Onboarding() {
       }, { headers: { Authorization: `Bearer ${token}` } });
       
       await refreshUser();
-      addToast('Onboarding completed! Welcome to StreetVendor BD.', 'success');
+      addToast('Merchant identity verified and recorded! Welcome to StreetVendor BD.', 'success');
       navigate('/vendor');
     } catch (err) {
-      addToast(err.response?.data?.error || 'Failed to save profile', 'danger');
+      addToast(err.response?.data?.error || 'Failed to save municipal dossier', 'danger');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '40px 20px' }}>
-      <div style={{ maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--sv-canvas)', padding: '48px 20px' }}>
+      <div style={{ maxWidth: 840, margin: '0 auto' }}>
         
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📜</div>
-          <h2 style={{ fontWeight: 800, color: '#1a6b3c' }}>Vendor Onboarding</h2>
-          <p style={{ color: '#64748b' }}>Please complete your official profile to start applying for vending zones.</p>
+        {/* Apple-style Civic Header */}
+        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+          <div className="d-inline-flex align-items-center gap-2 mb-3">
+            <span className="apple-pill-badge" style={{ background: 'var(--sv-primary-light)', color: 'var(--sv-primary)', border: '1px solid var(--sv-primary-border)', padding: '5px 14px' }}>
+              🏛️ Dhaka City Corporation Official Registration
+            </span>
+          </div>
+          <h2 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--sv-text-primary)', margin: '0 0 8px' }}>
+            Merchant Digital Identity Onboarding
+          </h2>
+          <p style={{ color: 'var(--sv-text-muted)', fontSize: '14px', maxWidth: '580px', margin: '0 auto' }}>
+            Complete your legal merchant profile to unlock spatial zone applications, digital vending license issuance, and municipal rights protection.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="row g-4">
+        <form onSubmit={handleSubmit} className="d-flex flex-column gap-4">
           
-          {/* Section 1: Identity */}
-          <div className="col-12">
-            <div className="sv-card p-4">
-              <h5 className="mb-4" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ background: '#1a6b3c', color: '#fff', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>1</span> 
-                Personal Identity
-              </h5>
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold">Full Name (Legal)</label>
-                  <input className="form-control" value={form.full_name} onChange={e => update('full_name', e.target.value)} required />
+          {/* Section 1: Personal Identity */}
+          <div className="apple-card p-4">
+            <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '50%',
+                background: 'var(--sv-primary)', color: '#FFFFFF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, fontSize: '14px'
+              }}>
+                1
+              </div>
+              <div>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--sv-text-primary)' }}>
+                  Personal Identity & National ID
+                </h4>
+                <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)' }}>
+                  Your legal identity as verified under Bangladesh national citizenship records.
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold">National ID (NID)</label>
-                  <input className="form-control" value={form.nid_number} onChange={e => update('nid_number', e.target.value)} required />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold">Resident Address</label>
-                  <input className="form-control" placeholder="House, Road, Area, City" value={form.home_address} onChange={e => update('home_address', e.target.value)} required />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold">Phone Number</label>
-                  <input className="form-control" value={form.phone} onChange={e => update('phone', e.target.value)} required />
-                </div>
-                <div className="col-12">
-                  <label className="form-label small fw-bold">Passport Photograph (Upload)</label>
-                  <div className="d-flex align-items-center gap-3">
-                    {form.avatar_url && (
-                      <img src={form.avatar_url} alt="Preview" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', border: '2px solid #1a6b3c' }} />
-                    )}
-                    <div className="flex-grow-1">
-                      <input type="file" className="form-control" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
-                      <div className="form-text">Choose a professional photo (JPG/PNG). {uploading && <span className="text-primary fw-bold">Uploading...</span>}</div>
+              </div>
+            </div>
+
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  Full Legal Name *
+                </label>
+                <input 
+                  className="form-control" 
+                  value={form.full_name} 
+                  onChange={e => update('full_name', e.target.value)} 
+                  placeholder="As printed on NID" 
+                  required 
+                />
+              </div>
+
+              <div className="col-md-6">
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  National ID Number (NID) *
+                </label>
+                <input 
+                  className="form-control" 
+                  value={form.nid_number} 
+                  onChange={e => update('nid_number', e.target.value)} 
+                  placeholder="10 or 17 digit NID number" 
+                  required 
+                />
+              </div>
+
+              <div className="col-md-6">
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  Permanent Residential Address *
+                </label>
+                <input 
+                  className="form-control" 
+                  placeholder="House, Road, Ward, Dhaka" 
+                  value={form.home_address} 
+                  onChange={e => update('home_address', e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="col-md-6">
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  Active Mobile Contact *
+                </label>
+                <input 
+                  className="form-control" 
+                  placeholder="+880 17..." 
+                  value={form.phone} 
+                  onChange={e => update('phone', e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="col-12 mt-3">
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  Official Passport Photograph
+                </label>
+                <div className="d-flex align-items-center gap-3 p-3 rounded-3" style={{ background: 'var(--sv-surface-subtle)', border: '1px dashed var(--sv-border)' }}>
+                  {form.avatar_url ? (
+                    <img src={form.avatar_url} alt="Preview" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', border: '2px solid var(--sv-primary)' }} />
+                  ) : (
+                    <div style={{ width: 64, height: 64, borderRadius: 14, background: 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                      👤
+                    </div>
+                  )}
+                  <div className="flex-grow-1">
+                    <input type="file" className="form-control" accept="image/*" onChange={handleFileUpload} disabled={uploading} style={{ fontSize: '13px' }} />
+                    <div style={{ fontSize: '11.5px', color: 'var(--sv-text-muted)', marginTop: '4px' }}>
+                      Clean portrait on clear background (JPG/PNG). {uploading && <span className="fw-bold" style={{ color: 'var(--sv-primary)' }}>Uploading to secure vault...</span>}
                     </div>
                   </div>
                 </div>
@@ -133,72 +197,165 @@ export default function Onboarding() {
             </div>
           </div>
 
-          {/* Section 2: Business details */}
-          <div className="col-12">
-            <div className="sv-card p-4">
-              <h5 className="mb-4" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ background: '#1a6b3c', color: '#fff', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>2</span> 
-                Business Details
-              </h5>
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold">Business / Stall Name</label>
-                  <input className="form-control" placeholder="e.g. Karim's Fruit Corner" value={form.business_name} onChange={e => update('business_name', e.target.value)} required />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold">Business Type</label>
-                  <select className="form-select" value={form.business_type} onChange={e => update('business_type', e.target.value)} required>
-                    <option value="">-- Select Type --</option>
-                    <option value="Food & Beverage">Food & Beverage</option>
-                    <option value="Clothing & Apparel">Clothing & Apparel</option>
-                    <option value="Electronics & Accessories">Electronics & Accessories</option>
-                    <option value="Household Goods">Household Goods</option>
-                    <option value="Fruits & Vegetables">Fruits & Vegetables</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold">TIN Number (Tax ID)</label>
-                  <input className="form-control" placeholder="Optional but recommended" value={form.tin_number} onChange={e => update('tin_number', e.target.value)} />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-bold">Expected Operating Hours</label>
-                  <input className="form-control" placeholder="e.g. 8:00 AM - 10:00 PM" value={form.operating_hours} onChange={e => update('operating_hours', e.target.value)} required />
+          {/* Section 2: Commercial Stall Profile */}
+          <div className="apple-card p-4">
+            <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '50%',
+                background: 'var(--sv-primary)', color: '#FFFFFF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, fontSize: '14px'
+              }}>
+                2
+              </div>
+              <div>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--sv-text-primary)' }}>
+                  Commercial Enterprise & Vending Trade
+                </h4>
+                <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)' }}>
+                  Details of your stall, trade category, and permitted operating window.
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Section 3: Terms */}
-          <div className="col-12">
-            <div className="sv-card p-4" style={{ borderLeft: '4px solid #f59e0b' }}>
-              <h5 className="mb-3" style={{ fontWeight: 700 }}>Legal Agreement</h5>
-              <div style={{ maxHeight: 150, overflowY: 'auto', background: '#fefce8', padding: 16, borderRadius: 8, fontSize: 13, color: '#854d0e', border: '1px solid #fef08a', marginBottom: 20 }}>
-                <p className="fw-bold mb-2">Terms & Conditions:</p>
-                <ul className="ps-3 mb-0">
-                  <li>Vendor must operate only in the approved location.</li>
-                  <li>Vendor must not block roads or public pathways.</li>
-                  <li>License must be displayed during operation.</li>
-                  <li>Violation may result in suspension or cancellation.</li>
-                  <li>All products sold must be legal and safe for consumption.</li>
-                  <li>Waste management is the responsibility of the vendor.</li>
-                </ul>
-              </div>
-              <div className="form-check">
-                <input className="form-check-input" type="checkbox" id="agree" checked={form.agreed} onChange={e => update('agreed', e.target.checked)} required />
-                <label className="form-check-label fw-semibold" htmlFor="agree" style={{ fontSize: 14 }}>
-                  I confirm that all provided information is accurate and I agree to the Operating Terms.
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  Stall / Enterprise Trade Name *
                 </label>
+                <input 
+                  className="form-control" 
+                  placeholder="e.g. Karim's Fresh Produce Corner" 
+                  value={form.business_name} 
+                  onChange={e => update('business_name', e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="col-md-6">
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  Commodity Classification *
+                </label>
+                <select 
+                  className="form-select" 
+                  value={form.business_type} 
+                  onChange={e => update('business_type', e.target.value)} 
+                  required
+                >
+                  <option value="">-- Choose Trade Category --</option>
+                  <option value="Food & Beverage">Food & Beverage (Tea, Snacks, Traditional)</option>
+                  <option value="Fruits & Vegetables">Produce, Fruits & Seasonal Vegetables</option>
+                  <option value="Clothing & Apparel">Apparel, Garments & Textiles</option>
+                  <option value="Handicrafts & Artisans">Handicrafts, Pottery & Cultural Artifacts</option>
+                  <option value="Electronics & Accessories">Electronics, Mobile Accents & Sundries</option>
+                  <option value="General Vending">General Metropolitan Vending</option>
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  TIN (Taxpayer Identification Number)
+                </label>
+                <input 
+                  className="form-control" 
+                  placeholder="Optional (Accelerates commercial permit)" 
+                  value={form.tin_number} 
+                  onChange={e => update('tin_number', e.target.value)} 
+                />
+              </div>
+
+              <div className="col-md-6">
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  Operating Time Window *
+                </label>
+                <input 
+                  className="form-control" 
+                  placeholder="e.g. 07:00 AM – 10:00 PM" 
+                  value={form.operating_hours} 
+                  onChange={e => update('operating_hours', e.target.value)} 
+                  required 
+                />
               </div>
             </div>
           </div>
 
-          <div className="col-12 text-center mt-5 mb-5">
-            <button type="submit" className="btn btn-primary px-5 py-3 shadow-lg" style={{ borderRadius: 12, fontWeight: 700, fontSize: 16 }} disabled={loading}>
-              {loading ? 'Processing...' : 'Complete My Registration 🚀'}
+          {/* Section 3: Legal Operating Terms */}
+          <div className="apple-card p-4">
+            <div className="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '50%',
+                background: 'var(--sv-accent)', color: '#FFFFFF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, fontSize: '14px'
+              }}>
+                3
+              </div>
+              <div>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--sv-text-primary)' }}>
+                  Municipal Operating Code & Civic Compact
+                </h4>
+                <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)' }}>
+                  Rules and mutual protection guarantees under the Dhaka City Corporation Spatial Trade Charter.
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              maxHeight: 140,
+              overflowY: 'auto',
+              background: 'var(--sv-surface-subtle)',
+              padding: '14px 18px',
+              borderRadius: 'var(--sv-radius)',
+              fontSize: '12.5px',
+              color: 'var(--sv-text-body)',
+              border: '1px solid var(--sv-border)',
+              lineHeight: 1.6,
+              marginBottom: '16px'
+            }}>
+              <strong style={{ color: 'var(--sv-primary)' }}>Municipal By-Laws Summary:</strong>
+              <ul className="ps-3 mb-0 mt-1">
+                <li>Merchants must conduct vending strictly within demarcated GPS polygon coordinates.</li>
+                <li>Pedestrian footpath clearances of at least 1.5 meters must be maintained at all times.</li>
+                <li>Official QR-coded Digital Vending Certificate must be made accessible upon civic audit.</li>
+                <li>Registered merchants enjoy protection against arbitrary extortion, eviction, and harassment.</li>
+                <li>Responsible waste disposal and cleanliness within a 3-meter radius is mandatory.</li>
+              </ul>
+            </div>
+
+            <div className="form-check">
+              <input 
+                className="form-check-input" 
+                type="checkbox" 
+                id="agreeCode" 
+                checked={form.agreed} 
+                onChange={e => update('agreed', e.target.checked)} 
+                required 
+              />
+              <label className="form-check-label" htmlFor="agreeCode" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--sv-text-primary)' }}>
+                I solemnly certify that all submitted credentials are valid, and I pledge adherence to the Dhaka Municipal Spatial Trade Code.
+              </label>
+            </div>
+          </div>
+
+          {/* Submission Action */}
+          <div className="text-center mt-2 mb-4">
+            <button 
+              type="submit" 
+              className="apple-pill-btn"
+              style={{ background: 'var(--sv-primary)', color: '#FFFFFF', padding: '14px 36px', fontSize: '15px', fontWeight: 700, boxShadow: 'var(--sv-shadow-lg)' }}
+              disabled={loading}
+            >
+              {loading ? 'Submitting Official Dossier...' : 'Gazette Merchant Registration 🚀'}
             </button>
             <div className="mt-3">
-              <button type="button" onClick={logout} className="btn btn-link text-muted" style={{ fontSize: 13 }}>Logout and finish later</button>
+              <button 
+                type="button" 
+                onClick={logout} 
+                className="btn btn-link text-muted" 
+                style={{ fontSize: '12.5px', textDecoration: 'none' }}
+              >
+                Sign out and complete registration later
+              </button>
             </div>
           </div>
 

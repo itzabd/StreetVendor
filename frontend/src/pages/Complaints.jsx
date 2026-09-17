@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -8,22 +8,62 @@ export default function Complaints() {
   const [formData, setFormData] = useState({ subject: '', description: '' });
   const [replyData, setReplyData] = useState({ id: null, status: '', admin_response: '' });
   const [loading, setLoading] = useState(false);
+  const [filterTab, setFilterTab] = useState('all');
   
-  const { profile, getToken } = useAuth();
+  const { profile, getToken, isDemo } = useAuth();
   const { addToast } = useToast();
   const isAdmin = profile?.role === 'admin';
 
-  useEffect(() => { loadComplaints(); }, []);
-
-  async function loadComplaints() {
+  const loadComplaints = useCallback(async () => {
     try {
       const token = await getToken();
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/complaints`, { headers: { Authorization: `Bearer ${token}` } });
-      setComplaints(res.data);
-    } catch (err) {
-      addToast('Failed to load complaints', 'danger');
+      let list = res.data || [];
+      if (isDemo && list.length === 0) {
+        list = [
+          {
+            id: 'comp-demo-01',
+            created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+            subject: 'Unauthorized Pavement Cart Encroachment at Spot M10-04',
+            description: 'Unregistered seasonal cart has occupied pedestrian verge adjacent to my permitted tea stall, causing congestion.',
+            status: 'in_review',
+            profiles: { full_name: 'Rahim Uddin' },
+            admin_response: 'DNCC Ward Inspector notified. Site inspection scheduled for tomorrow morning.'
+          },
+          {
+            id: 'comp-demo-02',
+            created_at: new Date(Date.now() - 86400000 * 6).toISOString(),
+            subject: 'Waste Disposal Bin Overflow in Karwan Bazar Corridor',
+            description: 'Municipal waste container requires immediate clearance near spot KB-01 produce stalls.',
+            status: 'resolved',
+            profiles: { full_name: 'Abdul Malek' },
+            admin_response: 'Waste clearance truck dispatched and area sanitized by City Corporation sanitation crew.'
+          }
+        ];
+      }
+      setComplaints(list);
+    } catch {
+      if (isDemo) {
+        setComplaints([
+          {
+            id: 'comp-demo-01',
+            created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+            subject: 'Unauthorized Pavement Cart Encroachment at Spot M10-04',
+            description: 'Unregistered seasonal cart has occupied pedestrian verge adjacent to my permitted tea stall, causing congestion.',
+            status: 'in_review',
+            profiles: { full_name: 'Rahim Uddin' },
+            admin_response: 'DNCC Ward Inspector notified. Site inspection scheduled for tomorrow morning.'
+          }
+        ]);
+      } else {
+        addToast('Failed to load civic complaints registry', 'danger');
+      }
     }
-  }
+  }, [getToken, isDemo, addToast]);
+
+  useEffect(() => { 
+    loadComplaints(); 
+  }, [loadComplaints]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -33,7 +73,7 @@ export default function Complaints() {
       await axios.post(`${import.meta.env.VITE_API_URL}/complaints`, formData, { headers: { Authorization: `Bearer ${token}` } });
       setFormData({ subject: '', description: '' });
       loadComplaints();
-      addToast('Complaint submitted successfully', 'success');
+      addToast('Grievance logged into municipal dispute registry', 'success');
     } catch (err) {
       addToast(err.response?.data?.error || 'Failed to submit complaint', 'danger');
     } finally {
@@ -48,122 +88,282 @@ export default function Complaints() {
       await axios.put(`${import.meta.env.VITE_API_URL}/complaints/${replyData.id}`, { status: replyData.status, admin_response: replyData.admin_response }, { headers: { Authorization: `Bearer ${token}` } });
       setReplyData({ id: null, status: '', admin_response: '' });
       loadComplaints();
-      addToast('Complaint status updated', 'success');
+      addToast('Municipal ruling and response dispatched', 'success');
     } catch (err) {
       addToast(err.response?.data?.error || 'Failed to update complaint', 'danger');
     }
   }
 
-  const getStatusBadge = (status) => {
-    const colors = { open: 'danger', in_review: 'warning', resolved: 'success', closed: 'secondary' };
-    const text = status.replace('_', ' ').toUpperCase();
-    return <span className={`badge bg-${colors[status]} px-3 py-2 rounded-pill`} style={{ fontSize: 11 }}>{text}</span>;
-  };
+  const filteredComplaints = useMemo(() => {
+    if (filterTab === 'open') return complaints.filter(c => c.status === 'open' || c.status === 'in_review');
+    if (filterTab === 'resolved') return complaints.filter(c => c.status === 'resolved' || c.status === 'closed');
+    return complaints;
+  }, [complaints, filterTab]);
 
   return (
-    <div className="p-4 animate-entrance" style={{ maxWidth: 1200, margin: '0 auto' }}>
-      <div className="sv-page-header mb-4">
-        <h3>{isAdmin ? '📣 Support Inbox' : '📨 My Complaints'}</h3>
-        <p>{isAdmin ? 'Manage and resolve vendor issues.' : 'Report issues or disputes to the administration.'}</p>
+    <div className="animate-entrance" style={{ maxWidth: 1200, margin: '0 auto', paddingBottom: '48px' }}>
+      {/* Header */}
+      <div className="sv-page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+          <div className="d-flex align-items-center gap-2 mb-1">
+            <span className="apple-pill-badge" style={{ background: 'var(--sv-primary-light)', color: 'var(--sv-primary)', border: '1px solid var(--sv-primary-border)' }}>
+              ⚖️ Civic Ombudsman Desk
+            </span>
+            <span className="apple-pill-badge" style={{ background: 'rgba(220, 38, 38, 0.1)', color: '#DC2626', border: '1px solid rgba(220, 38, 38, 0.25)' }}>
+              Official Grievance Registry
+            </span>
+          </div>
+          <h2 style={{ fontSize: '26px', fontWeight: 700, margin: 0 }}>
+            {isAdmin ? 'Municipal Grievance & Dispute Desk' : 'Merchant Dispute Registry'}
+          </h2>
+          <p style={{ fontSize: '13.5px', color: 'var(--sv-text-muted)', margin: '4px 0 0' }}>
+            {isAdmin 
+              ? 'Review merchant spatial conflicts, encroachment reports, and issue authoritative municipal rulings.'
+              : 'File formal complaints directly to Dhaka City Corporation regarding harassment, spot encroachment, or utilities.'}
+          </p>
+        </div>
+
+        <div className="d-flex align-items-center gap-2">
+          <div className="apple-card px-3 py-2 text-center" style={{ minWidth: 120 }}>
+            <div style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--sv-text-subtle)', textTransform: 'uppercase' }}>Active Cases</div>
+            <div className="sv-mono-data" style={{ fontSize: '18px', fontWeight: 700, color: '#DC2626' }}>
+              {complaints.filter(c => c.status === 'open' || c.status === 'in_review').length}
+            </div>
+          </div>
+        </div>
       </div>
       
+      {/* Vendor Submission Form */}
       {!isAdmin && (
-        <div className="sv-card mb-5">
-          <div className="sv-card-header d-flex align-items-center gap-2">
-            <span className="fs-5">🚨</span>
-            <h5 className="mb-0 text-danger fw-bold">File a New Complaint</h5>
+        <div className="apple-card p-4 mb-4">
+          <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <div className="d-flex align-items-center gap-2">
+              <span style={{ fontSize: '18px' }}>🚨</span>
+              <h4 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--sv-text-primary)' }}>
+                File Formal Civic Grievance
+              </h4>
+            </div>
+            <span className="sv-badge sv-badge-outline" style={{ fontSize: '10.5px' }}>
+              OMBUDSMAN PROTOCOL
+            </span>
           </div>
-          <div className="card-body p-4">
-            <form onSubmit={handleSubmit} className="row g-3">
+
+          <form onSubmit={handleSubmit}>
+            <div className="row g-3">
               <div className="col-12">
-                <label className="form-label small fw-semibold">Subject</label>
-                <input type="text" placeholder="e.g., Harassment, Spot dispute..." className="form-control bg-light" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} required />
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  Dispute Nature / Subject *
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Unauthorized cart encroachment at Spot M10-04, Extortion attempt, Waterlogging..." 
+                  className="form-control" 
+                  value={formData.subject} 
+                  onChange={e => setFormData({ ...formData, subject: e.target.value })} 
+                  required 
+                />
               </div>
+
               <div className="col-12">
-                <label className="form-label small fw-semibold">Description</label>
-                <textarea rows="4" placeholder="Please describe the issue in as much detail as possible..." className="form-control bg-light" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} required></textarea>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '5px' }}>
+                  Detailed Circumstantial Report *
+                </label>
+                <textarea 
+                  rows="3" 
+                  placeholder="Provide precise location, involved parties, date and time, and requested civic action..." 
+                  className="form-control" 
+                  value={formData.description} 
+                  onChange={e => setFormData({ ...formData, description: e.target.value })} 
+                  required
+                />
               </div>
-              <div className="col-12 text-end mt-4">
-                <button type="submit" className="btn btn-danger px-5" disabled={loading} style={{ borderRadius: 8 }}>
-                  {loading ? 'Submitting...' : 'Submit Complaint'}
+
+              <div className="col-12 d-flex justify-content-between align-items-center mt-2">
+                <span style={{ fontSize: '12px', color: 'var(--sv-text-subtle)' }}>
+                  🔒 All reports are logged with your verified NID identity and audited by municipal officers.
+                </span>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  disabled={loading}
+                  style={{ padding: '8px 24px' }}
+                >
+                  {loading ? 'Submitting...' : 'Lodge Formal Complaint'}
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
       )}
 
-      <h5 className="fw-bold mb-3">{isAdmin ? 'All Tickets' : 'My Ticket History'}</h5>
+      {/* Ticket List & Segmented Bar */}
+      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h4 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--sv-text-primary)' }}>
+          {isAdmin ? `All Municipal Tickets (${filteredComplaints.length})` : `My Dossier History (${filteredComplaints.length})`}
+        </h4>
+
+        <div className="apple-segmented-bar">
+          <button 
+            className={`apple-segmented-item ${filterTab === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterTab('all')}
+          >
+            All Tickets
+          </button>
+          <button 
+            className={`apple-segmented-item ${filterTab === 'open' ? 'active' : ''}`}
+            onClick={() => setFilterTab('open')}
+          >
+            Active Inquiries
+          </button>
+          <button 
+            className={`apple-segmented-item ${filterTab === 'resolved' ? 'active' : ''}`}
+            onClick={() => setFilterTab('resolved')}
+          >
+            Resolved Cases
+          </button>
+        </div>
+      </div>
+
       <div className="d-flex flex-column gap-3">
-        {complaints.length === 0 ? (
-          <div className="text-center text-muted py-5 sv-card bg-light border-0 shadow-none">No complaints found.</div>
-        ) : complaints.map(c => (
-          <div key={c.id} className="sv-card position-relative overflow-hidden">
-            {/* Status indicator line */}
-            <div className={`position-absolute top-0 bottom-0 start-0`} style={{ width: 4, background: c.status === 'resolved' ? '#10b981' : c.status === 'open' ? '#ef4444' : '#f59e0b' }}></div>
-            
-            <div className="card-body p-4 ms-2">
-              <div className="d-flex justify-content-between align-items-start mb-3 border-bottom pb-3">
-                <div>
-                  <h5 className="fw-bold mb-1 text-dark">{c.subject}</h5>
-                  <div className="small text-muted">
-                    {isAdmin ? (
-                      <>From: <span className="fw-semibold text-primary">{c.profiles?.full_name}</span> • {new Date(c.created_at).toLocaleString()}</>
-                    ) : (
-                      <>Submitted on {new Date(c.created_at).toLocaleString()}</>
-                    )}
-                  </div>
+        {filteredComplaints.length === 0 ? (
+          <div className="apple-card text-center py-5 text-muted" style={{ color: 'var(--sv-text-subtle)' }}>
+            No grievance records in this filter view.
+          </div>
+        ) : filteredComplaints.map(c => (
+          <div key={c.id} className="apple-card p-4 position-relative" style={{ overflow: 'hidden' }}>
+            {/* Status indicator rail */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: '4px',
+              backgroundColor: c.status === 'resolved' ? '#059669' : c.status === 'open' ? '#DC2626' : '#D97706'
+            }} />
+
+            <div className="d-flex justify-content-between align-items-start mb-3 pb-2 border-bottom flex-wrap gap-2">
+              <div>
+                <h5 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 4px', color: 'var(--sv-text-primary)' }}>
+                  {c.subject}
+                </h5>
+                <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)' }}>
+                  {isAdmin ? (
+                    <>Complainant: <strong style={{ color: 'var(--sv-primary)' }}>{c.profiles?.full_name || 'Verified Merchant'}</strong> · Filed on {new Date(c.created_at).toLocaleDateString('en-GB')}</>
+                  ) : (
+                    <>Lodged on {new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</>
+                  )}
                 </div>
-                {getStatusBadge(c.status)}
               </div>
-              
-              <div className="p-3 rounded-3 mb-3" style={{ background: '#f8fafc', color: '#334155', fontSize: 14, border: '1px solid #e2e8f0' }}>
-                {c.description}
-              </div>
 
-              {c.admin_response && (
-                <div className="d-flex gap-3 p-3 rounded-3 mt-3 align-items-start" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                  <div className="fs-3">🛡️</div>
-                  <div>
-                    <div className="fw-bold text-success mb-1" style={{ fontSize: 13 }}>Admin Response</div>
-                    <div style={{ color: '#166534', fontSize: 14 }}>{c.admin_response}</div>
-                  </div>
-                </div>
-              )}
-
-              {isAdmin && replyData.id !== c.id && c.status !== 'closed' && (
-                <div className="text-end mt-3">
-                  <button onClick={() => setReplyData({ id: c.id, status: c.status, admin_response: c.admin_response || '' })} className="btn btn-sm btn-outline-primary px-4" style={{ borderRadius: 6 }}>
-                    Reply / Update Status
-                  </button>
-                </div>
-              )}
-
-              {isAdmin && replyData.id === c.id && (
-                <form onSubmit={handleAdminReply} className="mt-4 p-3 rounded-3 shadow-sm border border-primary" style={{ background: '#fff' }}>
-                  <h6 className="fw-bold text-primary mb-3">Update Ticket</h6>
-                  <div className="row g-3">
-                    <div className="col-md-3">
-                      <label className="form-label small">Status</label>
-                      <select className="form-select" value={replyData.status} onChange={e => setReplyData({...replyData, status: e.target.value})}>
-                        <option value="open">Open</option>
-                        <option value="in_review">In Review</option>
-                        <option value="resolved">Resolved</option>
-                        <option value="closed">Closed</option>
-                      </select>
-                    </div>
-                    <div className="col-md-9">
-                      <label className="form-label small">Response Message</label>
-                      <input type="text" className="form-control" placeholder="Write a response to the vendor..." value={replyData.admin_response} onChange={e => setReplyData({...replyData, admin_response: e.target.value})} />
-                    </div>
-                    <div className="col-12 d-flex justify-content-end gap-2 mt-3">
-                      <button type="button" onClick={() => setReplyData({id: null})} className="btn btn-light px-4">Cancel</button>
-                      <button type="submit" className="btn btn-primary px-4">Save Update</button>
-                    </div>
-                  </div>
-                </form>
-              )}
+              <span className={`apple-pill-badge ${
+                c.status === 'resolved' ? 'bg-success bg-opacity-10 text-success' :
+                c.status === 'in_review' ? 'bg-warning bg-opacity-10 text-warning' :
+                'bg-danger bg-opacity-10 text-danger'
+              }`}>
+                ● {c.status?.replace('_', ' ').toUpperCase()}
+              </span>
             </div>
+            
+            <div style={{
+              padding: '12px 16px',
+              borderRadius: 'var(--sv-radius)',
+              background: 'var(--sv-surface-subtle)',
+              fontSize: '13.5px',
+              color: 'var(--sv-text-body)',
+              lineHeight: 1.6,
+              marginBottom: '12px'
+            }}>
+              {c.description}
+            </div>
+
+            {c.admin_response && (
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: 'var(--sv-radius)',
+                background: 'rgba(5, 150, 105, 0.08)',
+                border: '1px solid rgba(5, 150, 105, 0.25)',
+                marginTop: '12px'
+              }}>
+                <div style={{ fontSize: '20px' }}>⚖️</div>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
+                    Dhaka Municipal Administrative Ruling
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#065f46', lineHeight: 1.5 }}>
+                    {c.admin_response}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isAdmin && replyData.id !== c.id && c.status !== 'closed' && (
+              <div className="text-end mt-3">
+                <button 
+                  onClick={() => setReplyData({ id: c.id, status: c.status, admin_response: c.admin_response || '' })} 
+                  className="apple-pill-btn"
+                  style={{ background: 'var(--sv-primary-light)', color: 'var(--sv-primary)', border: '1px solid var(--sv-primary-border)', padding: '5px 14px', fontSize: '12px' }}
+                >
+                  ✍️ Issue Municipal Ruling / Update
+                </button>
+              </div>
+            )}
+
+            {isAdmin && replyData.id === c.id && (
+              <form onSubmit={handleAdminReply} className="mt-3 p-3 rounded-3" style={{ background: 'rgba(30, 74, 74, 0.04)', border: '1.5px solid var(--sv-primary-border)' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--sv-primary)', marginBottom: '10px' }}>
+                  Update Complaint Ledger & Dispatch Ruling
+                </div>
+                <div className="row g-2">
+                  <div className="col-md-3">
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '3px' }}>
+                      Status
+                    </label>
+                    <select 
+                      className="form-select form-select-sm" 
+                      value={replyData.status} 
+                      onChange={e => setReplyData({ ...replyData, status: e.target.value })}
+                    >
+                      <option value="open">Open</option>
+                      <option value="in_review">In Municipal Review</option>
+                      <option value="resolved">Resolved & Action Taken</option>
+                      <option value="closed">Closed / Dismissed</option>
+                    </select>
+                  </div>
+                  <div className="col-md-9">
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '3px' }}>
+                      Official Resolution Note
+                    </label>
+                    <input 
+                      type="text" 
+                      className="form-control form-control-sm" 
+                      placeholder="Enter municipal directives, inspection findings, or fine citation..." 
+                      value={replyData.admin_response} 
+                      onChange={e => setReplyData({ ...replyData, admin_response: e.target.value })} 
+                      required
+                    />
+                  </div>
+                  <div className="col-12 d-flex justify-content-end gap-2 mt-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setReplyData({ id: null, status: '', admin_response: '' })} 
+                      className="apple-pill-btn"
+                      style={{ background: 'var(--sv-surface-subtle)', border: '1px solid var(--sv-border)', padding: '4px 12px', fontSize: '12px' }}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="apple-pill-btn"
+                      style={{ background: 'var(--sv-primary)', color: '#FFFFFF', padding: '4px 16px', fontSize: '12px' }}
+                    >
+                      Record Ruling
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
           </div>
         ))}
       </div>

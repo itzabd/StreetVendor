@@ -1,38 +1,38 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const pageTitles = {
-  '/vendor': 'Vendor Dashboard',
-  '/vendor/applications': 'My Applications',
-  '/vendor/assignments': 'My Assigned Spots',
-  '/vendor/permissions': 'My Permissions',
-  '/vendor/complaints': 'My Complaints',
-  '/vendor/rent': 'Rent Records',
-  '/vendor/profile': 'Profile Settings',
-  '/admin': 'Admin Dashboard',
-  '/admin/zones': 'Zone Management',
-  '/admin/blocks': 'Block Management',
-  '/admin/spots': 'Spot Management',
-  '/admin/applications': 'Vendor Applications',
-  '/admin/assignments': 'Spot Assignments',
-  '/admin/permissions': 'Permission Management',
-  '/admin/complaints': 'Complaints',
-  '/admin/rent': 'Rent Records',
-  '/admin/profile': 'Profile Settings',
+  '/vendor': 'Merchant Operations & Spot Overview',
+  '/vendor/applications': 'Spot Allocation Applications',
+  '/vendor/assignments': 'Designated Spatial Demarcation',
+  '/vendor/permissions': 'Official Verified Trade Licenses',
+  '/vendor/complaints': 'Grievance & Dispute Registry',
+  '/vendor/rent': 'Monthly Lease Fee Records',
+  '/vendor/profile': 'Merchant Identity & Business Profile',
+  '/admin': 'Municipal Oversight & Spot Registry Desk',
+  '/admin/zones': 'GIS Spatial Trade Zones',
+  '/admin/blocks': 'Sector & Block Demarcations',
+  '/admin/spots': 'Designated Vending Spot Matrix',
+  '/admin/applications': 'Vendor Permit Applications Review',
+  '/admin/assignments': 'Spot Allocation & Lease Assignments',
+  '/admin/permissions': 'Trade License Approvals',
+  '/admin/guest-reports': 'Citizen Unofficial Spot Reports',
+  '/admin/complaints': 'Civic Grievances & Disputes',
+  '/admin/rent': 'Municipal Rent Collection Ledger',
+  '/admin/users': 'Municipal Trade Register Directory',
+  '/admin/profile': 'Officer Administrative Profile',
 };
 
 export default function Navbar() {
-  const { profile, user, logout, isDemo, switchDemoRole } = useAuth();
+  const { profile, logout, isDemo, switchDemoRole } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const title = pageTitles[location.pathname] || 'StreetVendor BD';
+  const title = pageTitles[location.pathname] || 'Municipal Spatial Ledger';
   const isAdmin = profile?.role === 'admin';
   
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
-  
-  // Simulated notifications stored in localStorage for Phase 3 constraint
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function Navbar() {
       try {
         const raw = localStorage.getItem('sv_notifications');
         const allNotifs = raw ? JSON.parse(raw) : [];
-        if (!Array.isArray(allNotifs)) throw new Error('Invalid format');
+        if (!Array.isArray(allNotifs)) return setNotifications([]);
         
         if (!profile?.id) return setNotifications([]);
 
@@ -48,7 +48,7 @@ export default function Navbar() {
           const isBroadcast = n.target_vendor_id === 'all';
           const isTargetedToMe = n.target_vendor_id === profile.id;
           return isBroadcast || isTargetedToMe;
-        }).reverse().slice(0, 10);
+        }).reverse().slice(0, 8);
 
         setNotifications(filtered);
       } catch (err) {
@@ -58,7 +58,7 @@ export default function Navbar() {
     };
 
     loadNotifs();
-    const interval = setInterval(loadNotifs, 3000);
+    const interval = setInterval(loadNotifs, 4000);
     return () => clearInterval(interval);
   }, [profile?.id]);
 
@@ -91,73 +91,100 @@ export default function Navbar() {
     setNotifications(prev => prev.map(n => ({ ...n, readBy: Array.from(new Set([...(n.readBy || []), userId])) })));
   };
 
-  const initials = profile?.full_name ? profile.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
   const unreadCount = notifications.filter(n => !(n.readBy || []).includes(profile?.id)).length;
+  const initials = profile?.full_name ? profile.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : (isAdmin ? 'TA' : 'RU');
 
   return (
-    <div className="sv-topbar d-flex justify-content-between align-items-center">
+    <header className="sv-topbar">
       <div className="sv-topbar-title">{title}</div>
       
-      <div className="d-flex align-items-center gap-4">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {/* Notification Bell */}
-        <div className="position-relative">
+        <div style={{ position: 'relative' }}>
           <button 
-            className="btn btn-sm btn-light border position-relative"
-            style={{ width: 40, height: 40, borderRadius: '50%' }}
+            className="btn btn-outline-dark btn-sm"
+            style={{ width: '32px', height: '32px', padding: 0, position: 'relative' }}
             onClick={() => { setShowNotifMenu(!showNotifMenu); setShowProfileMenu(false); }}
+            title="Official dispatches and alerts"
           >
             🔔
             {unreadCount > 0 && (
-              <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: 9 }}>
-                {unreadCount}
-              </span>
+              <span style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                width: '8px',
+                height: '8px',
+                backgroundColor: '#5DBBBB',
+                borderRadius: '50%',
+                boxShadow: '0 0 6px rgba(30, 74, 74, 0.4)'
+              }}></span>
             )}
           </button>
           
           {showNotifMenu && (
-            <div className="position-absolute end-0 mt-2 shadow bg-white rounded-3 p-2" style={{ width: 320, zIndex: 1000, border: '1px solid #e2e8f0' }}>
-              <div className="d-flex justify-content-between align-items-center mb-2 px-2 pt-2 border-bottom pb-2">
-                <h6 className="mb-0 fw-bold">Notifications</h6>
-                <div className="d-flex align-items-center gap-2">
-                  {unreadCount > 0 && (
-                    <span 
-                      className="text-primary pointer small" 
-                      style={{ cursor: 'pointer', fontSize: 11, fontWeight: 600, textDecoration: 'underline' }}
-                      onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
-                    >
-                      Mark all as read
-                    </span>
-                  )}
-
-                </div>
+            <div style={{
+              position: 'absolute',
+              right: 0,
+              marginTop: '8px',
+              width: '320px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid var(--sv-border)',
+              borderRadius: 'var(--sv-radius)',
+              boxShadow: 'var(--sv-shadow-lg)',
+              zIndex: 1000,
+              padding: '8px 0'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 14px',
+                borderBottom: '1px solid var(--sv-border)'
+              }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-primary)' }}>
+                  Civic Dispatches ({notifications.length})
+                </span>
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={markAllAsRead}
+                    style={{ background: 'none', border: 'none', color: 'var(--sv-primary)', fontSize: '11px', cursor: 'pointer', padding: 0 }}
+                  >
+                    Mark read
+                  </button>
+                )}
               </div>
-              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+
+              <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
                 {notifications.length === 0 ? (
-                  <div className="text-muted text-center py-4 small">No new notifications</div>
+                  <div style={{ padding: '24px', textAlign: 'center', color: 'var(--sv-text-muted)', fontSize: '12px' }}>
+                    No unread notices
+                  </div>
                 ) : (
                   notifications.map(n => {
                     const isRead = (n.readBy || []).includes(profile?.id);
-                    const isBroadcast = n.target_vendor_id === 'all';
                     return (
-                      <div key={n.id} className="p-2 border-bottom position-relative" style={{ borderRadius: 6, background: isRead ? '#fff' : '#f0fdf4' }}>
-                        <div className="d-flex align-items-center gap-2 mb-1">
-                          <div className="fw-semibold" style={{ fontSize: 13, color: '#1a6b3c', paddingRight: 20 }}>{n.title}</div>
-                          {isBroadcast && <span className="badge bg-secondary" style={{ fontSize: 8 }}>System</span>}
+                      <div 
+                        key={n.id} 
+                        style={{
+                          padding: '10px 14px',
+                          borderBottom: '1px solid var(--sv-border-subtle)',
+                          backgroundColor: isRead ? '#FFFFFF' : 'var(--sv-primary-light)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => markAsRead(n.id)}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-primary)' }}>
+                            {n.title}
+                          </span>
+                          <span style={{ fontSize: '10px', color: 'var(--sv-text-subtle)' }}>
+                            {new Date(n.created_at).toLocaleDateString()}
+                          </span>
                         </div>
-                        <div className="text-muted" style={{ fontSize: 12 }}>{n.message}</div>
-                        <div className="d-flex justify-content-between align-items-end mt-1">
-                          <div className="text-muted" style={{ fontSize: 10 }}>{new Date(n.created_at).toLocaleDateString()}</div>
-                          {!isRead && (
-                            <button 
-                              onClick={() => markAsRead(n.id)}
-                              className="btn btn-sm text-primary p-0" 
-                              style={{ fontSize: 11, background: 'transparent', border: 'none', textDecoration: 'underline' }}
-                            >
-                              Mark as read
-                            </button>
-                          )}
+                        <div style={{ fontSize: '11.5px', color: 'var(--sv-text-secondary)', lineHeight: 1.35 }}>
+                          {n.message}
                         </div>
-                        {!isRead && <div className="position-absolute" style={{ width: 8, height: 8, background: '#ef4444', borderRadius: '50%', top: 12, right: 12 }}></div>}
                       </div>
                     );
                   })
@@ -167,70 +194,132 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Profile Dropdown */}
-        <div className="position-relative">
-          <div 
-            className="d-flex align-items-center gap-3" 
-            style={{ cursor: 'pointer', padding: '6px 12px', borderRadius: 12, transition: 'background 0.2s' }}
+        {/* Profile Trigger */}
+        <div style={{ position: 'relative' }}>
+          <button 
             onClick={() => { setShowProfileMenu(!showProfileMenu); setShowNotifMenu(false); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px 8px',
+              borderRadius: 'var(--sv-radius)'
+            }}
           >
-            <div style={{ textAlign: 'right', lineHeight: 1.3 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{profile?.full_name || 'User'}</div>
-              <div style={{ fontSize: 11, color: isDemo ? '#16a34a' : '#94a3b8', fontWeight: isDemo ? 700 : 500 }}>
-                {isDemo ? (isAdmin ? '⭐ Demo Admin' : '⭐ Demo Vendor') : (isAdmin ? '🔑 Administrator' : '🛒 Vendor')}
-              </div>
+            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--sv-text-primary)', lineHeight: 1.2 }}>
+                {profile?.full_name || (isAdmin ? 'Tanvir Ahmed' : 'Rahim Uddin')}
+              </span>
+              <span style={{ fontSize: '10.5px', color: 'var(--sv-text-muted)' }}>
+                {isDemo ? (isAdmin ? 'Demo Licensing Officer' : 'Demo Merchant') : (isAdmin ? 'Licensing Officer' : 'Merchant')}
+              </span>
             </div>
             
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Avatar" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: isDemo ? '2px solid #22c55e' : '2px solid #e2e8f0' }} />
-            ) : (
-              <div className="sv-avatar">{initials}</div>
-            )}
-          </div>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #1E4A4A, #2D6060)',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '12px',
+              boxShadow: '0 2px 8px rgba(30, 74, 74, 0.25)'
+            }}>
+              {initials}
+            </div>
+          </button>
 
           {showProfileMenu && (
-            <div className="position-absolute end-0 mt-2 shadow bg-white rounded-3 py-2" style={{ width: 220, zIndex: 1000, border: '1px solid #e2e8f0' }}>
+            <div style={{
+              position: 'absolute',
+              right: 0,
+              marginTop: '8px',
+              width: '200px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid var(--sv-border)',
+              borderRadius: 'var(--sv-radius)',
+              boxShadow: 'var(--sv-shadow-lg)',
+              zIndex: 1000,
+              padding: '6px'
+            }}>
               {isDemo && (
-                <>
-                  <button 
-                    className="dropdown-item py-2 px-3 fw-bold text-success" 
-                    onClick={() => {
-                      const next = isAdmin ? 'vendor' : 'admin';
-                      switchDemoRole(next);
-                      navigate(next === 'admin' ? '/admin' : '/vendor');
-                      setShowProfileMenu(false);
-                    }}
-                  >
-                    🔁 Switch to {isAdmin ? 'Vendor View' : 'Admin View'}
-                  </button>
-                  <div className="dropdown-divider"></div>
-                </>
+                <button 
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '8px 10px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: 'var(--sv-primary)',
+                    background: 'var(--sv-primary-light)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    marginBottom: '4px'
+                  }}
+                  onClick={() => {
+                    const next = isAdmin ? 'vendor' : 'admin';
+                    switchDemoRole(next);
+                    navigate(next === 'admin' ? '/admin' : '/vendor');
+                    setShowProfileMenu(false);
+                  }}
+                >
+                  Switch to {isAdmin ? 'Merchant View' : 'Officer Desk'}
+                </button>
               )}
+
               <button 
-                className="dropdown-item py-2 px-3 fw-semibold text-secondary" 
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '7px 10px',
+                  fontSize: '12px',
+                  color: 'var(--sv-text-secondary)',
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
                 onClick={() => {
                   navigate(isAdmin ? '/admin/profile' : '/vendor/profile');
                   setShowProfileMenu(false);
                 }}
               >
-                ⚙️ Profile Settings
+                Profile Settings
               </button>
-              <div className="dropdown-divider"></div>
+
+              <div style={{ height: '1px', backgroundColor: 'var(--sv-border)', margin: '4px 0' }}></div>
+
               <button 
-                className="dropdown-item py-2 px-3 fw-semibold text-danger" 
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '7px 10px',
+                  fontSize: '12px',
+                  color: 'var(--sv-status-danger)',
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
                 onClick={() => {
                   logout();
                   setShowProfileMenu(false);
                   navigate('/home');
                 }}
               >
-                {isDemo ? '✕ Exit Demo Mode' : '🚪 Sign Out'}
+                {isDemo ? 'Exit Demo Session' : 'Sign Out'}
               </button>
             </div>
           )}
         </div>
       </div>
-    </div>
-
+    </header>
   );
 }

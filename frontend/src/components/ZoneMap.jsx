@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents, useMap, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents, useMap, Polygon, ZoomControl } from 'react-leaflet';
 import { useState, useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -27,13 +27,13 @@ function isPointInPolygon(point, polygon) {
 
 // Create a compact dot icon for spot markers (avoids overlap)
 function createSpotIcon(status, isSelected, isLocked, customColor) {
-  const color = isSelected ? '#7c3aed' : (customColor || (status === 'available' ? '#16a34a' : status === 'occupied' ? '#dc2626' : '#d97706'));
+  const color = isSelected ? '#1E4A4A' : (customColor || (status === 'available' ? '#16a34a' : status === 'occupied' ? '#dc2626' : '#d97706'));
   const ring = isSelected ? `box-shadow:0 0 0 3px #fff,0 0 0 5px ${color};` : 'box-shadow:0 1px 4px rgba(0,0,0,0.4);';
   const pulse = isLocked ? `
     @keyframes sv-marker-pulse {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7); }
-      70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(124, 58, 237, 0); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 74, 74, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(30, 74, 74, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 74, 74, 0); }
     }
     animation: sv-marker-pulse 2s infinite;
   ` : '';
@@ -210,13 +210,15 @@ export default function ZoneMap({
           scrollWheelZoom={!locked}
           doubleClickZoom={!locked}
           touchZoom={!locked}
-          zoomControl={!locked}
+          zoomControl={false}
           attributionControl={!locked}
         >
           <MapCenterer center={mapCenter} zoom={locked ? 18 : (zoom ?? null)} />
+          {!locked && <ZoomControl position="bottomright" />}
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maxZoom={19}
           />
 
           {/* Admin click-to-pick */}
@@ -307,7 +309,7 @@ export default function ZoneMap({
                   className="" pane="tooltipPane"
                 >
                   <span style={{
-                    background: isSelected ? '#7c3aed' : (spot.displayColor || (spot.status === 'available' ? '#16a34a' : (spot.status === 'unverified' ? '#f59e0b' : '#dc2626'))),
+                    background: isSelected ? '#1E4A4A' : (spot.displayColor || (spot.status === 'available' ? '#16a34a' : (spot.status === 'unverified' ? '#f59e0b' : '#dc2626'))),
                     color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 700,
                     whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
                   }}>{spot.business_name || spot.vendor_name || spot.label || spot.spot_number || 'Spot'}</span>
@@ -319,8 +321,8 @@ export default function ZoneMap({
                   </div>
                   <div style={{ marginTop: 4 }}>
                     <span style={{
-                      background: isSelected ? '#ede9fe' : (spot.displayColor ? `${spot.displayColor}20` : (spot.status === 'available' ? '#dcfce7' : (spot.status === 'unverified' ? '#fef3c7' : '#fee2e2'))),
-                      color: isSelected ? '#6d28d9' : (spot.displayColor || (spot.status === 'available' ? '#15803d' : (spot.status === 'unverified' ? '#b45309' : '#991b1b'))),
+                      background: isSelected ? '#EBF5F5' : (spot.displayColor ? `${spot.displayColor}20` : (spot.status === 'available' ? '#dcfce7' : (spot.status === 'unverified' ? '#fef3c7' : '#fee2e2'))),
+                      color: isSelected ? '#1E4A4A' : (spot.displayColor || (spot.status === 'available' ? '#15803d' : (spot.status === 'unverified' ? '#b45309' : '#991b1b'))),
                       padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600
                     }}>
                       {isSelected ? '✓ SELECTED' : (spot.status === 'available' ? '🟢 AVAILABLE' : (spot.operating_hours ? `🕒 ${spot.operating_hours.toUpperCase()}` : '🕒 HOURS NOT SPECIFIED'))}

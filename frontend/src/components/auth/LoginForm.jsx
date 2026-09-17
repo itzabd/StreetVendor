@@ -35,61 +35,113 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }) {
 
   return (
     <div className="auth-form-container">
-      <h3 style={{ fontWeight: 800, fontSize: 22, color: '#1a2c1e', marginBottom: 4 }}>Welcome back</h3>
-      <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 20 }}>Sign in to your account or try instant demo</p>
+      <h3 style={{ fontWeight: 700, fontSize: '20px', color: 'var(--sv-text-primary)', marginBottom: '4px' }}>
+        Sign In to Portal
+      </h3>
+      <p style={{ color: 'var(--sv-text-muted)', fontSize: '13px', marginBottom: '16px' }}>
+        Access your merchant dashboard or municipal administrative desk
+      </p>
 
       {/* Instant Demo Quick Access */}
-      <div className="p-3 mb-4 rounded-3" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <span className="fw-bold text-success" style={{ fontSize: 12 }}>🚀 Instant Demo (No Registration)</span>
-          <span className="badge bg-success text-white" style={{ fontSize: 9 }}>PUBLIC DEMO</span>
+      <div style={{
+        padding: '14px',
+        background: 'linear-gradient(135deg, rgba(238,242,255,0.9) 0%, rgba(245,243,255,0.7) 100%)',
+        border: '1.5px solid var(--sv-primary-border)',
+        borderRadius: 'var(--sv-radius-lg)',
+        marginBottom: '18px',
+        backdropFilter: 'blur(8px)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          position: 'absolute', top: '-15px', right: '-15px',
+          width: '70px', height: '70px',
+          background: 'radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)',
+          pointerEvents: 'none'
+        }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--sv-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            ⚡ Instant Showcase Access — No Signup
+          </span>
+          <span className="sv-badge sv-badge-primary" style={{ fontSize: '9px' }}>
+            LIVE
+          </span>
         </div>
-        <div className="d-flex gap-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <button
             type="button"
             onClick={handleDemoVendor}
-            className="btn btn-sm btn-success fw-bold flex-grow-1 py-2"
-            style={{ borderRadius: 8, fontSize: 12 }}
+            className="btn btn-sm btn-primary"
+            style={{ padding: '7px' }}
           >
-            🛒 Demo Vendor
+            Demo Merchant
           </button>
           <button
             type="button"
             onClick={handleDemoAdmin}
-            className="btn btn-sm btn-outline-dark fw-bold flex-grow-1 py-2"
-            style={{ borderRadius: 8, fontSize: 12 }}
+            className="btn btn-sm btn-outline-dark"
+            style={{ padding: '7px' }}
           >
-            🔑 Demo Admin
+            Demo Officer
           </button>
         </div>
       </div>
 
-      <div className="d-flex align-items-center my-3">
-        <div style={{ flex: 1, height: 1, background: '#e2e8f0' }}></div>
-        <span className="px-3 text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>OR SIGN IN</span>
-        <div style={{ flex: 1, height: 1, background: '#e2e8f0' }}></div>
+      <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0' }}>
+        <div style={{ flex: 1, height: 1, backgroundColor: 'var(--sv-border)' }}></div>
+        <span style={{ padding: '0 12px', fontSize: '11px', fontWeight: 600, color: 'var(--sv-text-subtle)', textTransform: 'uppercase' }}>
+          OR USE ACCOUNT
+        </span>
+        <div style={{ flex: 1, height: 1, backgroundColor: 'var(--sv-border)' }}></div>
       </div>
 
-      {error && <div className="alert alert-danger py-2" style={{ fontSize: 13 }}>{error}</div>}
+      {error && (
+        <div className="alert alert-danger py-2 mb-3" style={{ fontSize: '12.5px', borderRadius: 'var(--sv-radius)' }}>
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleLogin}>
         <div className="mb-3">
-          <label className="form-label fw-semibold" style={{ fontSize: 13, color: '#374151' }}>Email address</label>
-          <input type="email" className="form-control" style={{ borderRadius: 10, padding: '10px 14px', fontSize: 14 }} placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
+          <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+            Email Address
+          </label>
+          <input 
+            type="email" 
+            className="form-control" 
+            placeholder="operator@dhakacity.gov.bd" 
+            value={email} 
+            onChange={e => setEmail(e.target.value)} 
+            required 
+            autoFocus 
+          />
         </div>
         <div className="mb-4">
-          <label className="form-label fw-semibold" style={{ fontSize: 13, color: '#374151' }}>Password</label>
-          <input type="password" className="form-control" style={{ borderRadius: 10, padding: '10px 14px', fontSize: 14 }} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+          <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+            Password
+          </label>
+          <input 
+            type="password" 
+            className="form-control" 
+            placeholder="••••••••" 
+            value={password} 
+            onChange={e => setPassword(e.target.value)} 
+            required 
+          />
         </div>
-        <button type="submit" className="btn w-100 fw-semibold" style={{ background: '#1a6b3c', color: '#fff', borderRadius: 10, padding: '11px', fontSize: 14 }} disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign In'}
+        <button 
+          type="submit" 
+          className="btn btn-primary w-100" 
+          disabled={loading}
+          style={{ padding: '9px' }}
+        >
+          {loading ? 'Authenticating...' : 'Sign In to Account'}
         </button>
       </form>
 
-      <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: '#64748b', marginBottom: 0 }}>
-        New vendor? <button type="button" onClick={onSwitchToRegister} className="btn btn-link p-0 fw-bold" style={{ color: '#1a6b3c', fontSize: 13, textDecoration: 'none' }}>Register here</button>
+      <p style={{ marginTop: '20px', textAlign: 'center', fontSize: '12.5px', color: 'var(--sv-text-muted)', marginBottom: 0 }}>
+        New vendor in Dhaka? <button type="button" onClick={onSwitchToRegister} className="btn btn-link p-0 fw-bold" style={{ color: 'var(--sv-primary)', fontSize: '12.5px', textDecoration: 'none' }}>Register new account</button>
       </p>
     </div>
   );
 }
-

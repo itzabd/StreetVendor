@@ -88,14 +88,18 @@ export function AuthProvider({ children }) {
         apiStatus = 'error';
       }
 
-      // Check Supabase Connectivity (only warn if not in demo mode)
-      try {
-        const { error: dbError } = await supabase.from('profiles').select('id').limit(1).maybeSingle();
-        if (dbError && (dbError.message?.includes('fetch') || dbError.code === 'PGRST301' || dbError.status === 0)) {
+      // Check Supabase Connectivity (only warn if configured with real URL)
+      const sbUrl = import.meta.env.VITE_SUPABASE_URL;
+      const isConfigured = sbUrl && !sbUrl.includes('placeholder') && !sbUrl.includes('example');
+      if (isConfigured) {
+        try {
+          const { error: dbError } = await supabase.from('profiles').select('id').limit(1).maybeSingle();
+          if (dbError && (dbError.message?.includes('fetch') || dbError.code === 'PGRST301' || dbError.status === 0)) {
+            dbStatus = 'error';
+          }
+        } catch {
           dbStatus = 'error';
         }
-      } catch {
-        dbStatus = 'error';
       }
 
       setServiceStatus({ database: dbStatus, api: apiStatus });

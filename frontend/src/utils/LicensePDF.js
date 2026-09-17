@@ -16,7 +16,6 @@ const C = {
   section:   [248,250,252],    // section bg
 };
 
-function rgb(arr) { return { r: arr[0], g: arr[1], b: arr[2] }; }
 function setFill(doc, c)   { doc.setFillColor(c[0], c[1], c[2]); }
 function setDraw(doc, c)   { doc.setDrawColor(c[0], c[1], c[2]); }
 function setTxt(doc, c)    { doc.setTextColor(c[0], c[1], c[2]); }
@@ -41,7 +40,7 @@ export async function generateLicensePDF(data) {
     nidNumber     = 'N/A',
     phone         = 'N/A',
     address       = 'N/A',
-    permissionType= 'Vending License',
+    permissionType: _permissionType = 'Vending License',
     businessType  = 'Street Vending',
     zoneName      = 'N/A',
     spotNumber    = 'N/A',
@@ -155,7 +154,7 @@ export async function generateLicensePDF(data) {
   }
 
   // Helper: field row (label: value)
-  function fieldRow(label, value, xLeft, xRight, yPos, colW, halfW) {
+  function fieldRow(label, value, xLeft, xRight, yPos) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     setTxt(doc, C.muted);
@@ -260,7 +259,7 @@ export async function generateLicensePDF(data) {
     'Residence Address – Verified',
     `Supporting Documents (TIN: ${data.tinNumber || 'N/A'}) – Verified & Filed`,
   ];
-  checks.forEach((chk, i) => {
+  checks.forEach(chk => {
     setFill(doc, C.approved);
     doc.circle(ML + 4, y + 2.5, 2.5, 'F');
     doc.setFont('helvetica', 'bold');

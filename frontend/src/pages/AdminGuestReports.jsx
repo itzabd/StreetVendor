@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -13,9 +13,7 @@ export default function AdminGuestReports() {
   const { addToast } = useToast();
   const base = import.meta.env.VITE_API_URL;
 
-  useEffect(() => { fetchReports(); }, []);
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       const token = await getToken();
       const res = await axios.get(`${base}/public/reports`, {
@@ -27,7 +25,11 @@ export default function AdminGuestReports() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [base, getToken]);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   const handleUpdateStatus = async (id, status) => {
     try {
@@ -37,7 +39,7 @@ export default function AdminGuestReports() {
       });
       addToast(`Report ${status} successfully!`, 'success');
       fetchReports();
-    } catch (err) {
+    } catch {
       addToast('Failed to update report status', 'danger');
     }
   };
@@ -64,13 +66,13 @@ export default function AdminGuestReports() {
           }))}
           height="350px"
         />
-        <div className="p-3 bg-light border-top d-flex justify-content-between align-items-center">
-          <small className="text-muted">
-            <span className="badge bg-warning me-1">Pending</span>
-            <span className="badge bg-success me-1">Approved</span>
-            <span className="badge bg-danger">Rejected</span>
-          </small>
-          <small className="text-muted">Click a row below to locate it on the map.</small>
+        <div style={{ padding: '10px 16px', borderTop: '1px solid var(--sv-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--sv-surface-subtle)' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span className="sv-badge sv-badge-warning">Pending</span>
+            <span className="sv-badge sv-badge-success">Approved</span>
+            <span className="sv-badge sv-badge-danger">Rejected</span>
+          </div>
+          <small className="text-muted">Click a row to locate on map.</small>
         </div>
       </div>
 
@@ -120,9 +122,9 @@ export default function AdminGuestReports() {
                     </td>
                     <td>
                       {r.status === 'pending' && (
-                        <div className="d-flex gap-2">
-                          <button onClick={() => handleUpdateStatus(r.id, 'approved')} className="btn btn-success btn-xs px-2 py-1 fw-bold" style={{fontSize: 10}}>Approve</button>
-                          <button onClick={() => handleUpdateStatus(r.id, 'rejected')} className="btn btn-danger btn-xs px-2 py-1 fw-bold" style={{fontSize: 10}}>Reject</button>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus(r.id, 'approved'); }} className="btn btn-sm btn-success">Approve</button>
+                          <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus(r.id, 'rejected'); }} className="btn btn-sm btn-outline-danger">Reject</button>
                         </div>
                       )}
                       {r.status !== 'pending' && <span className="text-muted small">—</span>}
@@ -134,9 +136,7 @@ export default function AdminGuestReports() {
           </table>
         </div>
       </div>
-      <style>{`
-        .btn-xs { padding: 2px 8px; border-radius: 4px; }
-      `}</style>
+
     </div>
   );
 }

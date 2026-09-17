@@ -20,8 +20,8 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }) {
       await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, form);
       const { error: loginErr } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
       if (loginErr) {
-          if (onSwitchToLogin) onSwitchToLogin();
-          return;
+        if (onSwitchToLogin) onSwitchToLogin();
+        return;
       }
       if (onSuccess) onSuccess();
     } catch (err) {
@@ -43,76 +43,144 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }) {
 
   return (
     <div className="auth-form-container">
-      <h3 style={{ fontWeight: 800, fontSize: 22, color: '#1a2c1e', marginBottom: 4 }}>Create Vendor Account</h3>
-      <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 18 }}>Join our digital street vendor platform or try instant demo</p>
+      <h3 style={{ fontWeight: 700, fontSize: '20px', color: 'var(--sv-text-primary)', marginBottom: '4px' }}>
+        Register Merchant Identity
+      </h3>
+      <p style={{ color: 'var(--sv-text-muted)', fontSize: '13px', marginBottom: '16px' }}>
+        Register with Dhaka City Corporation spatial trade ledger
+      </p>
 
       {/* Instant Demo Quick Access */}
-      <div className="p-3 mb-4 rounded-3" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <span className="fw-bold text-success" style={{ fontSize: 12 }}>🚀 Instant Demo (No Registration)</span>
-          <span className="badge bg-success text-white" style={{ fontSize: 9 }}>PUBLIC DEMO</span>
+      <div style={{
+        padding: '14px',
+        backgroundColor: 'var(--sv-surface-subtle)',
+        border: '1px solid var(--sv-border)',
+        borderRadius: 'var(--sv-radius)',
+        marginBottom: '18px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--sv-text-secondary)', textTransform: 'uppercase' }}>
+            ⚡ Instant Showcase Access (No Signup)
+          </span>
+          <span className="sv-badge sv-badge-success" style={{ fontSize: '9.5px' }}>
+            READY
+          </span>
         </div>
-        <div className="d-flex gap-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <button
             type="button"
             onClick={handleDemoVendor}
-            className="btn btn-sm btn-success fw-bold flex-grow-1 py-2"
-            style={{ borderRadius: 8, fontSize: 12 }}
+            className="btn btn-sm btn-primary"
+            style={{ padding: '7px' }}
           >
-            🛒 Demo Vendor
+            Demo Merchant
           </button>
           <button
             type="button"
             onClick={handleDemoAdmin}
-            className="btn btn-sm btn-outline-dark fw-bold flex-grow-1 py-2"
-            style={{ borderRadius: 8, fontSize: 12 }}
+            className="btn btn-sm btn-outline-dark"
+            style={{ padding: '7px' }}
           >
-            🔑 Demo Admin
+            Demo Officer
           </button>
         </div>
       </div>
 
-      <div className="d-flex align-items-center my-3">
-        <div style={{ flex: 1, height: 1, background: '#e2e8f0' }}></div>
-        <span className="px-3 text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>OR REGISTER</span>
-        <div style={{ flex: 1, height: 1, background: '#e2e8f0' }}></div>
+      <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0' }}>
+        <div style={{ flex: 1, height: 1, backgroundColor: 'var(--sv-border)' }}></div>
+        <span style={{ padding: '0 12px', fontSize: '11px', fontWeight: 600, color: 'var(--sv-text-subtle)', textTransform: 'uppercase' }}>
+          OR NEW REGISTRATION
+        </span>
+        <div style={{ flex: 1, height: 1, backgroundColor: 'var(--sv-border)' }}></div>
       </div>
 
-      {error && <div className="alert alert-danger py-2 mb-3" style={{ fontSize: 13 }}>{error}</div>}
+      {error && (
+        <div className="alert alert-danger py-2 mb-3" style={{ fontSize: '12.5px', borderRadius: 'var(--sv-radius)' }}>
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleRegister}>
-        <div className="row g-3">
+        <div className="row g-2">
           <div className="col-12">
-            <label className="form-label fw-semibold" style={{ fontSize: 13 }}>Full Name *</label>
-            <input className="form-control" style={{ borderRadius: 10, padding: '10px 14px' }} placeholder="e.g. Mohammad Karim" value={form.full_name} onChange={e => update('full_name', e.target.value)} required />
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+              Full Name *
+            </label>
+            <input 
+              className="form-control" 
+              placeholder="e.g. Mohammad Karim" 
+              value={form.full_name} 
+              onChange={e => update('full_name', e.target.value)} 
+              required 
+            />
           </div>
           <div className="col-12">
-            <label className="form-label fw-semibold" style={{ fontSize: 13 }}>Email Address *</label>
-            <input type="email" className="form-control" style={{ borderRadius: 10, padding: '10px 14px' }} placeholder="karim@example.com" value={form.email} onChange={e => update('email', e.target.value)} required />
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+              Email Address *
+            </label>
+            <input 
+              type="email" 
+              className="form-control" 
+              placeholder="karim@dhakacity.gov.bd" 
+              value={form.email} 
+              onChange={e => update('email', e.target.value)} 
+              required 
+            />
           </div>
           <div className="col-12">
-            <label className="form-label fw-semibold" style={{ fontSize: 13 }}>Password *</label>
-            <input type="password" className="form-control" style={{ borderRadius: 10, padding: '10px 14px' }} placeholder="At least 6 characters" value={form.password} onChange={e => update('password', e.target.value)} required minLength={6} />
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+              Account Password *
+            </label>
+            <input 
+              type="password" 
+              className="form-control" 
+              placeholder="At least 6 characters" 
+              value={form.password} 
+              onChange={e => update('password', e.target.value)} 
+              required 
+              minLength={6} 
+            />
           </div>
-          <div className="col-md-6">
-            <label className="form-label fw-semibold" style={{ fontSize: 13 }}>Phone</label>
-            <input className="form-control" style={{ borderRadius: 10, padding: '10px 14px' }} placeholder="01XXXXXXXXX" value={form.phone} onChange={e => update('phone', e.target.value)} />
+          <div className="col-6">
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+              Phone Number
+            </label>
+            <input 
+              className="form-control" 
+              placeholder="01XXXXXXXXX" 
+              value={form.phone} 
+              onChange={e => update('phone', e.target.value)} 
+            />
           </div>
-          <div className="col-md-6">
-            <label className="form-label fw-semibold" style={{ fontSize: 13 }}>NID</label>
-            <input className="form-control" style={{ borderRadius: 10, padding: '10px 14px' }} placeholder="Optional" value={form.nid_number} onChange={e => update('nid_number', e.target.value)} />
+          <div className="col-6">
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--sv-text-secondary)', marginBottom: '4px' }}>
+              National ID (NID)
+            </label>
+            <input 
+              className="form-control" 
+              placeholder="10 or 17 digit NID" 
+              value={form.nid_number} 
+              onChange={e => update('nid_number', e.target.value)} 
+            />
           </div>
-          <div className="col-12 mt-2">
-            <button type="submit" className="btn w-100 fw-semibold" style={{ background: '#1a6b3c', color: '#fff', borderRadius: 10, padding: '12px', fontSize: 14 }} disabled={loading}>
-              {loading ? 'Processing...' : 'Register as Vendor'}
+          <div className="col-12 mt-3">
+            <button 
+              type="submit" 
+              className="btn btn-primary w-100" 
+              disabled={loading}
+              style={{ padding: '9px' }}
+            >
+              {loading ? 'Registering Merchant...' : 'Create Merchant Account'}
             </button>
           </div>
         </div>
       </form>
-      <p style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: '#64748b', marginBottom: 0 }}>
-        Already a vendor? <button type="button" onClick={onSwitchToLogin} className="btn btn-link p-0 fw-bold" style={{ color: '#1a6b3c', fontSize: 13, textDecoration: 'none' }}>Sign In</button>
+      
+      <p style={{ marginTop: '20px', textAlign: 'center', fontSize: '12.5px', color: 'var(--sv-text-muted)', marginBottom: 0 }}>
+        Already registered? <button type="button" onClick={onSwitchToLogin} className="btn btn-link p-0 fw-bold" style={{ color: 'var(--sv-primary)', fontSize: '12.5px', textDecoration: 'none' }}>Sign In</button>
       </p>
     </div>
   );
 }
+
 
