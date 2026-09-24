@@ -26,25 +26,30 @@ function isPointInPolygon(point, polygon) {
 }
 
 // Create a compact dot icon for spot markers (avoids overlap)
-function createSpotIcon(status, isSelected, isLocked, customColor) {
-  const color = isSelected ? '#1E4A4A' : (customColor || (status === 'available' ? '#16a34a' : status === 'occupied' ? '#dc2626' : '#d97706'));
-  const ring = isSelected ? `box-shadow:0 0 0 3px #fff,0 0 0 5px ${color};` : 'box-shadow:0 1px 4px rgba(0,0,0,0.4);';
-  const pulse = isLocked ? `
-    @keyframes sv-marker-pulse {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 74, 74, 0.7); }
-      70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(30, 74, 74, 0); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 74, 74, 0); }
-    }
-    animation: sv-marker-pulse 2s infinite;
-  ` : '';
+function createSpotIcon(status, isSelected, isLocked, customColor, isFavorite = false) {
+  const color = isSelected ? '#1E4A4A' : (customColor || (status === 'available' ? '#16A34A' : (status === 'unverified' ? '#DC2626' : '#D97706')));
+  const size = isSelected ? 26 : 20;
+  const anchor = size / 2;
+  const ring = isSelected
+    ? 'box-shadow: 0 0 0 4px #FFFFFF, 0 0 0 7px #1E4A4A, 0 6px 18px rgba(30, 74, 74, 0.45);'
+    : (isFavorite
+      ? 'box-shadow: 0 0 0 3px #F59E0B, 0 2px 8px rgba(0, 0, 0, 0.35);'
+      : 'box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 0 2px #FFFFFF;');
+  const innerDot = isSelected
+    ? '<div style="width:7px;height:7px;border-radius:50%;background:#FFFFFF;"></div>'
+    : (isFavorite
+      ? '<span style="font-size:10px;line-height:1;color:#FFFFFF;font-weight:900;">★</span>'
+      : '<div style="width:5px;height:5px;border-radius:50%;background:#FFFFFF;opacity:0.9;"></div>');
 
   return L.divIcon({
-    className: '',
-    html: `<div style="background:${color};border-radius:50%;width:22px;height:22px;border:3px solid #fff;${ring}cursor:pointer;${pulse}"></div>`,
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
-    popupAnchor: [0, -14],
-    tooltipAnchor: [0, -16],
+    className: 'sv-map-marker-pin',
+    html: `<div style="background:${color};border-radius:50%;width:${size}px;height:${size}px;${ring}cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s cubic-bezier(0.16,1,0.3,1);">
+      ${innerDot}
+    </div>`,
+    iconSize: [size, size],
+    iconAnchor: [anchor, anchor],
+    popupAnchor: [0, -anchor - 4],
+    tooltipAnchor: [0, -anchor - 6],
   });
 }
 
@@ -300,18 +305,21 @@ export default function ZoneMap({
               <Marker
                 key={`spot-${spot.id}`}
                 position={[parseFloat(spot.latitude), parseFloat(spot.longitude)]}
-                icon={createSpotIcon(spot.status, isSelected, locked, spot.displayColor)}
-                eventHandlers={onSpotSelect && isAvailable ? {
-                  click: (e) => { e.originalEvent.stopPropagation(); onSpotSelect(spot); }
+                icon={createSpotIcon(spot.status, isSelected, locked, spot.displayColor, spot.isFavorite)}
+                eventHandlers={onSpotSelect ? {
+                  click: (e) => {
+                    e.originalEvent?.stopPropagation();
+                    onSpotSelect(spot);
+                  }
                 } : {}}
               >
-                <Tooltip permanent direction="top" offset={[0, -12]} opacity={1}
-                  className="" pane="tooltipPane"
+                <Tooltip permanent={isSelected} direction="top" offset={[0, -12]} opacity={1}
+                  className="sv-map-spot-tooltip" pane="tooltipPane"
                 >
                   <span style={{
-                    background: isSelected ? '#1E4A4A' : (spot.displayColor || (spot.status === 'available' ? '#16a34a' : (spot.status === 'unverified' ? '#f59e0b' : '#dc2626'))),
-                    color: '#fff', padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 700,
-                    whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+                    background: isSelected ? '#1E4A4A' : (spot.displayColor || (spot.status === 'available' ? '#16A34A' : (spot.status === 'unverified' ? '#DC2626' : '#D97706'))),
+                    color: '#fff', padding: '2px 8px', borderRadius: 10, fontSize: 10.5, fontWeight: 700,
+                    whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
                   }}>{spot.business_name || spot.vendor_name || spot.label || spot.spot_number || 'Spot'}</span>
                 </Tooltip>
                 <Popup>

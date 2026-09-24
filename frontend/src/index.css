@@ -2538,3 +2538,263 @@ body.sv-drawer-open {
     border-radius: var(--sv-radius);
   }
 }
+
+/* ─── Apple-Grade Glassmorphism Auth Modal ────────────────────── */
+.sv-auth-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 26, 26, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  animation: svFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes svFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes svCardPop {
+  from { opacity: 0; transform: scale(0.95) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.sv-glass-auth-modal {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 28px;
+  box-shadow: 0 24px 60px -12px rgba(10, 30, 30, 0.35),
+              0 0 0 1px rgba(30, 74, 74, 0.08);
+  overflow: hidden;
+  position: relative;
+  animation: svCardPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sv-modal-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--sv-border-subtle);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.sv-auth-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 50px;
+  background: var(--sv-surface);
+  border: 1.5px solid var(--sv-border);
+  color: var(--sv-primary);
+  font-family: var(--sv-font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-decoration: none;
+  box-shadow: var(--sv-shadow-xs);
+}
+
+.sv-auth-back-btn:hover {
+  background: var(--sv-primary-light);
+  border-color: var(--sv-primary-border);
+  transform: translateX(-2px);
+  color: var(--sv-primary);
+}
+
+.sv-modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--sv-border);
+  background: var(--sv-surface);
+  color: var(--sv-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.sv-modal-close-btn:hover {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #DC2626;
+  transform: scale(1.06);
+}
+
+.sv-auth-mode-segmented {
+  display: flex;
+  background: #EFE9E2;
+  border-radius: 50px;
+  padding: 4px;
+  margin: 14px 20px 0;
+  gap: 4px;
+}
+
+.sv-auth-mode-btn {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 50px;
+  border: none;
+  background: transparent;
+  font-family: var(--sv-font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sv-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sv-auth-mode-btn.active {
+  background: #FFFFFF;
+  color: var(--sv-primary);
+  box-shadow: 0 2px 8px rgba(30, 74, 74, 0.12);
+}
+
+.sv-modal-body-scroll {
+  padding: 18px 20px 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Standalone Auth Pages (/login and /register) */
+.sv-auth-page-wrapper {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(circle at 20% 20%, rgba(30, 74, 74, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(217, 119, 6, 0.06) 0%, transparent 50%),
+              #F5F0EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.sv-glass-auth-card {
+  max-width: 480px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 28px;
+  padding: 28px 24px;
+  box-shadow: 0 24px 60px -12px rgba(30, 74, 74, 0.2), 0 0 0 1px rgba(30, 74, 74, 0.08);
+}
+
+/* ─── Map Polish: Recenter, Fullscreen & Tooltips ────────────── */
+.sv-map-recenter-btn {
+  background: var(--sv-primary-light);
+  border: 1px solid var(--sv-primary-border);
+  color: var(--sv-primary);
+  padding: 3px 9px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: var(--sv-font-sans);
+}
+.sv-map-recenter-btn:hover {
+  background: var(--sv-primary);
+  color: #FFFFFF;
+}
+
+.sv-map-exit-fullscreen-btn {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(30, 74, 74, 0.92);
+  color: #FFFFFF;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 7px 18px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  animation: svFadeIn 0.2s ease;
+}
+
+.sv-map-spot-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.sv-map-spot-tooltip::before {
+  display: none !important;
+}
+
+/* Tactile Favorite Button on Public Cards */
+.sv-card-fav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 50px;
+  border: 1.5px solid var(--sv-border);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--sv-text-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--sv-font-sans);
+  line-height: 1;
+}
+.sv-card-fav-btn:hover {
+  border-color: #FECACA;
+  background: #FFF5F5;
+  color: #DC2626;
+  transform: scale(1.04);
+}
+.sv-card-fav-btn.is-favorited {
+  background: #FEF2F2;
+  border-color: #F87171;
+  color: #DC2626;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.18);
+}
+
+.sv-card-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 50px;
+  border: 1px solid var(--sv-border);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--sv-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.sv-card-share-btn:hover {
+  background: var(--sv-primary-light);
+  border-color: var(--sv-primary-border);
+  color: var(--sv-primary);
+}
+

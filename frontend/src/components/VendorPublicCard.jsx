@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 export default function VendorPublicCard({ vendor, isFavorite, onToggleFavorite, onSelect, isSelected = false }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const getCategoryIcon = (cat, name) => {
     const text = `${cat || ''} ${name || ''}`.toLowerCase();
@@ -21,6 +22,17 @@ export default function VendorPublicCard({ vendor, isFavorite, onToggleFavorite,
   const isUnverified = vendor.is_unverified || vendor.status === 'reported' || false;
   const zoneName = vendor.spots?.zones?.name || vendor.zone_name || 'Dhaka Metro';
   const areaName = vendor.spots?.zones?.city_corporation || vendor.area_name || '';
+
+  const handleShare = (e) => {
+    e.stopPropagation();
+    const stallName = vendor.profiles?.business_name || vendor.profiles?.full_name || vendor.vendor_name || 'Vending Spot';
+    const shareUrl = `${window.location.origin}/home?spot=${spotNumber}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${stallName} (#${spotNumber}) on StreetVendor BD: ${shareUrl}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div 
@@ -111,33 +123,28 @@ export default function VendorPublicCard({ vendor, isFavorite, onToggleFavorite,
           </div>
         </div>
 
-        {/* Bookmark */}
+        {/* Tactile Favorite Button for Non-Reg & Registered Users */}
         <button 
+          type="button"
           onClick={(e) => { e.stopPropagation(); onToggleFavorite(vendor.vendor_id || vendor.id); }}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: isFavorite ? '#DC2626' : '#AC9C8D',
-            fontSize: '18px',
-            padding: '2px',
-            cursor: 'pointer',
-            lineHeight: 1,
-            transition: 'transform 0.15s ease'
-          }}
-          title={isFavorite ? 'Remove bookmark' : 'Bookmark spot'}
+          className={`sv-card-fav-btn ${isFavorite ? 'is-favorited' : ''}`}
+          title={isFavorite ? 'Saved in your favorites' : 'Save this vendor to favorites'}
         >
-          {isFavorite ? '★' : '☆'}
+          <span>{isFavorite ? '★' : '☆'}</span>
+          <span>{isFavorite ? 'Saved' : 'Save'}</span>
         </button>
       </div>
 
-      {/* Footer Details: Stars + Hours */}
+      {/* Footer Details: Stars + Share + Operating Hours */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between', 
         paddingTop: '8px', 
         borderTop: '1px solid var(--sv-border-subtle)',
-        fontSize: '11.5px'
+        fontSize: '11.5px',
+        flexWrap: 'wrap',
+        gap: '6px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <span style={{ color: '#EAB308', fontSize: '12px' }}>★</span>
@@ -145,9 +152,22 @@ export default function VendorPublicCard({ vendor, isFavorite, onToggleFavorite,
           <span style={{ color: 'var(--sv-text-caption)', fontSize: '11px' }}>({totalRatings || 40})</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--sv-text-caption)', fontSize: '11px' }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }}></span>
-          <span>{vendor.profiles?.operating_hours ? vendor.profiles.operating_hours.split('-')[0].trim() + ' open' : 'Open Today'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* 1-Tap Share Button */}
+          <button
+            type="button"
+            onClick={handleShare}
+            className="sv-card-share-btn"
+            title="Share this vending spot with others"
+          >
+            <span>{copied ? '✓' : '🔗'}</span>
+            <span>{copied ? 'Copied' : 'Share'}</span>
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--sv-text-caption)', fontSize: '11px' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }}></span>
+            <span>{vendor.profiles?.operating_hours ? vendor.profiles.operating_hours.split('-')[0].trim() + ' open' : 'Open Today'}</span>
+          </div>
         </div>
       </div>
     </div>

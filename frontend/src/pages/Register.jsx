@@ -1,17 +1,28 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/auth/RegisterForm';
 
 export default function Register() {
   const navigate = useNavigate();
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--sv-canvas)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div className="sv-card" style={{ maxWidth: '480px', width: '100%', padding: '32px 28px', boxShadow: 'var(--sv-shadow-lg)' }}>
-        <div style={{ marginBottom: '16px' }}>
-          <Link to="/" style={{ color: 'var(--sv-primary)', fontSize: '12.5px', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            ← Return to Spatial Ledger
-          </Link>
+    <div className="sv-auth-page-wrapper">
+      <div className="sv-glass-auth-card" style={{ maxWidth: '520px' }}>
+        {/* Top Header with Back to Home button */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <button
+            type="button"
+            onClick={() => navigate('/home')}
+            className="sv-auth-back-btn"
+            title="Return to StreetVendor BD Homepage"
+          >
+            ← Back to Home
+          </button>
+          <div className="sv-telemetry-badge" style={{ fontSize: '10.5px', padding: '3px 9px' }}>
+            <span className="sv-pulse-dot" style={{ width: '6px', height: '6px' }}></span>
+            <span>SECURE GIS</span>
+          </div>
         </div>
+
         <RegisterForm 
           onSuccess={() => navigate('/')} 
           onSwitchToLogin={() => navigate('/login')} 

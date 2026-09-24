@@ -221,6 +221,7 @@ export default function LandingPage() {
   });
   const [reportDraft, setReportDraft] = useState(null);
   const [reportSuccess, setReportSuccess] = useState(false);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -373,6 +374,7 @@ export default function LandingPage() {
     const matchesSearch = nameStr.includes(q) || zoneStr.includes(q) || spotStr.includes(q);
     if (!matchesSearch) return false;
     if (filter === 'all') return true;
+    if (filter === 'favorites') return favorites.includes(v.vendor_id || v.id);
     if (filter === 'tea') return nameStr.includes('tea') || nameStr.includes('coffee') || nameStr.includes('fuchka') || zoneStr.includes('tea');
     if (filter === 'fruit') return nameStr.includes('fruit') || nameStr.includes('juice') || zoneStr.includes('fruit');
     if (filter === 'snacks') return nameStr.includes('pitha') || nameStr.includes('snack') || nameStr.includes('biryani') || nameStr.includes('food');
@@ -395,6 +397,7 @@ export default function LandingPage() {
       else if (r.reasonable === max) displayColor = '#D97706';
       else displayColor = '#DC2626';
     }
+    const isFav = favorites.includes(v.vendor_id || v.id);
     return {
       ...v.spots,
       latitude: v.spots?.latitude ?? v.latitude,
@@ -404,7 +407,8 @@ export default function LandingPage() {
       vendor_name: v.profiles?.business_name || v.profiles?.full_name || v.vendor_name,
       operating_hours: v.profiles?.operating_hours,
       ratings: r,
-      displayColor
+      displayColor,
+      isFavorite: isFav
     };
   });
 
@@ -416,6 +420,7 @@ export default function LandingPage() {
 
   const CATEGORIES = [
     { key: 'all', icon: '🗺️', label: 'All Spots' },
+    { key: 'favorites', icon: '⭐', label: `Saved (${favorites.length})` },
     { key: 'tea', icon: '🍵', label: 'Tea & Snacks' },
     { key: 'fruit', icon: '🍊', label: 'Fruit & Juice' },
     { key: 'snacks', icon: '🍲', label: 'Street Food' },
@@ -616,9 +621,9 @@ export default function LandingPage() {
                 ⚡ Demo
               </button>
 
-              {/* Universal Sign In Button */}
+              {/* Universal Sign In Button - Opens Glassmorphic Auth Modal */}
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => setAuthMode('login')}
                 className="btn btn-primary btn-sm"
                 style={{ borderRadius: '50px', padding: '5px 13px', fontSize: '12px' }}
               >
@@ -675,13 +680,34 @@ export default function LandingPage() {
         <div className="sv-map-section-bar d-flex d-lg-none">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '15px' }}>🗺️</span>
-            <strong style={{ fontSize: '13.5px', color: '#1E4A4A', letterSpacing: '-0.02em' }}>Interactive Spatial Registry</strong>
+            <strong style={{ fontSize: '13.5px', color: '#1E4A4A', letterSpacing: '-0.02em' }}>Interactive Spatial Map</strong>
           </div>
-          <span className="badge bg-primary" style={{ fontSize: '10.5px' }}>{filteredVendors.length} Spots Active</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={() => setIsMapExpanded(!isMapExpanded)}
+              className="btn btn-sm btn-outline-dark"
+              style={{ fontSize: '11px', padding: '2px 9px', borderRadius: '50px', fontWeight: 600 }}
+            >
+              {isMapExpanded ? '✕ Minimize' : '⛶ Fullscreen'}
+            </button>
+            <span className="badge bg-primary" style={{ fontSize: '10px' }}>{filteredVendors.length} Spots</span>
+          </div>
         </div>
 
         {/* Full-canvas map */}
-        <section className="sv-gis-canvas">
+        <section className={`sv-gis-canvas ${isMapExpanded ? 'is-mobile-fullscreen' : ''}`}>
+
+          {/* Floating Exit Fullscreen Button */}
+          {isMapExpanded && (
+            <button
+              type="button"
+              onClick={() => setIsMapExpanded(false)}
+              className="sv-map-exit-fullscreen-btn d-flex d-lg-none"
+            >
+              ✕ Exit Fullscreen Map
+            </button>
+          )}
 
           {/* Floating Pill when Deck is Minimized */}
           {isDeckMinimized && (
@@ -759,6 +785,34 @@ export default function LandingPage() {
                 </div>
               </div>
 
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleToggleFavorite(selectedVendor.vendor_id || selectedVendor.id)}
+                  className={`btn btn-sm ${favorites.includes(selectedVendor.vendor_id || selectedVendor.id) ? 'btn-danger' : 'btn-outline-danger'}`}
+                  style={{ flex: 1, fontSize: '11.5px', borderRadius: '50px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                >
+                  <span>{favorites.includes(selectedVendor.vendor_id || selectedVendor.id) ? '★ Saved' : '☆ Save to Favorites'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const spotNum = selectedVendor.spots?.spot_number || 'SPOT';
+                    const name = selectedVendor.profiles?.business_name || selectedVendor.profiles?.full_name || selectedVendor.vendor_name;
+                    const url = `${window.location.origin}/home?spot=${spotNum}`;
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(`${name} (#${spotNum}) on StreetVendor BD: ${url}`);
+                      alert('✓ Spot link copied to clipboard!');
+                    }
+                  }}
+                  className="btn btn-outline-dark btn-sm"
+                  style={{ fontSize: '11.5px', borderRadius: '50px', padding: '5px 12px' }}
+                  title="Share this spot"
+                >
+                  🔗 Share
+                </button>
+              </div>
+
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }}
@@ -801,6 +855,14 @@ export default function LandingPage() {
 
           {/* Map Legend */}
           <div className="sv-gis-legend">
+            <button
+              type="button"
+              onClick={() => jumpToWard('all', 23.8103, 90.4125, 13)}
+              className="sv-map-recenter-btn"
+              title="Reset view to full Dhaka metropolitan map"
+            >
+              🎯 Recenter
+            </button>
             {[
               { color: '#16A34A', label: 'Approved & Trusted' },
               { color: '#D97706', label: 'Active Demarcation' },
@@ -941,9 +1003,41 @@ export default function LandingPage() {
                   Loading municipal spots…
                 </div>
               ) : filteredVendors.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '32px', color: '#4A6E6E', fontSize: '13px' }}>
-                  <div style={{ fontSize: '22px', marginBottom: '8px' }}>🔍</div>
-                  No spots matching your query.
+                <div style={{ textAlign: 'center', padding: '32px 16px', color: '#4A6E6E', fontSize: '13px', background: 'rgba(255,255,255,0.7)', borderRadius: '16px', border: '1.5px dashed var(--sv-border)' }}>
+                  <div style={{ fontSize: '28px', marginBottom: '8px' }}>
+                    {filter === 'favorites' ? '⭐' : '🔍'}
+                  </div>
+                  {filter === 'favorites' ? (
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '14.5px', color: '#1E4A4A', marginBottom: '4px' }}>
+                        No Saved Vendors Yet
+                      </div>
+                      <p style={{ fontSize: '12px', color: '#7A7268', maxWidth: '300px', margin: '0 auto 12px', lineHeight: 1.5 }}>
+                        Tap the <strong>Save</strong> button (☆) on any street stall card or map marker to bookmark your favorite vendors for quick access!
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setFilter('all')}
+                        className="btn btn-sm btn-primary"
+                        style={{ borderRadius: '50px', fontSize: '11.5px', padding: '6px 16px' }}
+                      >
+                        Explore All Spots
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#1E4A4A', marginBottom: '4px' }}>No spots matching your query</div>
+                      <p style={{ fontSize: '12px', color: '#7A7268', margin: '0 0 10px' }}>Try searching by another food type or ward name.</p>
+                      <button
+                        type="button"
+                        onClick={() => { setSearch(''); setFilter('all'); }}
+                        className="btn btn-sm btn-outline-dark"
+                        style={{ borderRadius: '50px', fontSize: '11px', padding: '4px 12px' }}
+                      >
+                        Reset Filters
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 filteredVendors.map(v => (
