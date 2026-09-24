@@ -201,45 +201,48 @@ export default function Profile() {
       <div className="row g-4">
         {/* Left Segmented Navigation */}
         <div className="col-lg-3">
-          <div className="apple-card p-3 mb-4 d-flex flex-column gap-2">
+          <div className="apple-card p-2 p-md-3 mb-4 d-flex flex-md-column flex-row gap-2 sv-profile-tab-list" style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}>
             <button 
               onClick={() => setActiveTab('details')}
-              className={`apple-pill-btn text-start justify-content-start w-100 ${activeTab === 'details' ? 'active' : ''}`}
+              className={`apple-pill-btn text-start justify-content-start ${activeTab === 'details' ? 'active' : ''}`}
               style={{
                 background: activeTab === 'details' ? 'var(--sv-primary)' : 'transparent',
                 color: activeTab === 'details' ? '#FFFFFF' : 'var(--sv-text-body)',
-                padding: '10px 16px',
+                padding: '8px 14px',
                 borderRadius: '12px',
-                fontSize: '13.5px'
+                fontSize: '13px',
+                flexShrink: 0
               }}
             >
-              👤 Profile & Enterprise Details
+              👤 Details
             </button>
             <button 
               onClick={() => setActiveTab('documents')}
-              className={`apple-pill-btn text-start justify-content-start w-100 ${activeTab === 'documents' ? 'active' : ''}`}
+              className={`apple-pill-btn text-start justify-content-start ${activeTab === 'documents' ? 'active' : ''}`}
               style={{
                 background: activeTab === 'documents' ? 'var(--sv-primary)' : 'transparent',
                 color: activeTab === 'documents' ? '#FFFFFF' : 'var(--sv-text-body)',
-                padding: '10px 16px',
+                padding: '8px 14px',
                 borderRadius: '12px',
-                fontSize: '13.5px'
+                fontSize: '13px',
+                flexShrink: 0
               }}
             >
-              📄 Vending License & Permit
+              📄 License
             </button>
             <button 
               onClick={() => setActiveTab('security')}
-              className={`apple-pill-btn text-start justify-content-start w-100 ${activeTab === 'security' ? 'active' : ''}`}
+              className={`apple-pill-btn text-start justify-content-start ${activeTab === 'security' ? 'active' : ''}`}
               style={{
                 background: activeTab === 'security' ? 'var(--sv-primary)' : 'transparent',
                 color: activeTab === 'security' ? '#FFFFFF' : 'var(--sv-text-body)',
-                padding: '10px 16px',
+                padding: '8px 14px',
                 borderRadius: '12px',
-                fontSize: '13.5px'
+                fontSize: '13px',
+                flexShrink: 0
               }}
             >
-              🛡️ Account Security & Password
+              🛡️ Security
             </button>
           </div>
 

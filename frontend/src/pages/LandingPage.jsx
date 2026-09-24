@@ -453,14 +453,15 @@ export default function LandingPage() {
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {user ? (
-            <button onClick={handleDashboardRedirect} className="btn btn-primary btn-sm" style={{ borderRadius: '50px' }}>
+            <button onClick={handleDashboardRedirect} className="btn btn-primary btn-sm" style={{ borderRadius: '50px', padding: '6px 14px' }}>
               {isDemo ? '⭐ Active Session' : 'Enter Portal →'}
             </button>
           ) : (
             <>
+              {/* Desktop Demo Buttons */}
               <button
                 onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm d-none d-md-inline-flex"
                 style={{ background: 'linear-gradient(135deg,#1E4A4A,#2D6060)', borderRadius: '50px', padding: '6px 14px', gap: '6px' }}
               >
                 <span>🏪</span>
@@ -469,15 +470,26 @@ export default function LandingPage() {
               </button>
               <button
                 onClick={() => { enterDemoMode('admin'); navigate('/admin'); }}
-                className="btn btn-outline-dark btn-sm"
-                style={{ borderRadius: '50px', padding: '6px 14px' }}
+                className="btn btn-outline-dark btn-sm d-none d-sm-inline-flex"
+                style={{ borderRadius: '50px', padding: '6px 12px' }}
               >
                 🏛️ Officer Demo
               </button>
+
+              {/* Mobile Quick Demo Button */}
               <button
-                onClick={() => setAuthMode('login')}
-                className="btn btn-sm d-none d-sm-inline-flex"
-                style={{ background: 'transparent', border: '1.5px solid #D1C7BD', color: '#322D29', borderRadius: '50px', padding: '6px 14px' }}
+                onClick={() => { enterDemoMode('admin'); navigate('/admin'); }}
+                className="btn btn-sm d-inline-flex d-sm-none"
+                style={{ background: 'var(--sv-primary-light)', border: '1px solid var(--sv-primary-border)', color: 'var(--sv-primary)', borderRadius: '50px', padding: '5px 10px', fontSize: '11.5px', fontWeight: 600 }}
+              >
+                ⚡ Demo
+              </button>
+
+              {/* Universal Sign In Button */}
+              <button
+                onClick={() => navigate('/login')}
+                className="btn btn-primary btn-sm"
+                style={{ borderRadius: '50px', padding: '5px 13px', fontSize: '12px' }}
               >
                 Sign In
               </button>

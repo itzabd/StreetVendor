@@ -141,7 +141,7 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <Link to="/vendor/applications" className="btn btn-outline-dark btn-sm">
               New Spot Application
             </Link>
@@ -153,23 +153,23 @@ export default function VendorDashboard() {
       </div>
 
       {/* Metrics Row */}
-      <div className="row g-3">
+      <div className="row g-2 g-md-3">
         {[
           { label: 'Assigned Spot', value: activeAssignment ? `#${activeAssignment.spots?.spot_number || 'M10-04'}` : 'None', sub: 'Designated trade position', link: '/vendor/assignments' },
           { label: 'Monthly Lease', value: activeAssignment ? `৳${Number(activeAssignment.rent_amount || 3500).toLocaleString()}` : '—', sub: 'Due 10th of each month', link: '/vendor/rent' },
           { label: 'Active Permits', value: stats.permissions, sub: 'Verified legal permissions', link: '/vendor/permissions' },
           { label: 'Open Inquiries', value: stats.complaints, sub: 'Grievance / resolution cases', link: '/vendor/complaints' },
         ].map((m, idx) => (
-          <div key={idx} className="col-sm-6 col-lg-3">
+          <div key={idx} className="col-6 col-md-3 col-lg-3">
             <Link to={m.link} style={{ textDecoration: 'none' }}>
-              <div className="sv-card" style={{ padding: '16px' }}>
-                <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)', fontWeight: 500, marginBottom: '4px' }}>
+              <div className="sv-card" style={{ padding: '14px 12px' }}>
+                <div style={{ fontSize: '11.5px', color: 'var(--sv-text-muted)', fontWeight: 500, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {m.label}
                 </div>
-                <div className="sv-mono-data" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--sv-text-primary)' }}>
+                <div className="sv-mono-data" style={{ fontSize: '20px', fontWeight: 700, color: 'var(--sv-text-primary)' }}>
                   {m.value}
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--sv-text-secondary)', marginTop: '2px' }}>
+                <div style={{ fontSize: '10.5px', color: 'var(--sv-text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {m.sub}
                 </div>
               </div>

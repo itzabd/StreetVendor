@@ -29,6 +29,9 @@ import VerifyLicense from './pages/VerifyLicense';
 import ServiceMonitor from './components/ServiceMonitor';
 import DemoBanner from './components/DemoBanner';
 
+import { NavProvider } from './context/NavContext';
+import BottomNav from './components/BottomNav';
+
 function Layout({ children }) {
   return (
     <>
@@ -37,6 +40,7 @@ function Layout({ children }) {
       <main className="sv-main">
         {children}
       </main>
+      <BottomNav />
     </>
   );
 }
@@ -65,11 +69,12 @@ export default function App() {
         <ConfirmProvider>
           <ServiceMonitor />
           <BrowserRouter>
-            <DemoBanner />
-            <Routes>
+            <NavProvider>
+              <DemoBanner />
+              <Routes>
             <Route path="/home" element={<LandingPage />} />
-            <Route path="/login" element={<Navigate to="/home?mode=login" replace />} />
-            <Route path="/register" element={<Navigate to="/home?mode=register" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/" element={<RootRedirect />} />
             <Route path="/verify/:id" element={<VerifyLicense />} />
 
@@ -100,7 +105,7 @@ export default function App() {
             {/* Catch-all: Redirect to home or root redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-
+          </NavProvider>
         </BrowserRouter>
         </ConfirmProvider>
       </ToastProvider>

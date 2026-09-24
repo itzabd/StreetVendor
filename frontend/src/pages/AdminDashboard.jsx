@@ -113,7 +113,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <Link to="/admin/zones" className="btn btn-outline-dark btn-sm">
               + Demarcate Zone
             </Link>
@@ -125,18 +125,18 @@ export default function AdminDashboard() {
       </div>
 
       {/* Metrics Row */}
-      <div className="row g-3">
+      <div className="row g-2 g-md-3">
         {statCards.map((s, idx) => (
-          <div key={idx} className="col-sm-6 col-lg">
+          <div key={idx} className="col-6 col-md-4 col-lg">
             <Link to={s.link} style={{ textDecoration: 'none' }}>
-              <div className="sv-card" style={{ padding: '16px' }}>
-                <div style={{ fontSize: '12px', color: 'var(--sv-text-muted)', fontWeight: 500, marginBottom: '4px' }}>
+              <div className="sv-card" style={{ padding: '14px 12px' }}>
+                <div style={{ fontSize: '11.5px', color: 'var(--sv-text-muted)', fontWeight: 500, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {s.label}
                 </div>
-                <div className="sv-mono-data" style={{ fontSize: '22px', fontWeight: 700, color: s.alert ? 'var(--sv-status-warning)' : 'var(--sv-text-primary)' }}>
+                <div className="sv-mono-data" style={{ fontSize: '20px', fontWeight: 700, color: s.alert ? 'var(--sv-status-warning)' : 'var(--sv-text-primary)' }}>
                   {s.value}
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--sv-text-secondary)', marginTop: '2px' }}>
+                <div style={{ fontSize: '10.5px', color: 'var(--sv-text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {s.sub}
                 </div>
               </div>

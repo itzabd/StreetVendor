@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNav } from '../context/NavContext';
 
 const pageTitles = {
   '/vendor': 'Merchant Operations & Spot Overview',
@@ -26,6 +27,7 @@ const pageTitles = {
 
 export default function Navbar() {
   const { profile, logout, isDemo, switchDemoRole } = useAuth();
+  const { toggleMobileNav, isMobileNavOpen } = useNav();
   const location = useLocation();
   const navigate = useNavigate();
   const title = pageTitles[location.pathname] || 'Municipal Spatial Ledger';
@@ -34,6 +36,28 @@ export default function Navbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+
+  // Close menus when route changes
+  useEffect(() => {
+    setShowProfileMenu(false);
+    setShowNotifMenu(false);
+  }, [location.pathname]);
+
+  // Click outside listener for dropdowns
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifMenu(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const loadNotifs = () => {
@@ -96,14 +120,26 @@ export default function Navbar() {
 
   return (
     <header className="sv-topbar">
-      <div className="sv-topbar-title">{title}</div>
+      <div className="sv-topbar-left">
+        <button 
+          type="button" 
+          className="sv-mobile-menu-toggle d-lg-none"
+          onClick={toggleMobileNav}
+          aria-label={isMobileNavOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
+        >
+          <span className="sv-hamburger-line"></span>
+          <span className="sv-hamburger-line"></span>
+          <span className="sv-hamburger-line"></span>
+        </button>
+        <div className="sv-topbar-title" title={title}>{title}</div>
+      </div>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {/* Notification Bell */}
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }} ref={notifRef}>
           <button 
             className="btn btn-outline-dark btn-sm"
-            style={{ width: '32px', height: '32px', padding: 0, position: 'relative' }}
+            style={{ width: '34px', height: '34px', padding: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={() => { setShowNotifMenu(!showNotifMenu); setShowProfileMenu(false); }}
             title="Official dispatches and alerts"
           >
@@ -111,8 +147,8 @@ export default function Navbar() {
             {unreadCount > 0 && (
               <span style={{
                 position: 'absolute',
-                top: '-4px',
-                right: '-4px',
+                top: '-3px',
+                right: '-3px',
                 width: '8px',
                 height: '8px',
                 backgroundColor: '#5DBBBB',
@@ -127,7 +163,7 @@ export default function Navbar() {
               position: 'absolute',
               right: 0,
               marginTop: '8px',
-              width: '320px',
+              width: 'min(320px, calc(100vw - 20px))',
               backgroundColor: '#FFFFFF',
               border: '1px solid var(--sv-border)',
               borderRadius: 'var(--sv-radius)',
@@ -195,7 +231,7 @@ export default function Navbar() {
         </div>
 
         {/* Profile Trigger */}
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }} ref={profileRef}>
           <button 
             onClick={() => { setShowProfileMenu(!showProfileMenu); setShowNotifMenu(false); }}
             style={{
@@ -205,11 +241,11 @@ export default function Navbar() {
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              padding: '4px 8px',
+              padding: '4px 6px',
               borderRadius: 'var(--sv-radius)'
             }}
           >
-            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
+            <div className="d-none d-sm-flex" style={{ textAlign: 'right', flexDirection: 'column' }}>
               <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--sv-text-primary)', lineHeight: 1.2 }}>
                 {profile?.full_name || (isAdmin ? 'Tanvir Ahmed' : 'Rahim Uddin')}
               </span>
@@ -229,7 +265,8 @@ export default function Navbar() {
               justifyContent: 'center',
               fontWeight: 700,
               fontSize: '12px',
-              boxShadow: '0 2px 8px rgba(30, 74, 74, 0.25)'
+              boxShadow: '0 2px 8px rgba(30, 74, 74, 0.25)',
+              flexShrink: 0
             }}>
               {initials}
             </div>
