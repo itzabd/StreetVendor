@@ -1700,52 +1700,294 @@ body.has-sv-demo-banner .sv-landing-header { margin-top: 36px; }
 /* ─── Mobile Segmented Navigation ───────────────────────────── */
 .sv-mobile-segmented-nav { display: none; }
 
+/* ─── Metrics Four Grid ─────────────────────────────────────── */
+.sv-metrics-four-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--sv-border-subtle);
+  border-radius: 14px;
+  padding: 10px 4px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+.sv-metrics-four-grid > div:not(:first-child) {
+  border-left: 1px solid var(--sv-border-subtle);
+}
+.sv-metric-num {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--sv-primary);
+  line-height: 1;
+  font-family: var(--sv-font-sans);
+}
+.sv-metric-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--sv-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 3px;
+}
+
+/* ─── Platform Features Deck ────────────────────────────────── */
+.sv-platform-features-deck {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--sv-border);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(30, 74, 74, 0.05);
+}
+.sv-features-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sv-features-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sv-primary);
+  background: var(--sv-primary-light);
+  border: 1px solid var(--sv-primary-border);
+  padding: 3px 9px;
+  border-radius: 100px;
+}
+.sv-features-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+@media (min-width: 576px) {
+  .sv-features-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.sv-feature-card {
+  background: #FAF8F5;
+  border: 1px solid var(--sv-border);
+  border-radius: 14px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+.sv-feature-card:hover {
+  background: #FFFFFF;
+  border-color: var(--sv-primary-border);
+  transform: translateY(-1px);
+  box-shadow: var(--sv-shadow-xs);
+}
+.sv-feature-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.sv-feature-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+.sv-feature-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--sv-primary);
+  background: var(--sv-primary-light);
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+.sv-feature-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sv-text-primary);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+.sv-feature-desc {
+  font-size: 11px;
+  color: var(--sv-text-caption);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.sv-mobile-overview-section {
+  padding: 14px 14px 0 14px;
+  background: #F5F0EB;
+}
+.sv-map-section-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
 @media (max-width: 991px) {
-  .sv-gis-workspace {
-    display: block;
-    height: auto;
+  .sv-landing-shell {
+    background: #F5F0EB;
+    overflow-x: hidden;
   }
 
+  /* Sticky Quick Jump Navigation */
   .sv-mobile-segmented-nav {
-    display: flex;
-    position: sticky;
-    top: 62px;
-    z-index: 1000;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--sv-border);
-    padding: 8px 14px;
-    gap: 8px;
+    display: flex !important;
+    position: sticky !important;
+    top: 56px !important;
+    z-index: 990 !important;
+    background: rgba(245, 240, 235, 0.96) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid var(--sv-border) !important;
+    padding: 8px 14px !important;
+    gap: 8px !important;
   }
 
   .sv-segmented-btn {
     flex: 1;
-    padding: 9px;
-    font-size: 12.5px;
-    font-weight: 600;
-    border-radius: var(--sv-radius);
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 50px;
     border: 1.5px solid var(--sv-border);
-    background-color: var(--sv-surface-subtle);
+    background-color: #FFFFFF;
     color: var(--sv-text-body);
     text-align: center;
     cursor: pointer;
     font-family: var(--sv-font-sans);
-    transition: var(--sv-transition-fast);
+    transition: all 0.18s ease;
+    white-space: nowrap;
   }
 
   .sv-segmented-btn.active {
-    background: var(--sv-gradient-primary);
-    border-color: var(--sv-primary);
-    color: #FFFFFF;
-    box-shadow: var(--sv-shadow-sm);
+    background: var(--sv-primary) !important;
+    border-color: var(--sv-primary) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(30, 74, 74, 0.25) !important;
   }
 
-  .sv-gis-workspace.view-map .sv-discovery-pane  { display: none !important; }
-  .sv-gis-workspace.view-list .sv-gis-canvas     { display: none !important; }
-  .sv-gis-canvas { height: calc(100vh - 115px); }
-  .sv-discovery-pane { height: auto; border-right: none; }
-  .sv-demo-grid { grid-template-columns: 1fr; }
-  .sv-ledger-metrics { grid-template-columns: 1fr 1fr; }
+  .sv-gis-workspace {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: auto !important;
+    position: relative !important;
+    overflow: visible !important;
+    background: #F5F0EB;
+    padding: 12px 14px 28px !important;
+    gap: 16px !important;
+  }
+
+  /* Never hide canvas or pane on mobile! Both stream seamlessly */
+  .sv-gis-workspace.view-map .sv-discovery-pane  { display: block !important; }
+  .sv-gis-workspace.view-list .sv-gis-canvas     { display: block !important; }
+
+  /* Discovery Pane on mobile: fluid, static block flow */
+  .sv-discovery-pane {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    overflow: visible !important;
+    order: 2 !important;
+  }
+
+  .sv-pane-content {
+    overflow-y: visible !important;
+    padding: 0 !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  .sv-deck-minimize-btn {
+    display: none !important;
+  }
+
+  /* Responsive Map Canvas on mobile */
+  .sv-gis-canvas {
+    position: relative !important;
+    width: 100% !important;
+    height: 380px !important;
+    min-height: 380px !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    border: 1.5px solid var(--sv-border) !important;
+    box-shadow: var(--sv-shadow-md) !important;
+    order: 1 !important;
+    margin: 0 !important;
+  }
+
+  /* Ward Jump Toolbar on mobile - NO CLIPPING */
+  .sv-gis-toolbar {
+    top: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    max-width: calc(100% - 20px) !important;
+    width: auto !important;
+    padding: 5px 8px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    border-radius: 100px !important;
+    scrollbar-width: none !important;
+  }
+  .sv-gis-toolbar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .sv-gis-tool-label {
+    flex-shrink: 0 !important;
+    font-size: 9.5px !important;
+    padding-right: 6px !important;
+  }
+
+  .sv-gis-tool-btn {
+    flex-shrink: 0 !important;
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+  }
+
+  /* Map Legend on Mobile */
+  .sv-gis-legend {
+    bottom: 10px !important;
+    right: 10px !important;
+    left: 10px !important;
+    justify-content: center !important;
+    font-size: 10.5px !important;
+    padding: 6px 10px !important;
+    border-radius: 100px !important;
+  }
+
+  /* Floating Dossier on Mobile */
+  .sv-floating-spot-dossier {
+    top: auto !important;
+    bottom: 48px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: calc(100% - 20px) !important;
+    padding: 14px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28) !important;
+    z-index: 1000 !important;
+  }
+
+  .sv-deck-restore-pill {
+    display: none !important;
+  }
 }
 
 /* ─── Apple-Grade Glassmorphism & Smooth Micro-Interactions ─── */

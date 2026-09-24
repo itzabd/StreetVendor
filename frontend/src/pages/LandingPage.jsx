@@ -321,7 +321,10 @@ export default function LandingPage() {
     if (lat && lng) {
       setMapCenter([parseFloat(lat), parseFloat(lng)]);
       setMapZoom(17);
-      if (window.innerWidth < 992) setMobileTab('map');
+      if (window.innerWidth < 992) {
+        setMobileTab('map');
+        document.getElementById('sv-gis-map-anchor')?.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
@@ -427,6 +430,134 @@ export default function LandingPage() {
     { key: 'all', label: 'Full Dhaka View', lat: 23.8103, lng: 90.4125, zoom: 13 },
   ];
 
+  const PLATFORM_FEATURES = [
+    {
+      icon: '🗺️',
+      title: 'GIS Spatial Demarcation',
+      tag: 'Precision Zoning',
+      desc: 'Official GPS coordinates demarcating designated hawker zones to prevent pedestrian corridor congestion and arbitrary evictions.'
+    },
+    {
+      icon: '🪪',
+      title: 'QR-Verified Trade Licenses',
+      tag: 'Anti-Counterfeit',
+      desc: 'Instant cryptographic scan & verification of stall legality, assigned operator identity, and valid municipal permits.'
+    },
+    {
+      icon: '⭐',
+      title: 'Public Trust & Grievance',
+      tag: 'Citizen Voice',
+      desc: 'Transparent public rating system and geolocation-tagged citizen reporting for unauthorized encroachment.'
+    },
+    {
+      icon: '💳',
+      title: 'Transparent Rent Ledger',
+      tag: 'Zero Extortion',
+      desc: 'Standardized municipal lease fees tracked digitally with audit trails, eliminating extortion and informal middlemen.'
+    }
+  ];
+
+  const renderHeroAndFeatures = (isMobile) => (
+    <div className={`sv-deck-hero-wrapper ${isMobile ? 'sv-mobile-hero-wrapper' : 'sv-desktop-hero-wrapper'}`}>
+      {/* Apple-Grade Civic Intro & Control Card */}
+      <div className="sv-deck-hero-card">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <div className="sv-intro-civic-badge" style={{ padding: '3px 10px', fontSize: '10.5px' }}>
+            <span>🏛️</span>
+            <span>DCC GIS REGISTRY 2025</span>
+          </div>
+          {!isMobile ? (
+            <button
+              onClick={() => setIsDeckMinimized(true)}
+              className="sv-deck-minimize-btn"
+              title="Minimize deck to maximize map view"
+            >
+              ✕
+            </button>
+          ) : (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, color: '#1E4A4A', background: '#EBF5F5', border: '1px solid #A8CFCF', padding: '2px 8px', borderRadius: '100px' }}>
+              <span className="sv-pulse-dot" style={{ width: '6px', height: '6px' }}></span>
+              <span>LIVE</span>
+            </div>
+          )}
+        </div>
+
+        <h2 style={{ fontSize: isMobile ? '20px' : '18px', fontWeight: 800, color: '#1E4A4A', letterSpacing: '-0.03em', margin: '0 0 6px', lineHeight: 1.25 }}>
+          Digital Spatial Ledger &amp; <span className="sv-editorial-accent">Verified Registry</span>
+        </h2>
+
+        <p style={{ fontSize: '12.5px', color: '#5A524A', lineHeight: 1.5, margin: '0 0 14px' }}>
+          Authoritative Dhaka City Corporation platform digitising designated street vending spots, QR permits, and public trust scores.
+        </p>
+
+        {/* Quick Demo Access Buttons */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
+          <button
+            onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }}
+            className="btn btn-primary btn-sm"
+            style={{
+              fontSize: '11.5px', padding: '8px 10px', borderRadius: '50px',
+              background: 'linear-gradient(135deg, #1E4A4A 0%, #2D6060 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
+            }}
+            title="Try Rahim's Spot M10-04"
+          >
+            <span>🏪</span>
+            <span>Merchant Demo</span>
+          </button>
+          <button
+            onClick={() => { enterDemoMode('admin'); navigate('/admin'); }}
+            className="btn btn-outline-dark btn-sm"
+            style={{ fontSize: '11.5px', padding: '8px 10px', borderRadius: '50px', fontWeight: 600 }}
+            title="Try Officer Desk"
+          >
+            🏛️ Officer Demo
+          </button>
+        </div>
+
+        {/* 4 Key Metric Chips */}
+        <div className="sv-metrics-four-grid">
+          <div>
+            <div className="sv-metric-num">{vendors.length || 15}+</div>
+            <div className="sv-metric-tag">Spots</div>
+          </div>
+          <div>
+            <div className="sv-metric-num">94%</div>
+            <div className="sv-metric-tag">Trust</div>
+          </div>
+          <div>
+            <div className="sv-metric-num">6 Wards</div>
+            <div className="sv-metric-tag">Metro</div>
+          </div>
+          <div>
+            <div className="sv-metric-num">100%</div>
+            <div className="sv-metric-tag">Digital</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Core Platform Capabilities (4 Pillars) ───── */}
+      <div className="sv-platform-features-deck" style={{ marginTop: '12px' }}>
+        <div className="sv-features-section-head">
+          <span className="sv-features-badge">PLATFORM CAPABILITIES</span>
+          <span style={{ fontSize: '11px', color: '#7A7268', fontWeight: 500 }}>Dhaka Smart City 2025</span>
+        </div>
+        <div className="sv-features-grid">
+          {PLATFORM_FEATURES.map((feat, idx) => (
+            <div key={idx} className="sv-feature-card">
+              <div className="sv-feature-card-header">
+                <span className="sv-feature-icon">{feat.icon}</span>
+                <span className="sv-feature-tag">{feat.tag}</span>
+              </div>
+              <h4 className="sv-feature-title">{feat.title}</h4>
+              <p className="sv-feature-desc">{feat.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="sv-landing-shell">
       {/* ─── Sticky Navbar ─────────────────────────────────── */}
@@ -498,18 +629,56 @@ export default function LandingPage() {
         </nav>
       </header>
 
-      {/* ─── Mobile Segmented Tab ────────────────────────── */}
+      {/* ─── Mobile Sticky Jump Navigation ────────────────────────── */}
       <div className="sv-mobile-segmented-nav">
-        <button className={`sv-segmented-btn ${mobileTab === 'map' ? 'active' : ''}`} onClick={() => setMobileTab('map')}>
-          🗺️ Map View
+        <button
+          type="button"
+          className={`sv-segmented-btn ${mobileTab === 'overview' ? 'active' : ''}`}
+          onClick={() => {
+            setMobileTab('overview');
+            document.getElementById('sv-mobile-overview-anchor')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        >
+          ⚡ Overview
         </button>
-        <button className={`sv-segmented-btn ${mobileTab === 'list' ? 'active' : ''}`} onClick={() => setMobileTab('list')}>
+        <button
+          type="button"
+          className={`sv-segmented-btn ${mobileTab === 'map' ? 'active' : ''}`}
+          onClick={() => {
+            setMobileTab('map');
+            document.getElementById('sv-gis-map-anchor')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        >
+          🗺️ Spatial Map
+        </button>
+        <button
+          type="button"
+          className={`sv-segmented-btn ${mobileTab === 'spots' ? 'active' : ''}`}
+          onClick={() => {
+            setMobileTab('spots');
+            document.getElementById('sv-spots-directory-anchor')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        >
           📋 Spots ({filteredVendors.length})
         </button>
       </div>
 
+      {/* ─── Mobile-Only Overview & Features Deck ────────────────── */}
+      <div id="sv-mobile-overview-anchor" className="sv-mobile-overview-section d-block d-lg-none">
+        {renderHeroAndFeatures(true)}
+      </div>
+
       {/* ─── Main GIS Workspace (Unified Immersive Canvas) ─ */}
       <main id="sv-gis-map-anchor" className={`sv-gis-workspace view-${mobileTab}`}>
+
+        {/* Mobile Map Section Header */}
+        <div className="sv-map-section-bar d-flex d-lg-none">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '15px' }}>🗺️</span>
+            <strong style={{ fontSize: '13.5px', color: '#1E4A4A', letterSpacing: '-0.02em' }}>Interactive Spatial Registry</strong>
+          </div>
+          <span className="badge bg-primary" style={{ fontSize: '10.5px' }}>{filteredVendors.length} Spots Active</span>
+        </div>
 
         {/* Full-canvas map */}
         <section className="sv-gis-canvas">
@@ -646,80 +815,19 @@ export default function LandingPage() {
         </section>
 
         {/* ─── Floating Apple-Grade Discovery Deck ───── */}
-        <aside className={`sv-discovery-pane ${isDeckMinimized ? 'is-minimized' : ''}`}>
+        <aside id="sv-spots-directory-anchor" className={`sv-discovery-pane ${isDeckMinimized ? 'is-minimized' : ''}`}>
           <div className="sv-pane-content">
 
-            {/* Apple-Grade Civic Intro & Control Card */}
-            <div className="sv-deck-hero-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div className="sv-intro-civic-badge" style={{ padding: '3px 10px', fontSize: '10.5px' }}>
-                  <span>🏛️</span>
-                  <span>DCC GIS REGISTRY 2025</span>
-                </div>
-                <button
-                  onClick={() => setIsDeckMinimized(true)}
-                  className="sv-deck-minimize-btn"
-                  title="Minimize deck to maximize map view"
-                >
-                  ✕
-                </button>
-              </div>
+            {/* Desktop-Only Hero and Feature Showcase */}
+            <div className="d-none d-lg-block">
+              {renderHeroAndFeatures(false)}
+            </div>
 
-              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#1E4A4A', letterSpacing: '-0.03em', margin: '0 0 5px', lineHeight: 1.2 }}>
-                Digital Spatial Ledger &amp; <span className="sv-editorial-accent">Verified Registry</span>
-              </h2>
-
-              <p style={{ fontSize: '12px', color: '#5A524A', lineHeight: 1.45, margin: '0 0 12px' }}>
-                Authoritative Dhaka City Corporation platform digitising designated street vending spots, QR permits, and public trust scores.
-              </p>
-
-              {/* Quick Demo Access Buttons */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-                <button
-                  onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }}
-                  className="btn btn-primary btn-sm"
-                  style={{
-                    fontSize: '11.5px', padding: '7px 10px', borderRadius: '50px',
-                    background: 'linear-gradient(135deg, #1E4A4A 0%, #2D6060 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
-                  }}
-                  title="Try Rahim's Spot M10-04"
-                >
-                  <span>🏪</span>
-                  <span>Merchant #M10-04</span>
-                </button>
-                <button
-                  onClick={() => { enterDemoMode('admin'); navigate('/admin'); }}
-                  className="btn btn-outline-dark btn-sm"
-                  style={{ fontSize: '11.5px', padding: '7px 10px', borderRadius: '50px' }}
-                  title="Try Officer Desk"
-                >
-                  🏛️ Officer Demo
-                </button>
-              </div>
-
-              {/* 4 Key Metric Chips */}
-              <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-                background: 'rgba(255, 255, 255, 0.8)', border: '1px solid var(--sv-border-subtle)',
-                borderRadius: '12px', padding: '8px 4px', textAlign: 'center'
-              }}>
-                <div>
-                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#1E4A4A', lineHeight: 1 }}>{vendors.length || 8}+</div>
-                  <div style={{ fontSize: '9px', fontWeight: 700, color: '#7A7268', textTransform: 'uppercase', marginTop: '2px' }}>Spots</div>
-                </div>
-                <div style={{ borderLeft: '1px solid var(--sv-border-subtle)' }}>
-                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#1E4A4A', lineHeight: 1 }}>94%</div>
-                  <div style={{ fontSize: '9px', fontWeight: 700, color: '#7A7268', textTransform: 'uppercase', marginTop: '2px' }}>Trust</div>
-                </div>
-                <div style={{ borderLeft: '1px solid var(--sv-border-subtle)' }}>
-                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#1E4A4A', lineHeight: 1 }}>6 Wards</div>
-                  <div style={{ fontSize: '9px', fontWeight: 700, color: '#7A7268', textTransform: 'uppercase', marginTop: '2px' }}>Metro</div>
-                </div>
-                <div style={{ borderLeft: '1px solid var(--sv-border-subtle)' }}>
-                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#1E4A4A', lineHeight: 1 }}>100%</div>
-                  <div style={{ fontSize: '9px', fontWeight: 700, color: '#7A7268', textTransform: 'uppercase', marginTop: '2px' }}>Digital</div>
-                </div>
+            {/* Mobile Spot Directory Header */}
+            <div className="d-block d-lg-none" style={{ marginBottom: '2px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span className="sv-features-badge" style={{ fontSize: '10px' }}>SPOT REGISTRY</span>
+                <span style={{ fontSize: '11.5px', color: '#7A7268', fontWeight: 600 }}>Filter by trade category</span>
               </div>
             </div>
 
