@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/auth/AuthModal';
+import RatingModal from '../components/RatingModal';
 import ZoneMap from '../components/ZoneMap';
 import VendorPublicCard from '../components/VendorPublicCard';
 import axios from 'axios';
@@ -14,12 +15,48 @@ export default function LandingPage() {
   const [authMode, setAuthMode] = useState(null);
   const [vendors, setVendors] = useState([]);
   const [favorites, setFavorites] = useState([]);
+  const [userRatings, setUserRatings] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('sv_guest_ratings') || '{}');
+    } catch {
+      return {};
+    }
+  });
+  const [ratingModalVendor, setRatingModalVendor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
-  const [mobileTab, setMobileTab] = useState('map');
+  const [mobileTab, setMobileTab] = useState('overview');
   const [isDeckMinimized, setIsDeckMinimized] = useState(false);
+  const [showDesktopPillars, setShowDesktopPillars] = useState(false);
   const base = import.meta.env.VITE_API_URL;
+
+  const toolbarRef = useRef(null);
+  const [isDraggingToolbar, setIsDraggingToolbar] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleToolbarMouseDown = (e) => {
+    e.stopPropagation();
+    setIsDraggingToolbar(true);
+    setStartX(e.pageX - (toolbarRef.current?.offsetLeft || 0));
+    setScrollLeft(toolbarRef.current?.scrollLeft || 0);
+  };
+
+  const handleToolbarMouseMove = (e) => {
+    if (!isDraggingToolbar) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const x = e.pageX - (toolbarRef.current?.offsetLeft || 0);
+    const walk = (x - startX) * 1.5;
+    if (toolbarRef.current) {
+      toolbarRef.current.scrollLeft = scrollLeft - walk;
+    }
+  };
+
+  const handleToolbarMouseUp = () => {
+    setIsDraggingToolbar(false);
+  };
 
   const FALLBACK_VENDORS = [
     {
@@ -298,22 +335,58 @@ export default function LandingPage() {
     }
   };
 
-  const handleRate = async (vendorId, ratingType) => {
+  const handleSubmitRating = async (vendorId, stars, tags = [], comment = '') => {
+    const ratingType = stars >= 4 ? 'good' : (stars === 3 ? 'reasonable' : 'worst');
+
+    // 1. Save locally for instant guest feedback
+    try {
+      const stored = JSON.parse(localStorage.getItem('sv_guest_ratings') || '{}');
+      stored[vendorId] = { stars, tags, comment, timestamp: Date.now() };
+      localStorage.setItem('sv_guest_ratings', JSON.stringify(stored));
+      setUserRatings({ ...stored });
+    } catch (e) {
+      console.error(e);
+    }
+
+    // 2. Optimistically update vendors in state
     setVendors(prev => prev.map(v => {
       const id = v.vendor_id || v.id;
       if (id === vendorId) {
-        const r = { ...(v.ratings || { good: 0, reasonable: 0, worst: 0 }) };
+        const r = { ...(v.ratings || { good: 15, reasonable: 2, worst: 0 }) };
         r[ratingType] = (r[ratingType] || 0) + 1;
+        r.total = ((r.good || 0) + (r.reasonable || 0) + (r.worst || 0) + 1);
         return { ...v, ratings: r };
       }
       return v;
     }));
+
+    // 3. Update selectedVendor if dossier is open
+    setSelectedVendor(prev => {
+      if (!prev) return null;
+      const id = prev.vendor_id || prev.id;
+      if (id === vendorId) {
+        const r = { ...(prev.ratings || { good: 15, reasonable: 2, worst: 0 }) };
+        r[ratingType] = (r[ratingType] || 0) + 1;
+        r.total = ((r.good || 0) + (r.reasonable || 0) + (r.worst || 0) + 1);
+        return { ...prev, ratings: r };
+      }
+      return prev;
+    });
+
+    // 4. Send to backend with optional auth
     try {
-      await axios.post(`${base}/public/rate`, { vendor_id: vendorId, rating: ratingType });
+      await axios.post(`${base}/public/rate`, { 
+        vendor_id: vendorId, 
+        rating_type: ratingType, 
+        rating: ratingType,
+        comment: comment || (tags && tags.length > 0 ? tags.join(', ') : `${stars} stars review`)
+      });
     } catch (err) {
-      console.error('Rating failed', err);
+      console.warn('Backend sync rating fallback to local', err);
     }
   };
+
+  const handleRate = handleSubmitRating;
 
   const handleSelectVendor = (vendor) => {
     setSelectedVendor(vendor);
@@ -428,138 +501,248 @@ export default function LandingPage() {
   ];
 
   const WARDS = [
-    { key: 'mirpur', label: 'Mirpur-10', lat: 23.8068, lng: 90.3687 },
-    { key: 'karwan', label: 'Karwan Bazar', lat: 23.7516, lng: 90.3938 },
-    { key: 'dhanmondi', label: 'Dhanmondi', lat: 23.7533, lng: 90.3769 },
-    { key: 'olddhaka', label: 'Old Dhaka', lat: 23.7104, lng: 90.4074 },
-    { key: 'all', label: 'Full Dhaka View', lat: 23.8103, lng: 90.4125, zoom: 13 },
+    { key: 'all', label: 'All Dhaka', lat: 23.8103, lng: 90.4125, zoom: 13, icon: '🏙️' },
+    { key: 'mirpur', label: 'Mirpur-10', lat: 23.8068, lng: 90.3687, icon: '📍' },
+    { key: 'karwan', label: 'Karwan Bazar', lat: 23.7516, lng: 90.3938, icon: '📍' },
+    { key: 'dhanmondi', label: 'Dhanmondi', lat: 23.7533, lng: 90.3769, icon: '📍' },
+    { key: 'olddhaka', label: 'Old Dhaka', lat: 23.7104, lng: 90.4074, icon: '📍' },
   ];
 
   const PLATFORM_FEATURES = [
     {
-      icon: '🗺️',
-      title: 'GIS Spatial Demarcation',
-      tag: 'Precision Zoning',
-      desc: 'Official GPS coordinates demarcating designated hawker zones to prevent pedestrian corridor congestion and arbitrary evictions.'
+      icon: '📍',
+      title: 'Official Safe Spots',
+      tag: 'Safe Locations',
+      desc: 'Approved street locations where favorite stalls operate legally without police harassment or sudden evictions.',
+      accent: '#0D9488',
+      bg: '#F0FDFA'
     },
     {
       icon: '🪪',
-      title: 'QR-Verified Trade Licenses',
-      tag: 'Anti-Counterfeit',
-      desc: 'Instant cryptographic scan & verification of stall legality, assigned operator identity, and valid municipal permits.'
+      title: 'Instant QR License',
+      tag: 'Scan With Phone',
+      desc: 'Scan any vendor’s QR code with your mobile camera to instantly check their real city permit and owner details.',
+      accent: '#2563EB',
+      bg: '#EFF6FF'
     },
     {
       icon: '⭐',
-      title: 'Public Trust & Grievance',
-      tag: 'Citizen Voice',
-      desc: 'Transparent public rating system and geolocation-tagged citizen reporting for unauthorized encroachment.'
+      title: 'Real Customer Ratings',
+      tag: '1-Tap Reviews',
+      desc: 'Rate food taste and hygiene, read real local opinions, and help good vendors grow their neighborhood trust.',
+      accent: '#D97706',
+      bg: '#FFFBEB'
     },
     {
       icon: '💳',
-      title: 'Transparent Rent Ledger',
-      tag: 'Zero Extortion',
-      desc: 'Standardized municipal lease fees tracked digitally with audit trails, eliminating extortion and informal middlemen.'
+      title: 'Fair Fixed Rates',
+      tag: 'No Middlemen',
+      desc: 'Standardized municipal fees protect hard-working vendors from shady middlemen and informal extortion.',
+      accent: '#059669',
+      bg: '#ECFDF5'
     }
   ];
 
+  const handleHeroAction = (action) => {
+    if (action === 'map') {
+      setMobileTab('map');
+      const el = document.getElementById('sv-gis-map-anchor');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else if (action === 'spots') {
+      setMobileTab('spots');
+      const el = document.getElementById('sv-spots-directory-anchor');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const renderHeroAndFeatures = (isMobile) => (
     <div className={`sv-deck-hero-wrapper ${isMobile ? 'sv-mobile-hero-wrapper' : 'sv-desktop-hero-wrapper'}`}>
-      {/* Apple-Grade Civic Intro & Control Card */}
+      {/* ─── Civic Hero Showcase Card ─── */}
       <div className="sv-deck-hero-card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <div className="sv-intro-civic-badge" style={{ padding: '3px 10px', fontSize: '10.5px' }}>
-            <span>🏛️</span>
-            <span>DCC GIS REGISTRY 2025</span>
+        {/* Authority Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div className="sv-intro-civic-badge">
+            <span style={{ fontSize: '13px' }}>🏛️</span>
+            <span>Dhaka City Corporation · Official Stalls</span>
           </div>
+
           {!isMobile ? (
             <button
               onClick={() => setIsDeckMinimized(true)}
               className="sv-deck-minimize-btn"
-              title="Minimize deck to maximize map view"
+              title="Minimize panel to expand map view"
             >
               ✕
             </button>
           ) : (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, color: '#1E4A4A', background: '#EBF5F5', border: '1px solid #A8CFCF', padding: '2px 8px', borderRadius: '100px' }}>
-              <span className="sv-pulse-dot" style={{ width: '6px', height: '6px' }}></span>
-              <span>LIVE</span>
+            <div className="sv-live-badge-chip">
+              <span className="sv-pulse-dot" style={{ width: '7px', height: '7px' }}></span>
+              <span>LIVE MAP</span>
             </div>
           )}
         </div>
 
-        <h2 style={{ fontSize: isMobile ? '20px' : '18px', fontWeight: 800, color: '#1E4A4A', letterSpacing: '-0.03em', margin: '0 0 6px', lineHeight: 1.25 }}>
-          Digital Spatial Ledger &amp; <span className="sv-editorial-accent">Verified Registry</span>
-        </h2>
+        {/* Catchy Headline */}
+        <h1 className="sv-hero-title">
+          Dhaka's Best Street Food &amp;{' '}
+          <span className="sv-hero-accent-text">Verified Local Stalls</span>
+        </h1>
 
-        <p style={{ fontSize: '12.5px', color: '#5A524A', lineHeight: 1.5, margin: '0 0 14px' }}>
-          Authoritative Dhaka City Corporation platform digitising designated street vending spots, QR permits, and public trust scores.
+        <p className="sv-hero-subtitle">
+          Explore clean, verified street food and genuine local stalls near you. Rated by real foodies, officially permitted by city hall, with fair fixed prices.
         </p>
 
-        {/* Quick Demo Access Buttons */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
-          <button
-            onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }}
-            className="btn btn-primary btn-sm"
-            style={{
-              fontSize: '11.5px', padding: '8px 10px', borderRadius: '50px',
-              background: 'linear-gradient(135deg, #1E4A4A 0%, #2D6060 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
-            }}
-            title="Try Rahim's Spot M10-04"
-          >
-            <span>🏪</span>
-            <span>Merchant Demo</span>
-          </button>
-          <button
-            onClick={() => { enterDemoMode('admin'); navigate('/admin'); }}
-            className="btn btn-outline-dark btn-sm"
-            style={{ fontSize: '11.5px', padding: '8px 10px', borderRadius: '50px', fontWeight: 600 }}
-            title="Try Officer Desk"
-          >
-            🏛️ Officer Demo
-          </button>
-        </div>
+        {/* Primary Citizen & Explorer CTA Buttons (Only on Mobile POV where map is in a separate tab) */}
+        {isMobile && (
+          <div className="sv-hero-actions">
+            <button
+              type="button"
+              onClick={() => handleHeroAction('map')}
+              className="sv-hero-primary-btn"
+            >
+              <span>🗺️</span>
+              <span>Open Food Map</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleHeroAction('spots')}
+              className="sv-hero-secondary-btn"
+            >
+              <span>🍔</span>
+              <span>Browse All Stalls ({filteredVendors.length})</span>
+            </button>
+          </div>
+        )}
 
-        {/* 4 Key Metric Chips */}
+        {/* Role Demo Switcher Strip (Only on Mobile POV - Desktop header already has both demo buttons) */}
+        {isMobile && (
+          <div className="sv-hero-demo-strip">
+            <div className="sv-hero-demo-label">
+              <span>⚡</span>
+              <span>Try Role Demos:</span>
+            </div>
+            <div className="sv-hero-demo-pills">
+              <button
+                type="button"
+                onClick={() => { enterDemoMode('vendor'); navigate('/vendor'); }}
+                className="sv-hero-demo-pill"
+                title="Try Rahim's stall portal (Spot M10-04)"
+              >
+                <span>🏪</span>
+                <span>Vendor App (Rahim)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { enterDemoMode('admin'); navigate('/admin'); }}
+                className="sv-hero-demo-pill"
+                title="Test City Officer Desk"
+              >
+                <span>🏛️</span>
+                <span>City Inspector View</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 4 Key Civic Metrics */}
         <div className="sv-metrics-four-grid">
           <div>
-            <div className="sv-metric-num">{vendors.length || 15}+</div>
-            <div className="sv-metric-tag">Spots</div>
+            <div className="sv-metric-num">{vendors.length || 11}+</div>
+            <div className="sv-metric-tag">Trusted Stalls</div>
           </div>
           <div>
             <div className="sv-metric-num">94%</div>
-            <div className="sv-metric-tag">Trust</div>
+            <div className="sv-metric-tag">Happy Foodies</div>
           </div>
           <div>
-            <div className="sv-metric-num">6 Wards</div>
-            <div className="sv-metric-tag">Metro</div>
+            <div className="sv-metric-num">6 Zones</div>
+            <div className="sv-metric-tag">Across Dhaka</div>
           </div>
           <div>
             <div className="sv-metric-num">100%</div>
-            <div className="sv-metric-tag">Digital</div>
+            <div className="sv-metric-tag">Fair Pricing</div>
           </div>
         </div>
       </div>
 
-      {/* ─── Core Platform Capabilities (4 Pillars) ───── */}
-      <div className="sv-platform-features-deck" style={{ marginTop: '12px' }}>
-        <div className="sv-features-section-head">
-          <span className="sv-features-badge">PLATFORM CAPABILITIES</span>
-          <span style={{ fontSize: '11px', color: '#7A7268', fontWeight: 500 }}>Dhaka Smart City 2025</span>
-        </div>
-        <div className="sv-features-grid">
-          {PLATFORM_FEATURES.map((feat, idx) => (
-            <div key={idx} className="sv-feature-card">
-              <div className="sv-feature-card-header">
-                <span className="sv-feature-icon">{feat.icon}</span>
-                <span className="sv-feature-tag">{feat.tag}</span>
-              </div>
-              <h4 className="sv-feature-title">{feat.title}</h4>
-              <p className="sv-feature-desc">{feat.desc}</p>
+      {/* ─── Platform Capabilities (4 Pillars) ───── */}
+      {!isMobile ? (
+        /* On Desktop: Show a clean, compact toggle bar so search and stalls appear immediately without scrolling */
+        <div style={{ marginTop: '8px' }}>
+          <button
+            type="button"
+            onClick={() => setShowDesktopPillars(!showDesktopPillars)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#FFFFFF',
+              border: '1px solid rgba(30, 74, 74, 0.12)',
+              borderRadius: '12px',
+              padding: '8px 14px',
+              fontSize: '11.5px',
+              fontWeight: 700,
+              color: '#1E4A4A',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>🛡️</span>
+              <span>Why Choose Verified Stalls? (4 City Pillars)</span>
             </div>
-          ))}
+            <span style={{ fontSize: '11.5px', color: '#7A7268' }}>{showDesktopPillars ? '▲ Hide' : '▼ Show'}</span>
+          </button>
+
+          {showDesktopPillars && (
+            <div className="sv-platform-features-deck" style={{ marginTop: '8px' }}>
+              <div className="sv-features-grid">
+                {PLATFORM_FEATURES.map((feat, idx) => (
+                  <div key={idx} className="sv-feature-card">
+                    <div className="sv-feature-card-header">
+                      <div className="sv-feature-icon-box" style={{ background: feat.bg, color: feat.accent }}>
+                        {feat.icon}
+                      </div>
+                      <span className="sv-feature-tag" style={{ background: feat.bg, color: feat.accent }}>
+                        {feat.tag}
+                      </span>
+                    </div>
+                    <h3 className="sv-feature-title">{feat.title}</h3>
+                    <p className="sv-feature-desc">{feat.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        /* On Mobile Guide tab: Always display the 4 pillars in full */
+        <div className="sv-platform-features-deck">
+          <div className="sv-features-section-head">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="sv-features-badge">WHY CHOOSE VERIFIED STALLS</span>
+              <span style={{ fontSize: '11px', color: '#7A7268', fontWeight: 600 }}>Safe, Clean &amp; Official</span>
+            </div>
+          </div>
+          <div className="sv-features-grid">
+            {PLATFORM_FEATURES.map((feat, idx) => (
+              <div key={idx} className="sv-feature-card">
+                <div className="sv-feature-card-header">
+                  <div className="sv-feature-icon-box" style={{ background: feat.bg, color: feat.accent }}>
+                    {feat.icon}
+                  </div>
+                  <span className="sv-feature-tag" style={{ background: feat.bg, color: feat.accent }}>
+                    {feat.tag}
+                  </span>
+                </div>
+                <h3 className="sv-feature-title">{feat.title}</h3>
+                <p className="sv-feature-desc">{feat.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -581,8 +764,9 @@ export default function LandingPage() {
               Municipal Spatial Registry
             </div>
           </div>
-          <div className="sv-telemetry-badge" style={{ marginLeft: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 600, color: '#1E4A4A', background: '#EBF5F5', border: '1px solid #A8CFCF', padding: '4px 10px', borderRadius: '100px' }}>
-            <span className="sv-pulse-dot"></span>
+          <div className="sv-telemetry-badge" style={{ marginLeft: '10px', display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', fontWeight: 700, color: '#1E4A4A', background: '#EBF5F5', border: '1px solid #A8CFCF', padding: '3px 8px', borderRadius: '100px' }}>
+            <span className="sv-pulse-dot" style={{ width: '6px', height: '6px' }}></span>
+            <span className="d-inline d-md-none">LIVE</span>
             <span className="d-none d-md-inline">DhCC GIS · LIVE</span>
           </div>
         </div>
@@ -644,7 +828,7 @@ export default function LandingPage() {
             document.getElementById('sv-mobile-overview-anchor')?.scrollIntoView({ behavior: 'smooth' });
           }}
         >
-          ⚡ Overview
+          ⚡ Guide
         </button>
         <button
           type="button"
@@ -654,7 +838,7 @@ export default function LandingPage() {
             document.getElementById('sv-gis-map-anchor')?.scrollIntoView({ behavior: 'smooth' });
           }}
         >
-          🗺️ Spatial Map
+          🗺️ Live Map
         </button>
         <button
           type="button"
@@ -664,7 +848,7 @@ export default function LandingPage() {
             document.getElementById('sv-spots-directory-anchor')?.scrollIntoView({ behavior: 'smooth' });
           }}
         >
-          📋 Spots ({filteredVendors.length})
+          🍔 Stalls ({filteredVendors.length})
         </button>
       </div>
 
@@ -683,6 +867,15 @@ export default function LandingPage() {
             <strong style={{ fontSize: '13.5px', color: '#1E4A4A', letterSpacing: '-0.02em' }}>Interactive Spatial Map</strong>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={() => jumpToWard('all', 23.8103, 90.4125, 13)}
+              className="btn btn-sm btn-outline-dark"
+              style={{ fontSize: '11px', padding: '2px 9px', borderRadius: '50px', fontWeight: 600 }}
+              title="Recenter to full Dhaka view"
+            >
+              🎯 Recenter
+            </button>
             <button
               type="button"
               onClick={() => setIsMapExpanded(!isMapExpanded)}
@@ -723,17 +916,29 @@ export default function LandingPage() {
           )}
 
           {/* Ward Jump Toolbar */}
-          <div className="sv-gis-toolbar">
+          <div
+            ref={toolbarRef}
+            className={`sv-gis-toolbar ${isDraggingToolbar ? 'is-dragging' : ''}`}
+            onTouchStart={(e) => e.stopPropagation()}
+            onMouseDown={handleToolbarMouseDown}
+            onMouseMove={handleToolbarMouseMove}
+            onMouseUp={handleToolbarMouseUp}
+            onMouseLeave={handleToolbarMouseUp}
+          >
             <span className="sv-gis-tool-label">METRO WARDS</span>
             {WARDS.map(w => (
               <button
                 key={w.key}
+                type="button"
                 onClick={() => jumpToWard(w.key, w.lat, w.lng, w.zoom || 16)}
                 className={`sv-gis-tool-btn ${activeWard === w.key ? 'active' : ''}`}
               >
-                {w.label}
+                {w.icon && <span style={{ fontSize: '11.5px', marginRight: '3px' }}>{w.icon}</span>}
+                <span>{w.label}</span>
               </button>
             ))}
+            {/* End spacer so last item is never clipped by rounded capsule curve */}
+            <div style={{ flexShrink: 0, width: '14px', height: '1px' }}></div>
           </div>
 
           {/* Floating Spot Dossier */}
@@ -760,11 +965,48 @@ export default function LandingPage() {
                 {selectedVendor.spots?.zones?.area ? ` · ${selectedVendor.spots.zones.area}` : ''}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-                <span style={{ color: '#EAB308', fontSize: '13px' }}>★ ★ ★ ★ ★</span>
-                <strong style={{ fontSize: '12.5px', color: '#322D29' }}>4.9</strong>
-                <span style={{ fontSize: '11px', color: '#7A7268' }}>· 94% Public Trust</span>
-              </div>
+              {/* Dynamic Customer Rating & 1-Tap Rate Button */}
+              {(() => {
+                const sId = selectedVendor.vendor_id || selectedVendor.id;
+                const r = selectedVendor.ratings || { good: 15, reasonable: 2, worst: 0 };
+                const goodScore = r.good || 0;
+                const totalRatings = r.total || ((r.good || 0) + (r.bad || 0) + (r.reasonable || 0) + (r.worst || 0)) || 25;
+                const score = totalRatings > 0 ? (4.0 + (goodScore / totalRatings) * 1.0).toFixed(1) : '4.9';
+                const userRating = userRatings[sId];
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span style={{ color: '#EAB308', fontSize: '13px' }}>★ ★ ★ ★ ★</span>
+                      <strong style={{ fontSize: '13px', color: '#1E4A4A' }}>{score}</strong>
+                      <span style={{ fontSize: '11px', color: '#7A7268' }}>({totalRatings} reviews)</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setRatingModalVendor(selectedVendor)}
+                      style={{
+                        fontSize: '11px',
+                        padding: '3px 10px',
+                        borderRadius: '50px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        border: `1.5px solid ${userRating ? '#F59E0B' : '#A8CFCF'}`,
+                        background: userRating ? '#FEF3C7' : '#EBF5F5',
+                        color: userRating ? '#92400E' : '#1E4A4A',
+                        transition: 'all 0.15s ease'
+                      }}
+                      title="Rate this stall"
+                    >
+                      <span>⭐</span>
+                      <span>{userRating ? `Your Rating: ${userRating.stars}★` : 'Rate This Stall'}</span>
+                    </button>
+                  </div>
+                );
+              })()}
 
               <div style={{
                 display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px',
@@ -772,9 +1014,9 @@ export default function LandingPage() {
                 fontSize: '11.5px', marginBottom: '12px'
               }}>
                 <div>
-                  <span style={{ color: '#4A6E6E', display: 'block', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>Monthly Lease</span>
-                  <strong style={{ fontFamily: 'Space Mono, monospace', fontSize: '13px', color: '#1E4A4A' }}>
-                    ৳{Number(selectedVendor.rent_amount || 3500).toLocaleString()}/mo
+                  <span style={{ color: '#4A6E6E', display: 'block', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>Food Category</span>
+                  <strong style={{ fontSize: '12px', color: '#1E4A4A' }}>
+                    {selectedVendor.category || 'Street Food & Snacks'}
                   </strong>
                 </div>
                 <div>
@@ -845,6 +1087,7 @@ export default function LandingPage() {
             onSpotSelect={handleSelectSpotMarker}
             viewOnly={!isReporting}
             hideDefaultLegend={true}
+            hideZoomControl={true}
             onPick={isReporting ? handlePointPick : null}
             selectedPolygon={reportDraft ? [reportDraft] : []}
             height="100%"
@@ -858,21 +1101,24 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={() => jumpToWard('all', 23.8103, 90.4125, 13)}
-              className="sv-map-recenter-btn"
+              className="sv-map-recenter-btn d-none d-lg-inline-flex"
               title="Reset view to full Dhaka metropolitan map"
             >
-              🎯 Recenter
+              <span>🎯</span>
+              <span>Recenter</span>
             </button>
-            {[
-              { color: '#16A34A', label: 'Approved & Trusted' },
-              { color: '#D97706', label: 'Active Demarcation' },
-              { color: '#DC2626', label: 'Citizen Report' },
-            ].map(l => (
-              <div key={l.color} className="sv-legend-item">
-                <span className="sv-dot-indicator" style={{ backgroundColor: l.color }}></span>
-                <span>{l.label}</span>
-              </div>
-            ))}
+            <div className="sv-legend-items-group">
+              {[
+                { color: '#16A34A', label: 'Approved & Trusted' },
+                { color: '#D97706', label: 'Demarcation' },
+                { color: '#DC2626', label: 'Citizen Report' },
+              ].map(l => (
+                <div key={l.color} className="sv-legend-item">
+                  <span className="sv-dot-indicator" style={{ backgroundColor: l.color }}></span>
+                  <span>{l.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -888,13 +1134,13 @@ export default function LandingPage() {
             {/* Mobile Spot Directory Header */}
             <div className="d-block d-lg-none" style={{ marginBottom: '2px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span className="sv-features-badge" style={{ fontSize: '10px' }}>SPOT REGISTRY</span>
-                <span style={{ fontSize: '11.5px', color: '#7A7268', fontWeight: 600 }}>Filter by trade category</span>
+                <span className="sv-features-badge" style={{ fontSize: '10px' }}>POPULAR FOOD &amp; STALLS</span>
+                <span style={{ fontSize: '11.5px', color: '#7A7268', fontWeight: 600 }}>Filter by category</span>
               </div>
             </div>
 
             {/* Category Filters */}
-            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+            <div className="sv-filter-row" style={{ flexShrink: 0, padding: '4px 0', minHeight: '38px' }}>
               {CATEGORIES.map(cat => (
                 <button
                   key={cat.key}
@@ -914,7 +1160,7 @@ export default function LandingPage() {
               <input
                 type="text"
                 className="sv-search-input"
-                placeholder="Search stall name, ward or spot ID…"
+                placeholder="Search for puchka, biryani, tea, or neighborhood…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{ borderRadius: '50px', paddingLeft: '36px' }}
@@ -930,20 +1176,30 @@ export default function LandingPage() {
             {/* Directory Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ fontSize: '13px', fontWeight: 700, color: '#322D29' }}>
-                Vending Spots <span style={{ fontWeight: 400, color: '#7A7268', fontSize: '12px' }}>({filteredVendors.length})</span>
+                Street Food &amp; Stalls <span style={{ fontWeight: 400, color: '#7A7268', fontSize: '12px' }}>({filteredVendors.length})</span>
               </div>
               <button
+                type="button"
                 onClick={() => setIsReporting(!isReporting)}
                 style={{
-                  fontSize: '11px', fontWeight: 600, cursor: 'pointer',
-                  background: isReporting ? '#FAF1F2' : 'transparent',
-                  border: `1.5px solid ${isReporting ? '#D4A5A8' : '#D1C7BD'}`,
-                  color: isReporting ? '#72383D' : '#4A6E6E',
-                  borderRadius: '50px', padding: '4px 12px',
-                  fontFamily: 'Space Grotesk, sans-serif'
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: isReporting ? '#FAF1F2' : '#FFFFFF',
+                  border: `1.5px solid ${isReporting ? '#D4A5A8' : '#A8CFCF'}`,
+                  color: isReporting ? '#72383D' : '#1E4A4A',
+                  borderRadius: '50px',
+                  padding: '5px 13px',
+                  minHeight: '32px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  boxShadow: '0 1px 3px rgba(30, 74, 74, 0.06)',
+                  transition: 'all 0.18s ease'
                 }}
               >
-                {isReporting ? '✕ Cancel' : '+ Report Stall'}
+                <span>{isReporting ? '✕' : '＋'}</span>
+                <span>{isReporting ? 'Cancel' : 'Add / Report Stall'}</span>
               </button>
             </div>
 
@@ -1047,7 +1303,8 @@ export default function LandingPage() {
                     isSelected={selectedVendor && ((selectedVendor.id && selectedVendor.id === v.id) || (selectedVendor.vendor_id && selectedVendor.vendor_id === (v.vendor_id || v.id)))}
                     isFavorite={favorites.includes(v.vendor_id || v.id)}
                     onToggleFavorite={handleToggleFavorite}
-                    onRate={handleRate}
+                    onRate={vendor => setRatingModalVendor(vendor)}
+                    userRating={userRatings[v.vendor_id || v.id]}
                     onSelect={handleSelectVendor}
                   />
                 ))
@@ -1198,6 +1455,16 @@ export default function LandingPage() {
         onClose={() => setAuthMode(null)}
         onSuccess={handleDashboardRedirect}
       />
+
+      {/* Community Rating Modal for Non-Registered Guests & Foodies */}
+      {ratingModalVendor && (
+        <RatingModal
+          vendor={ratingModalVendor}
+          existingRating={userRatings[ratingModalVendor.vendor_id || ratingModalVendor.id]}
+          onClose={() => setRatingModalVendor(null)}
+          onSubmitRating={handleSubmitRating}
+        />
+      )}
     </div>
   );
 }

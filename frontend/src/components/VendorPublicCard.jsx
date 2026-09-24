@@ -1,6 +1,14 @@
 import { useState } from 'react';
 
-export default function VendorPublicCard({ vendor, isFavorite, onToggleFavorite, onSelect, isSelected = false }) {
+export default function VendorPublicCard({ 
+  vendor, 
+  isFavorite, 
+  onToggleFavorite, 
+  onSelect, 
+  isSelected = false,
+  onRate,
+  userRating
+}) {
   const [isHovered, setIsHovered] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -98,9 +106,9 @@ export default function VendorPublicCard({ vendor, isFavorite, onToggleFavorite,
             }}>
               {isUnverified ? 'Citizen Report' : '✓ Verified'}
             </span>
-            {vendor.rent_amount && (
-              <span className="sv-mono-data" style={{ fontSize: '11px', color: 'var(--sv-text-muted)', marginLeft: 'auto' }}>
-                ৳{Number(vendor.rent_amount).toLocaleString()}/mo
+            {vendor.category && (
+              <span style={{ fontSize: '11px', color: 'var(--sv-text-muted)', marginLeft: 'auto', fontWeight: 500 }}>
+                {vendor.category}
               </span>
             )}
           </div>
@@ -146,10 +154,43 @@ export default function VendorPublicCard({ vendor, isFavorite, onToggleFavorite,
         flexWrap: 'wrap',
         gap: '6px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ color: '#EAB308', fontSize: '12px' }}>★</span>
-          <span style={{ fontWeight: 700, color: 'var(--sv-text-primary)' }}>{ratingScore}</span>
-          <span style={{ color: 'var(--sv-text-caption)', fontSize: '11px' }}>({totalRatings || 40})</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ color: '#EAB308', fontSize: '12px' }}>★</span>
+            <span style={{ fontWeight: 700, color: 'var(--sv-text-primary)' }}>{ratingScore}</span>
+            <span style={{ color: 'var(--sv-text-caption)', fontSize: '11px' }}>({totalRatings || 40})</span>
+          </div>
+
+          {/* Interactive Guest & User Rating Button */}
+          {onRate && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRate(vendor);
+              }}
+              className="sv-card-rate-btn"
+              title={userRating ? `You rated ${userRating.stars}★. Tap to update` : "Rate this food stall"}
+              style={{
+                background: userRating ? '#FEF3C7' : 'rgba(255, 255, 255, 0.9)',
+                border: `1.5px solid ${userRating ? '#FCD34D' : 'var(--sv-border)'}`,
+                color: userRating ? '#92400E' : 'var(--sv-text-muted)',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                padding: '3px 9px',
+                minHeight: '28px',
+                borderRadius: '50px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>⭐</span>
+              <span>{userRating ? `Rated ${userRating.stars}★` : 'Rate'}</span>
+            </button>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

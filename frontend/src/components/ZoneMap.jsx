@@ -111,7 +111,8 @@ export default function ZoneMap({
   center,
   zoom = null,
   locked = false,
-  hideDefaultLegend = false
+  hideDefaultLegend = false,
+  hideZoomControl = false
 }) {
   const defaultCenter = center || [23.8103, 90.4125];
   const [mapCenter, setMapCenter] = useState(defaultCenter);
@@ -219,7 +220,7 @@ export default function ZoneMap({
           attributionControl={!locked}
         >
           <MapCenterer center={mapCenter} zoom={locked ? 18 : (zoom ?? null)} />
-          {!locked && <ZoomControl position="bottomright" />}
+          {!locked && !hideZoomControl && <ZoomControl position="bottomright" />}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
