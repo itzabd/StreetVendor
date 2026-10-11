@@ -116,6 +116,17 @@ CREATE TABLE IF NOT EXISTS rent_records (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 10. Vendor Favorites
+CREATE TABLE IF NOT EXISTS vendor_favorites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  vendor_id UUID NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, vendor_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_vendor_favorites_user ON vendor_favorites(user_id);
+
 -- ============================================================
 -- Row Level Security (RLS) Policies
 -- ============================================================
@@ -129,6 +140,7 @@ ALTER TABLE spot_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE complaints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rent_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE vendor_favorites ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: users can read/update their own profile
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
@@ -158,3 +170,8 @@ CREATE POLICY "Vendors can view own complaints" ON complaints FOR SELECT USING (
 
 -- Rent Records: authenticated users (scoped in backend)
 CREATE POLICY "Authenticated users can view rent records" ON rent_records FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Vendor Favorites: users manage own favorites
+CREATE POLICY "Users can manage own favorites" ON vendor_favorites FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Service role full access on vendor_favorites" ON vendor_favorites USING (true) WITH CHECK (true);
+

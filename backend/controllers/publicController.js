@@ -309,40 +309,63 @@ const publicController = {
   toggleFavorite: async (req, res) => {
     try {
       const { vendor_id } = req.body;
+      if (!vendor_id) {
+        return res.status(400).json({ error: 'vendor_id is required' });
+      }
+
+      if (req.isDemo) {
+        return res.json({ favorite: true, demo: true });
+      }
+
       const user_id = req.user.id;
 
       // Check if exists
-      const { data: existing } = await supabase
+      const { data: existing, error: checkError } = await supabase
         .from('vendor_favorites')
         .select('id')
         .eq('user_id', user_id)
         .eq('vendor_id', vendor_id)
         .maybeSingle();
 
+      if (checkError) throw checkError;
+
       if (existing) {
-        await supabase.from('vendor_favorites').delete().eq('id', existing.id);
+        const { error: deleteError } = await supabase
+          .from('vendor_favorites')
+          .delete()
+          .eq('id', existing.id);
+        if (deleteError) throw deleteError;
         res.json({ favorite: false });
       } else {
-        await supabase.from('vendor_favorites').insert([{ user_id, vendor_id }]);
+        const { error: insertError } = await supabase
+          .from('vendor_favorites')
+          .insert([{ user_id, vendor_id }]);
+        if (insertError) throw insertError;
         res.json({ favorite: true });
       }
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('toggleFavorite error:', err.message || err);
+      res.status(500).json({ error: err.message || 'Failed to toggle favorite' });
     }
   },
 
   // Get user favorites
   getFavorites: async (req, res) => {
     try {
+      if (req.isDemo) {
+        return res.json([]);
+      }
+
       const { data, error } = await supabase
         .from('vendor_favorites')
         .select('vendor_id')
         .eq('user_id', req.user.id);
       
       if (error) throw error;
-      res.json(data.map(f => f.vendor_id));
+      res.json((data || []).map(f => f.vendor_id));
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.warn('getFavorites notice (table may need migration):', err.message || err);
+      res.json([]);
     }
   },
 

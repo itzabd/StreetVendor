@@ -8,9 +8,10 @@ import VendorPublicCard from '../components/VendorPublicCard';
 import axios from 'axios';
 
 export default function LandingPage() {
-  const { user, profile, enterDemoMode, isDemo } = useAuth();
+  const { user, profile, enterDemoMode, isDemo, getToken } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const useServerFavorites = !!user && !isDemo;
 
   const [authMode, setAuthMode] = useState(null);
   const [vendors, setVendors] = useState([]);
@@ -270,9 +271,9 @@ export default function LandingPage() {
 
   useEffect(() => {
     fetchVendors();
-    if (user) fetchFavorites();
+    if (useServerFavorites) fetchFavorites();
     else loadGuestFavorites();
-  }, [user]);
+  }, [user, isDemo]);
 
   const fetchVendors = async () => {
     try {
@@ -292,44 +293,61 @@ export default function LandingPage() {
 
   const fetchFavorites = async () => {
     try {
-      const token = await (async () => {
-        const { data: { session } } = await (await import('../supabaseClient')).default.auth.getSession();
-        return session?.access_token;
-      })();
-      if (!token) return;
+      const token = await getToken();
+      if (!token) {
+        loadGuestFavorites();
+        return;
+      }
       const res = await axios.get(`${base}/public/favorites`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setFavorites(res.data);
+      setFavorites(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to fetch favorites', err);
+      loadGuestFavorites();
     }
   };
 
   const loadGuestFavorites = () => {
-    const local = localStorage.getItem('sv_guest_favorites');
-    if (local) setFavorites(JSON.parse(local));
+    try {
+      const local = localStorage.getItem('sv_guest_favorites');
+      if (local) {
+        const parsed = JSON.parse(local);
+        setFavorites(Array.isArray(parsed) ? parsed : []);
+      } else {
+        setFavorites([]);
+      }
+    } catch {
+      setFavorites([]);
+    }
   };
 
   const handleToggleFavorite = async (vendorId) => {
-    if (!user) {
-      const newFavs = favorites.includes(vendorId)
-        ? favorites.filter(id => id !== vendorId)
-        : [...favorites, vendorId];
-      setFavorites(newFavs);
-      localStorage.setItem('sv_guest_favorites', JSON.stringify(newFavs));
+    if (!useServerFavorites) {
+      setFavorites(prev => {
+        const newFavs = prev.includes(vendorId)
+          ? prev.filter(id => id !== vendorId)
+          : [...prev, vendorId];
+        try {
+          localStorage.setItem('sv_guest_favorites', JSON.stringify(newFavs));
+        } catch (e) {
+          console.error('Failed to save to localStorage', e);
+        }
+        return newFavs;
+      });
       return;
     }
     try {
-      const token = await (async () => {
-        const { data: { session } } = await (await import('../supabaseClient')).default.auth.getSession();
-        return session?.access_token;
-      })();
+      const token = await getToken();
+      if (!token) return;
       const res = await axios.post(`${base}/public/favorite`, { vendor_id: vendorId }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.data.favorite) setFavorites([...favorites, vendorId]);
-      else setFavorites(favorites.filter(id => id !== vendorId));
+      if (res.data.favorite) {
+        setFavorites(prev => prev.includes(vendorId) ? prev : [...prev, vendorId]);
+      } else {
+        setFavorites(prev => prev.filter(id => id !== vendorId));
+      }
     } catch (err) {
       console.error('Favorite toggle failed', err);
     }
